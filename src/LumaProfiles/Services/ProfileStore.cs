@@ -89,7 +89,33 @@ public sealed class ProfileStore
         Profile("creative-skin", "Piel natural", "Color creativo", "Reduce excesos de saturación y conserva tonos de piel agradables.", "#EAA27D", "#BB6B73", 70, 78, 48, 0, 1.00, 1.00, 1.00, 0.98, "Usuario (RGB)"),
         Profile("creative-golden", "Atardecer dorado", "Color creativo", "Calidez expresiva para fotografía, música y contenido ambiental.", "#FFB24C", "#C95155", 65, 80, 55, 0, 1.02, 1.00, 0.96, 0.84, "Usuario (RGB)"),
         Profile("creative-ocean", "Océano frío", "Color creativo", "Azules limpios y sensación fría para tecnología y paisajes marinos.", "#2ED2D0", "#315BDA", 72, 82, 54, 0, 1.01, 0.94, 1.00, 1.04, "Usuario (RGB)"),
-        Profile("creative-mono", "Monocromo editorial", "Color creativo", "Blanco y negro suave para lectura visual, fotografía y concentración.", "#A8B0B8", "#343A42", 68, 82, 0, 0, 1.04, 1.00, 1.00, 1.00, "Neutro 6500 K")
+        Profile("creative-mono", "Monocromo editorial", "Color creativo", "Blanco y negro suave para lectura visual, fotografía y concentración.", "#A8B0B8", "#343A42", 68, 82, 0, 0, 1.04, 1.00, 1.00, 1.00, "Neutro 6500 K"),
+
+        Profile("faithful-studio", "Estudio neutro", "Color fiel", "Base sobria para diseño, edición y comparación visual sin color exagerado.", "#A9B8C5", "#4D6273", 65, 80, 48, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K"),
+        Profile("faithful-photo", "Fotografía diurna", "Color fiel", "Luz clara y balance cercano a día para revisar paisajes, producto y retrato.", "#73C6EB", "#E9C878", 75, 82, 54, 0, 1.00, 1.00, 0.99, 0.98, "Usuario (RGB)"),
+        Profile("faithful-print", "Prueba de impresión", "Color fiel", "Brillo contenido y saturación moderada para aproximar una revisión destinada a papel.", "#C7BFAE", "#6F726F", 50, 78, 44, 0, 1.04, 1.00, 0.99, 0.97, "Usuario (RGB)"),
+
+        Profile("hdr-bright", "HDR luminoso", "HDR", "Punto de partida de alto brillo para demostraciones HDR y escenas con luces intensas.", "#F7D94C", "#3BB7FF", 100, 90, 62, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance", true),
+        Profile("hdr-darkroom", "HDR sala oscura", "HDR", "Base HDR más contenida para películas y juegos en habitaciones con poca iluminación.", "#7C5CE7", "#1A365F", 68, 82, 50, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K", "Balanced", true),
+
+        Profile("creative-forest", "Bosque profundo", "Color creativo", "Verdes densos y cálidos para naturaleza, aventura y fotografía ambiental.", "#2E9B69", "#A5B85B", 68, 82, 58, 0, 1.02, 0.94, 1.03, 0.93, "Usuario (RGB)"),
+        Profile("creative-cyber", "Cyber nocturno", "Color creativo", "Magenta y azul definidos para contenido futurista sin llevarlos al máximo.", "#E943A8", "#3D66F5", 72, 84, 70, 0, 1.03, 1.03, 0.94, 1.04, "Usuario (RGB)"),
+        Profile("creative-pastel", "Pastel suave", "Color creativo", "Contraste delicado y color reducido para ilustración, fondos claros y contenido relajado.", "#F0B7CF", "#9FD9D1", 70, 72, 42, 0, 0.98, 1.00, 0.99, 0.98, "Usuario (RGB)"),
+        Profile("creative-sepia", "Sepia documental", "Color creativo", "Acabado cálido y desaturado inspirado en fotografía histórica y archivo.", "#C99B63", "#6B4D3B", 58, 78, 40, 0, 1.03, 1.00, 0.88, 0.70, "Usuario (RGB)"),
+        Profile("creative-winter", "Invierno limpio", "Color creativo", "Blancos fríos y azules precisos para nieve, arquitectura y escenas minimalistas.", "#D8F2F5", "#6787C8", 78, 83, 50, 0, 1.01, 0.92, 1.00, 1.05, "Usuario (RGB)"),
+
+        Profile("entertainment-anime", "Anime", "Entretenimiento", "Color expresivo y líneas claras para animación, ilustración y contenido estilizado.", "#FF6FAE", "#56C8F0", 82, 82, 64, 0, 1.02, 1.00, 0.99, 1.00, "Neutro 6500 K"),
+        Profile("entertainment-sports", "Deportes", "Entretenimiento", "Movimiento claro, césped natural y contraste reforzado para transmisiones deportivas.", "#35AE68", "#43A4E8", 88, 86, 58, 0, 1.04, 0.98, 1.01, 0.98, "Usuario (RGB)", "HighPerformance"),
+        Profile("entertainment-documentary", "Documental", "Entretenimiento", "Color moderado y detalle equilibrado para naturaleza, viajes e historia.", "#D0A567", "#477D83", 72, 82, 52, 0, 1.00, 1.00, 1.00, 0.98, "Usuario (RGB)"),
+
+        Profile("performance-esports", "eSports", "Rendimiento", "Contraste alto y sombras abiertas para partidas competitivas a máxima frecuencia.", "#FF445F", "#3975FF", 90, 90, 55, 0, 1.10, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
+        Profile("performance-latency", "Respuesta rápida", "Rendimiento", "Imagen contenida para sesiones rápidas, priorizando legibilidad y rendimiento sostenido.", "#41D5E8", "#5168F2", 75, 85, 50, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
+
+        Profile("eyes-reading", "Lectura cálida", "Cuidado visual", "Fondo cálido y saturación baja para lectura prolongada de documentos y páginas web.", "#E4C98B", "#8D744F", 40, 78, 38, 0, 1.00, 1.00, 0.97, 0.88, "Usuario (RGB)"),
+        Profile("eyes-office", "Oficina suave", "Cuidado visual", "Brillo medio y calidez ligera para hojas de cálculo, correo y tareas diarias.", "#B8D9C8", "#7696A0", 55, 76, 46, 0, 1.00, 1.00, 0.99, 0.94, "Usuario (RGB)"),
+        Profile("eyes-sunset", "Atardecer", "Cuidado visual", "Transición cálida para las últimas horas de trabajo sin teñir demasiado la imagen.", "#E9B664", "#9C684D", 32, 72, 44, 0, 1.00, 1.00, 0.94, 0.80, "Usuario (RGB)"),
+        Profile("eyes-red-night", "Noche roja", "Cuidado visual", "Brillo muy bajo y reducción intensa del azul para consultas breves durante la noche.", "#D95C45", "#643A35", 14, 68, 35, 0, 1.00, 1.00, 0.72, 0.52, "Usuario (RGB)"),
+        Profile("eyes-sensitive", "Sensibilidad suave", "Cuidado visual", "Contraste y brillo reducidos para momentos en los que la pantalla se siente demasiado intensa.", "#D4C89A", "#7B7768", 24, 65, 38, 0, 0.96, 1.00, 0.96, 0.86, "Usuario (RGB)")
     ];
 
     private static DisplayProfile Profile(
