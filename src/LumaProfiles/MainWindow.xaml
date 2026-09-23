@@ -733,8 +733,38 @@
                     <Button Style="{StaticResource PrimaryButton}" Content="Guardar y aplicar" Click="SaveAndApply_Click" Margin="0,10,0,9"/>
                     <Button Style="{StaticResource SecondaryButton}" Content="Restaurar valores originales" Click="RestoreDefaults_Click"/>
 
-                    <Border Background="#251F16" BorderBrush="#5E4B29" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,18,0,0">
-                        <TextBlock Text="Consejo: para trabajo de color usa Natural o Referencia. Los modos cálidos modifican intencionalmente el balance RGB." Foreground="#D7BE88" TextWrapping="Wrap"/>
+                    <Border BorderBrush="#29434F" BorderThickness="1" CornerRadius="12" Margin="0,18,0,0" ClipToBounds="True">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#162A33" Offset="0"/>
+                                <GradientStop Color="#101920" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid>
+                            <Border Width="3" Margin="0,10" CornerRadius="2" Background="#55D6F5" HorizontalAlignment="Left"/>
+                            <Grid Margin="15,13,13,13">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="34"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="26" Height="26" CornerRadius="8" Background="#193945" BorderBrush="#286070" BorderThickness="1"
+                                        HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <TextBlock Text="i" Foreground="#7CE5FA" FontSize="14" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Precisión de color" Foreground="#EFF8FB" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <Border Background="#183641" CornerRadius="7" Padding="7,2" Margin="8,0,0,0">
+                                            <TextBlock Text="RECOMENDADO" Foreground="#6DDDF4" FontSize="8" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Foreground="#9FB2BF" TextWrapping="Wrap" LineHeight="17" Margin="0,6,0,0">
+                                        <Run Text="Usa "/><Run Text="Natural" Foreground="#DDF8FF" FontWeight="SemiBold"/><Run Text=" o "/><Run Text="Referencia" Foreground="#DDF8FF" FontWeight="SemiBold"/><Run Text=" para trabajo de color. Los perfiles cálidos modifican intencionalmente el balance RGB."/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
