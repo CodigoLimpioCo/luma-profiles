@@ -97,12 +97,16 @@ public sealed class MonitorService
             {
                 SetVcp(physical.hPhysicalMonitor, 0x10, (uint)profile.Brightness, "brillo", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x12, (uint)profile.Contrast, "contraste", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x14, 5, "temperatura 6500 K", failures);
+                SetVcp(physical.hPhysicalMonitor, 0x14, ColorPreset(profile.ColorTemperature), "temperatura de color", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x16, 100, "ganancia roja", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x18, 100, "ganancia verde", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x1A, 100, "ganancia azul", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x87, 0, "nitidez artificial", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x8A, (uint)profile.Saturation, "saturación", failures);
+                if (profile.Hue != 0)
+                {
+                    SetVcp(physical.hPhysicalMonitor, 0x89, (uint)(profile.Hue + 50), "matiz", failures);
+                }
             }
         }
         finally
@@ -110,6 +114,14 @@ public sealed class MonitorService
             NativeMethods.DestroyPhysicalMonitors(count, physicalMonitors);
         }
     }
+
+    private static uint ColorPreset(string colorTemperature) => colorTemperature switch
+    {
+        "Cálido 5000 K" => 4,
+        "Neutro 6500 K" => 5,
+        "Frío 7500 K" => 6,
+        _ => 11
+    };
 
     private static void SetVcp(IntPtr monitor, byte code, uint value, string label, List<string> failures)
     {

@@ -21,6 +21,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<DisplayProfile> Profiles { get; }
     public ICollectionView VisibleProfiles { get; }
     public IReadOnlyList<string> MonitorTargets { get; } = ["Ambas pantallas", "Pantalla 1", "Pantalla 2"];
+    public IReadOnlyList<string> ColorTemperatureOptions { get; } =
+        ["Usuario (RGB)", "Cálido 5000 K", "Neutro 6500 K", "Frío 7500 K"];
 
     public DisplayProfile SelectedProfile
     {
@@ -61,6 +63,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             StatusMessage = category == "Todos" ? "Mostrando todos los perfiles." : $"Categoría: {category}.";
         }
     }
+
+    private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (e.ClickCount == 2)
+        {
+            ToggleMaximized();
+            return;
+        }
+
+        if (e.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
+    private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    private void Maximize_Click(object sender, RoutedEventArgs e) => ToggleMaximized();
+
+    private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void ToggleMaximized() =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     private void EditProfile_Click(object sender, RoutedEventArgs e)
     {

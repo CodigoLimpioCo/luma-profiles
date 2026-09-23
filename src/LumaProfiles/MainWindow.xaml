@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Luma Profiles" Height="900" Width="1500" MinHeight="720" MinWidth="1180"
-        WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB">
+        Title="Luma Profiles" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
+        WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB"
+        WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text">
     <Window.Resources>
         <SolidColorBrush x:Key="PanelBrush" Color="#121A23"/>
         <SolidColorBrush x:Key="CardBrush" Color="#151F29"/>
@@ -73,25 +74,161 @@
         </Style>
 
         <Style TargetType="Slider">
-            <Setter Property="Margin" Value="0,4,0,13"/>
+            <Setter Property="Margin" Value="0,5,0,14"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton IsTabStop="False" Background="#55D6F5" BorderThickness="0" Height="4"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="14" Height="14">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Fill="#DDF8FF" Stroke="#55D6F5" StrokeThickness="2"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton IsTabStop="False" Background="#344552" BorderThickness="0" Height="4"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style TargetType="ComboBox">
-            <Setter Property="Foreground" Value="#101820"/>
-            <Setter Property="Background" Value="#F1F5F8"/>
+            <Setter Property="Foreground" Value="#EAF4FA"/>
+            <Setter Property="Background" Value="#17232D"/>
             <Setter Property="BorderBrush" Value="#334756"/>
             <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="MinHeight" Value="38"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="#EAF4FA"/>
+                        <Setter Property="Background" Value="#17232D"/>
+                        <Setter Property="Padding" Value="12,8"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="ItemRoot" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="5">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="ItemRoot" Property="Background" Value="#253846"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="ItemRoot" Property="Background" Value="#1D4855"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="#17232D" BorderBrush="#334756" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="20"/>
+                                                </Grid.ColumnDefinitions>
+                                                <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                  VerticalAlignment="Center" TextElement.Foreground="#EAF4FA"/>
+                                                <TextBlock Grid.Column="1" Text="⌄" Foreground="#8EA5B6" FontSize="16" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Fade">
+                                <Border Background="#131E27" BorderBrush="#334756" BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="220">
+                                    <ScrollViewer MaxHeight="260">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid Background="Transparent">
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb MinHeight="36">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="#3A4C59" CornerRadius="4" Margin="1"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="340"/>
+            <ColumnDefinition Width="365"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#0D141C" BorderBrush="#1E2B36" BorderThickness="0,0,1,0">
+        <Border Grid.Row="0" Grid.ColumnSpan="3" Background="#0B1219" BorderBrush="#1D2B36" BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
+                    <Ellipse Width="12" Height="12" Fill="#55D6F5" Margin="0,0,8,0"/>
+                    <TextBlock Text="Luma Profiles" FontWeight="SemiBold" Foreground="#DCEAF3"/>
+                    <TextBlock Text="  •  Monitor Studio" Foreground="#667D8E"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="—" Click="Minimize_Click"/>
+                    <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="□" Click="Maximize_Click"/>
+                    <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="×" Click="Close_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="0" Background="#0D141C" BorderBrush="#1E2B36" BorderThickness="0,0,1,0">
             <Grid Margin="16,24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -127,7 +264,7 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Column="1" Margin="30,26,24,24">
+        <Grid Grid.Row="1" Grid.Column="1" Margin="24,24,18,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="18"/>
@@ -159,7 +296,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Width="278" Height="328" Margin="0,0,16,16" Padding="12"
+                            <Border Width="264" Height="340" Margin="0,0,12,14" Padding="11"
                                     Background="{StaticResource CardBrush}" BorderBrush="#263746" BorderThickness="1"
                                     CornerRadius="13" ToolTip="{Binding Description}">
                                 <Border.Style>
@@ -174,22 +311,30 @@
                                 </Border.Style>
                                 <Grid>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="122"/>
+                                        <RowDefinition Height="130"/>
                                         <RowDefinition Height="*"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <Border CornerRadius="9" ClipToBounds="True">
+                                    <Border CornerRadius="9" ClipToBounds="True" BorderBrush="#385064" BorderThickness="1">
                                         <Grid>
-                                            <Grid.Background>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                    <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
-                                                    <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
-                                                </LinearGradientBrush>
-                                            </Grid.Background>
-                                            <Ellipse Width="46" Height="46" Fill="#CCFFF3C4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,15,22,0"/>
-                                            <Polygon Points="0,112 65,52 120,104 166,63 278,122" Fill="#B9233440" VerticalAlignment="Bottom"/>
-                                            <Polygon Points="0,122 88,80 142,115 202,78 278,118 278,122" Fill="#CC0B1A22" VerticalAlignment="Bottom"/>
+                                            <Rectangle>
+                                                <Rectangle.Fill>
+                                                    <ImageBrush ImageSource="/Assets/color-reference.png" Stretch="UniformToFill"
+                                                                Viewbox="0.333,0.08,0.333,0.72" ViewboxUnits="RelativeToBoundingBox"/>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                            <Rectangle Opacity="0.18">
+                                                <Rectangle.Fill>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                        <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                                        <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Rectangle.Fill>
+                                            </Rectangle>
+                                            <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
+                                                <TextBlock Text="Vista previa de color" FontSize="10" Foreground="#DCEAF3"/>
+                                            </Border>
                                             <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
                                                     Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
                                                 <TextBlock Text="ACTIVO" FontSize="10" FontWeight="Bold" Foreground="#55D6F5"/>
@@ -199,7 +344,7 @@
 
                                     <StackPanel Grid.Row="1" Margin="2,10,2,8">
                                         <TextBlock Text="{Binding Name}" FontSize="19" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Height="42" Margin="0,4,0,8"/>
+                                        <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Height="45" Margin="0,4,0,8" FontSize="12"/>
                                         <WrapPanel>
                                             <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
                                                 <TextBlock Foreground="#C7D5E0"><Run Text="Brillo "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
@@ -234,7 +379,7 @@
             </Border>
         </Grid>
 
-        <Border Grid.Column="2" Background="#0E161F" BorderBrush="#1E2B36" BorderThickness="1,0,0,0">
+        <Border Grid.Row="1" Grid.Column="2" Background="#0E161F" BorderBrush="#1E2B36" BorderThickness="1,0,0,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24,28">
                     <TextBlock Text="Ajustar perfil" FontSize="23" FontWeight="SemiBold"/>
@@ -247,16 +392,25 @@
                         </StackPanel>
                     </Border>
 
+                    <TextBlock Text="IMAGEN" Foreground="#6E8798" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,11"/>
                     <TextBlock><Run Text="Brillo"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Brightness, Mode=TwoWay}"/>
                     <TextBlock><Run Text="Contraste"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Contrast}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Contrast, Mode=TwoWay}"/>
-                    <TextBlock><Run Text="Saturación"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="#55D6F5"/></TextBlock>
-                    <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Saturation, Mode=TwoWay}"/>
                     <TextBlock><Run Text="Gamma"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Gamma, StringFormat={}{0:F2}}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0.70" Maximum="1.30" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Gamma, Mode=TwoWay}"/>
 
-                    <TextBlock Text="Balance RGB" FontWeight="SemiBold" Margin="0,5,0,10"/>
+                    <Border Height="1" Background="#263744" Margin="0,4,0,16"/>
+                    <TextBlock Text="COLOR" Foreground="#6E8798" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,10"/>
+                    <TextBlock Text="Temperatura de color" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding ColorTemperatureOptions}"
+                              SelectedItem="{Binding SelectedProfile.ColorTemperature, Mode=TwoWay}" Margin="0,0,0,14"/>
+                    <TextBlock><Run Text="Saturación"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Saturation, Mode=TwoWay}"/>
+                    <TextBlock ToolTip="Algunos modos del monitor bloquean el matiz, igual que ASUS DisplayWidget."><Run Text="Matiz"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Hue}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="-50" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Hue, Mode=TwoWay}" ToolTip="Disponible únicamente si el modo del monitor permite modificar el matiz."/>
+
+                    <TextBlock Text="Balance RGB personalizado" FontWeight="SemiBold" Margin="0,2,0,10"/>
                     <TextBlock Foreground="#FF7B86"><Run Text="Rojo"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Red, StringFormat={}{0:F2}}"/></TextBlock>
                     <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Red, Mode=TwoWay}"/>
                     <TextBlock Foreground="#68DB98"><Run Text="Verde"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Green, StringFormat={}{0:F2}}"/></TextBlock>

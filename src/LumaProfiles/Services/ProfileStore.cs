@@ -26,9 +26,19 @@ public sealed class ProfileStore
         {
             if (File.Exists(ProfilesPath))
             {
-                var saved = JsonSerializer.Deserialize<List<DisplayProfile>>(File.ReadAllText(ProfilesPath), JsonOptions);
+                var json = File.ReadAllText(ProfilesPath);
+                var saved = JsonSerializer.Deserialize<List<DisplayProfile>>(json, JsonOptions);
                 if (saved is { Count: > 0 })
                 {
+                    if (!json.Contains("\"ColorTemperature\"", StringComparison.Ordinal))
+                    {
+                        foreach (var profile in saved)
+                        {
+                            profile.ColorTemperature = Defaults.FirstOrDefault(item => item.Id == profile.Id)?.ColorTemperature
+                                ?? "Usuario (RGB)";
+                        }
+                    }
+
                     var merged = Defaults.Select(defaultProfile =>
                         saved.FirstOrDefault(item => item.Id == defaultProfile.Id) ?? defaultProfile.Clone()).ToList();
                     return merged;
@@ -54,20 +64,20 @@ public sealed class ProfileStore
 
     private static List<DisplayProfile> CreateDefaults() =>
     [
-        Profile("natural", "Natural", "Color fiel", "Color neutro y equilibrado para uso diario, fotografía y diseño.", "#26C6DA", "#2870B5", 80, 80, 50, 1.00, 1.00, 1.00, 1.00),
-        Profile("reference", "Referencia", "Color fiel", "Brillo moderado y señal neutra para revisar grises, piel y detalle.", "#AAB7C4", "#485765", 50, 80, 50, 1.00, 1.00, 1.00, 1.00),
-        Profile("entertainment", "Entretenimiento", "Entretenimiento", "Un poco más vivo para juegos y vídeo, sin convertir los colores en neón.", "#9C5CFF", "#E34D8D", 85, 80, 56, 1.03, 1.00, 1.00, 1.00),
-        Profile("performance", "Rendimiento", "Rendimiento", "Conserva 180 Hz y activa Alto rendimiento para priorizar fotogramas.", "#2D8CFF", "#5EE7F7", 85, 80, 52, 1.00, 1.00, 1.00, 1.00, "HighPerformance"),
-        Profile("cinema", "Cine cálido", "Entretenimiento", "Imagen suavemente cálida para películas y contenido nocturno.", "#F3A45B", "#8C3C5D", 70, 80, 52, 1.02, 1.00, 0.99, 0.96),
-        Profile("eyes-soft", "Ojos suave", "Cuidado visual", "Brillo moderado y tono apenas cálido para jornadas largas.", "#9EDC8D", "#4FA981", 45, 75, 48, 1.00, 1.00, 0.99, 0.94),
-        Profile("eyes-rest", "Ojos descanso", "Cuidado visual", "Brillo bajo y filtro cálido medio para trabajar con poca luz.", "#EFC66A", "#8F7A47", 30, 72, 46, 1.00, 1.00, 0.97, 0.86),
-        Profile("eyes-night", "Ojos noche", "Cuidado visual", "Brillo mínimo práctico y filtro ámbar intenso para uso nocturno.", "#FF9B4A", "#693A35", 18, 70, 44, 1.00, 1.00, 0.93, 0.74)
+        Profile("natural", "Natural", "Color fiel", "Color neutro y equilibrado para uso diario, fotografía y diseño.", "#26C6DA", "#2870B5", 80, 80, 50, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K"),
+        Profile("reference", "Referencia", "Color fiel", "Brillo moderado y señal neutra para revisar grises, piel y detalle.", "#AAB7C4", "#485765", 50, 80, 50, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K"),
+        Profile("entertainment", "Entretenimiento", "Entretenimiento", "Un poco más vivo para juegos y vídeo, sin convertir los colores en neón.", "#9C5CFF", "#E34D8D", 85, 80, 56, 0, 1.03, 1.00, 1.00, 1.00, "Neutro 6500 K"),
+        Profile("performance", "Rendimiento", "Rendimiento", "Conserva 180 Hz y activa Alto rendimiento para priorizar fotogramas.", "#2D8CFF", "#5EE7F7", 85, 80, 52, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
+        Profile("cinema", "Cine cálido", "Entretenimiento", "Imagen suavemente cálida para películas y contenido nocturno.", "#F3A45B", "#8C3C5D", 70, 80, 52, 0, 1.02, 1.00, 0.99, 0.96, "Usuario (RGB)"),
+        Profile("eyes-soft", "Ojos suave", "Cuidado visual", "Brillo moderado y tono apenas cálido para jornadas largas.", "#9EDC8D", "#4FA981", 45, 75, 48, 0, 1.00, 1.00, 0.99, 0.94, "Usuario (RGB)"),
+        Profile("eyes-rest", "Ojos descanso", "Cuidado visual", "Brillo bajo y filtro cálido medio para trabajar con poca luz.", "#EFC66A", "#8F7A47", 30, 72, 46, 0, 1.00, 1.00, 0.97, 0.86, "Usuario (RGB)"),
+        Profile("eyes-night", "Ojos noche", "Cuidado visual", "Brillo mínimo práctico y filtro ámbar intenso para uso nocturno.", "#FF9B4A", "#693A35", 18, 70, 44, 0, 1.00, 1.00, 0.93, 0.74, "Usuario (RGB)")
     ];
 
     private static DisplayProfile Profile(
         string id, string name, string category, string description, string previewStart, string previewEnd,
-        int brightness, int contrast, int saturation, double gamma, double red, double green, double blue,
-        string powerPlan = "Balanced") => new()
+        int brightness, int contrast, int saturation, int hue, double gamma, double red, double green, double blue,
+        string colorTemperature = "Usuario (RGB)", string powerPlan = "Balanced") => new()
         {
             Id = id,
             Name = name,
@@ -78,10 +88,12 @@ public sealed class ProfileStore
             Brightness = brightness,
             Contrast = contrast,
             Saturation = saturation,
+            Hue = hue,
             Gamma = gamma,
             Red = red,
             Green = green,
             Blue = blue,
+            ColorTemperature = colorTemperature,
             PowerPlan = powerPlan
         };
 }

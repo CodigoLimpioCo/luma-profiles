@@ -9,4 +9,7 @@
     <RootNamespace>LumaProfiles</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\color-reference.png" />
+  </ItemGroup>
 </Project>

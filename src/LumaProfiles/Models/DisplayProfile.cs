@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text.Json.Serialization;
 
 namespace LumaProfiles.Models;
 
@@ -9,10 +8,12 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     private int _brightness;
     private int _contrast;
     private int _saturation;
+    private int _hue;
     private double _gamma;
     private double _red;
     private double _green;
     private double _blue;
+    private string _colorTemperature = "Usuario (RGB)";
     private bool _isActive;
 
     public required string Id { get; init; }
@@ -26,12 +27,13 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public int Brightness { get => _brightness; set => Set(ref _brightness, value); }
     public int Contrast { get => _contrast; set => Set(ref _contrast, value); }
     public int Saturation { get => _saturation; set => Set(ref _saturation, value); }
+    public int Hue { get => _hue; set => Set(ref _hue, value); }
     public double Gamma { get => _gamma; set => Set(ref _gamma, value); }
     public double Red { get => _red; set => Set(ref _red, value); }
     public double Green { get => _green; set => Set(ref _green, value); }
     public double Blue { get => _blue; set => Set(ref _blue, value); }
+    public string ColorTemperature { get => _colorTemperature; set => Set(ref _colorTemperature, value); }
 
-    [JsonIgnore]
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
 
     public DisplayProfile Clone() => new()
@@ -46,10 +48,12 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         Brightness = Brightness,
         Contrast = Contrast,
         Saturation = Saturation,
+        Hue = Hue,
         Gamma = Gamma,
         Red = Red,
         Green = Green,
-        Blue = Blue
+        Blue = Blue,
+        ColorTemperature = ColorTemperature
     };
 
     public void CopyAdjustmentsFrom(DisplayProfile source)
@@ -57,10 +61,12 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         Brightness = source.Brightness;
         Contrast = source.Contrast;
         Saturation = source.Saturation;
+        Hue = source.Hue;
         Gamma = source.Gamma;
         Red = source.Red;
         Green = source.Green;
         Blue = source.Blue;
+        ColorTemperature = source.ColorTemperature;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

@@ -9,7 +9,8 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 - Ocho perfiles iniciales: Natural, Referencia, Entretenimiento, Rendimiento, Cine cálido y tres niveles de cuidado visual.
 - Tarjetas con vista previa, descripción y valores principales.
 - Categorías para color fiel, entretenimiento, rendimiento y cuidado visual.
-- Ajuste individual de brillo, contraste, saturación, gamma y balance RGB.
+- Ajuste individual de brillo, contraste, gamma, temperatura de color, saturación, matiz y balance RGB.
+- Interfaz oscura integrada, tarjetas fotográficas, tres columnas y editor dividido en Imagen y Color.
 - Aplicación a ambas pantallas o a una pantalla específica.
 - Guardado de personalizaciones en `%LOCALAPPDATA%\LumaProfiles\profiles.json`.
 - Botón para recuperar una señal RGB neutra cuando aparece una dominante de color.
@@ -22,6 +23,8 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 - Monitor con DDC/CI habilitado para controlar brillo, contraste y saturación.
 
 La corrección de gamma funciona mediante las API de Windows. Algunos controladores gráficos, perfiles ICC o aplicaciones de calibración pueden reemplazarla posteriormente.
+
+El control de matiz depende del modo GameVisual y del soporte DDC/CI del monitor. Cuando el propio monitor lo bloquea, Luma Profiles conserva el resto de los ajustes y muestra un aviso.
 
 ## Ejecutar desde el código
 
