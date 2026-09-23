@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Luma Profiles" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
+        Title="Luma Profiles — Código Limpio" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
         WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB"
         WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text">
     <Window.Resources>
@@ -170,6 +170,16 @@
             </Setter>
         </Style>
 
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="#EAF4FA"/>
+            <Setter Property="Background" Value="#131E27"/>
+            <Setter Property="BorderBrush" Value="#2E4250"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="CaretBrush" Value="#55D6F5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
         <Style TargetType="ScrollBar">
             <Setter Property="Width" Value="8"/>
             <Setter Property="Background" Value="Transparent"/>
@@ -218,7 +228,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
                     <Ellipse Width="12" Height="12" Fill="#55D6F5" Margin="0,0,8,0"/>
                     <TextBlock Text="Luma Profiles" FontWeight="SemiBold" Foreground="#DCEAF3"/>
-                    <TextBlock Text="  •  Monitor Studio" Foreground="#667D8E"/>
+                    <TextBlock Text="  •  creado por Código Limpio" Foreground="#55D6F5"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="—" Click="Minimize_Click"/>
@@ -245,13 +255,16 @@
                     </Grid>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold"/>
-                        <TextBlock Text="Monitor Studio" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                        <TextBlock Text="por Código Limpio" FontSize="11" Foreground="#55D6F5"/>
                     </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2">
                     <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Todos" Content="▦   Todos"/>
                     <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Color fiel" Content="◉   Color fiel"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="ASUS GameVisual" Content="◆   ASUS GameVisual"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="HDR" Content="◐   HDR"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Color creativo" Content="✦   Color creativo"/>
                     <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Entretenimiento" Content="▶   Entretenimiento"/>
                     <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Rendimiento" Content="⚡   Rendimiento"/>
                     <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Cuidado visual" Content="◒   Cuidado visual"/>
@@ -260,6 +273,10 @@
                 <StackPanel Grid.Row="3">
                     <Button Style="{StaticResource FlatButton}" Click="Repair_Click" ToolTip="Restablece una gamma RGB neutra y elimina dominantes de color." Content="↺   Neutralizar color"/>
                     <TextBlock Text="Los cambios se guardan en este equipo." Foreground="#6F8495" FontSize="11" TextWrapping="Wrap" Margin="14,10"/>
+                    <Border Height="1" Background="#263744" Margin="10,8"/>
+                    <TextBlock Text="CREADO POR" Foreground="#5F788A" FontWeight="SemiBold" FontSize="10" Margin="14,5,0,2"/>
+                    <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="Código Limpio  ↗" Foreground="#55D6F5"/>
+                    <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub de la organización  ↗" FontSize="11"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -275,19 +292,25 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="210"/>
+                    <ColumnDefinition Width="14"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Perfiles de pantalla" FontSize="31" FontWeight="SemiBold"/>
-                    <TextBlock Text="Color preciso para cada momento" FontSize="16" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
+                    <TextBlock Text="Biblioteca de perfiles" FontSize="31" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Profiles.Count, StringFormat={}{0} modos ajustables para cada momento}" FontSize="16" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Width="190">
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Buscar perfiles" Foreground="{StaticResource MutedBrush}" Margin="2,0,0,5"/>
+                    <TextBox TextChanged="Search_TextChanged" ToolTip="Busca por nombre, categoría o descripción"/>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Width="190">
                     <TextBlock Text="Destino" Foreground="{StaticResource MutedBrush}" Margin="2,0,0,5"/>
                     <ComboBox ItemsSource="{Binding MonitorTargets}" SelectedItem="{Binding SelectedMonitorTarget}"/>
                 </StackPanel>
             </Grid>
 
-            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer x:Name="ProfilesScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding VisibleProfiles}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -333,7 +356,10 @@
                                                 </Rectangle.Fill>
                                             </Rectangle>
                                             <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
-                                                <TextBlock Text="Vista previa de color" FontSize="10" Foreground="#DCEAF3"/>
+                                                <Grid>
+                                                    <TextBlock Text="{Binding Category}" FontSize="10" Foreground="#DCEAF3"/>
+                                                    <TextBlock Text="VISTA PREVIA" FontSize="9" Foreground="#91A8B8" HorizontalAlignment="Right"/>
+                                                </Grid>
                                             </Border>
                                             <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
                                                     Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
@@ -417,6 +443,15 @@
                     <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Green, Mode=TwoWay}"/>
                     <TextBlock Foreground="#6DA3FF"><Run Text="Azul"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Blue, StringFormat={}{0:F2}}"/></TextBlock>
                     <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Blue, Mode=TwoWay}"/>
+
+                    <Border Background="#18253A" BorderBrush="#36537D" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,4,0,10"
+                            Visibility="{Binding SelectedProfile.IsHdr, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="HDR requiere activación en Windows" Foreground="#86B7FF" FontWeight="SemiBold"/>
+                            <TextBlock Text="Al activar HDR, el monitor bloquea GameVisual y varios controles SDR." Foreground="#A9BBD0" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="Abrir configuración HDR" Click="OpenHdrSettings_Click"/>
+                        </StackPanel>
+                    </Border>
 
                     <Button Style="{StaticResource PrimaryButton}" Content="Guardar y aplicar" Click="SaveAndApply_Click" Margin="0,10,0,9"/>
                     <Button Style="{StaticResource SecondaryButton}" Content="Restaurar valores originales" Click="RestoreDefaults_Click"/>

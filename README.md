@@ -1,12 +1,18 @@
 # Luma Profiles
 
+Aplicación creada por **[Código Limpio](https://codigolimpio.com.co/)** · [GitHub](https://github.com/CodigoLimpioCo)
+
 Luma Profiles es una aplicación de escritorio para Windows que permite guardar, personalizar y aplicar perfiles de color a uno o varios monitores compatibles con DDC/CI.
 
 ![Captura de Luma Profiles](docs/app-screenshot.png)
 
 ## Funciones
 
-- Ocho perfiles iniciales: Natural, Referencia, Entretenimiento, Rendimiento, Cine cálido y tres niveles de cuidado visual.
+- 23 perfiles iniciales organizados por finalidad.
+- Siete modos inspirados en ASUS GameVisual: RTS/RPG, FPS, Cine, Escenario, Carrera, sRGB y MOBA.
+- Tres puntos de partida HDR: Gaming HDR, Cine HDR y Consola HDR.
+- Cinco estilos creativos: Vibrante realista, Piel natural, Atardecer dorado, Océano frío y Monocromo editorial.
+- Natural, Referencia, Entretenimiento, Rendimiento, Cine cálido y tres niveles de cuidado visual.
 - Tarjetas con vista previa, descripción y valores principales.
 - Categorías para color fiel, entretenimiento, rendimiento y cuidado visual.
 - Ajuste individual de brillo, contraste, gamma, temperatura de color, saturación, matiz y balance RGB.
@@ -49,3 +55,5 @@ La interfaz implementada se encuentra en `docs/app-screenshot.png`. El concepto 
 ## Licencia
 
 MIT. Las contribuciones y mejoras son bienvenidas.
+
+Código Limpio no está afiliado con ASUS. Las marcas mencionadas pertenecen a sus respectivos propietarios.

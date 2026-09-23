@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
+using System.Diagnostics;
 using LumaProfiles.Models;
 using LumaProfiles.Services;
 
@@ -15,11 +15,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly MonitorService _monitorService = new();
     private DisplayProfile _selectedProfile;
     private string _selectedCategory = "Todos";
+    private string _searchText = string.Empty;
     private string _selectedMonitorTarget = "Ambas pantallas";
     private string _statusMessage = "Listo. Selecciona un perfil para aplicarlo o ajustarlo.";
 
     public ObservableCollection<DisplayProfile> Profiles { get; }
-    public ICollectionView VisibleProfiles { get; }
+    public ObservableCollection<DisplayProfile> VisibleProfiles { get; } = [];
     public IReadOnlyList<string> MonitorTargets { get; } = ["Ambas pantallas", "Pantalla 1", "Pantalla 2"];
     public IReadOnlyList<string> ColorTemperatureOptions { get; } =
         ["Usuario (RGB)", "Cálido 5000 K", "Neutro 6500 K", "Frío 7500 K"];
@@ -46,12 +47,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         Profiles = new ObservableCollection<DisplayProfile>(_profileStore.Load());
         _selectedProfile = Profiles.First();
-        VisibleProfiles = CollectionViewSource.GetDefaultView(Profiles);
-        VisibleProfiles.Filter = item => item is DisplayProfile profile &&
-            (_selectedCategory == "Todos" || profile.Category == _selectedCategory);
+        RefreshVisibleProfiles();
 
         InitializeComponent();
         DataContext = this;
+        Loaded += (_, _) => ProfilesScrollViewer.ScrollToTop();
     }
 
     private void Category_Click(object sender, RoutedEventArgs e)
@@ -59,9 +59,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (sender is Button { Tag: string category })
         {
             _selectedCategory = category;
-            VisibleProfiles.Refresh();
-            StatusMessage = category == "Todos" ? "Mostrando todos los perfiles." : $"Categoría: {category}.";
+            RefreshVisibleProfiles();
+            ProfilesScrollViewer.ScrollToTop();
+            StatusMessage = category == "Todos" ? $"Mostrando los {Profiles.Count} perfiles." : $"Categoría: {category}.";
         }
+    }
+
+    private void Search_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _searchText = (sender as TextBox)?.Text?.Trim() ?? string.Empty;
+        RefreshVisibleProfiles();
+        ProfilesScrollViewer.ScrollToTop();
+        StatusMessage = string.IsNullOrWhiteSpace(_searchText)
+            ? $"Biblioteca completa: {Profiles.Count} perfiles."
+            : $"Resultados para “{_searchText}”.";
+    }
+
+    private void RefreshVisibleProfiles()
+    {
+        VisibleProfiles.Clear();
+        foreach (var profile in Profiles.Where(MatchesCurrentFilter))
+        {
+            VisibleProfiles.Add(profile);
+        }
+    }
+
+    private bool MatchesCurrentFilter(DisplayProfile profile)
+    {
+        if (_selectedCategory != "Todos" && profile.Category != _selectedCategory) return false;
+        if (string.IsNullOrWhiteSpace(_searchText)) return true;
+
+        return profile.Name.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
+               profile.Category.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
+               profile.Description.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -83,6 +113,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void Maximize_Click(object sender, RoutedEventArgs e) => ToggleMaximized();
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void OpenCodigoLimpio_Click(object sender, RoutedEventArgs e) => OpenUrl("https://codigolimpio.com.co/");
+
+    private void OpenCodigoLimpioGithub_Click(object sender, RoutedEventArgs e) => OpenUrl("https://github.com/CodigoLimpioCo");
+
+    private void OpenHdrSettings_Click(object sender, RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo("ms-settings:display") { UseShellExecute = true });
+    }
+
+    private static void OpenUrl(string url) =>
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
     private void ToggleMaximized() =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
@@ -134,6 +176,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         profile.IsActive = result.DisplayCount > 0;
         _profileStore.Save(Profiles);
         StatusMessage = FormatResult($"{profile.Name} aplicado", result);
+        if (profile.IsHdr)
+        {
+            StatusMessage += " Activa HDR en Windows; al hacerlo, el monitor administra y bloquea varios controles SDR.";
+        }
     }
 
     private static string FormatResult(string successText, ApplyResult result)

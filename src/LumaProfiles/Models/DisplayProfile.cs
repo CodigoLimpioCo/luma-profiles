@@ -23,6 +23,7 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public required string PreviewStart { get; init; }
     public required string PreviewEnd { get; init; }
     public string PowerPlan { get; init; } = "Balanced";
+    public bool IsHdr { get; init; }
 
     public int Brightness { get => _brightness; set => Set(ref _brightness, value); }
     public int Contrast { get => _contrast; set => Set(ref _contrast, value); }
@@ -45,6 +46,7 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         PreviewStart = PreviewStart,
         PreviewEnd = PreviewEnd,
         PowerPlan = PowerPlan,
+        IsHdr = IsHdr,
         Brightness = Brightness,
         Contrast = Contrast,
         Saturation = Saturation,
