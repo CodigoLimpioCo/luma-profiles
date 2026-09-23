@@ -90,6 +90,8 @@
         </Style>
 
         <Style TargetType="Button" x:Key="CloseWindowButton" BasedOn="{StaticResource WindowButton}">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Display"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
