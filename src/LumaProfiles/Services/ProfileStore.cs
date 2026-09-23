@@ -115,7 +115,10 @@ public sealed class ProfileStore
         Profile("eyes-office", "Oficina suave", "Cuidado visual", "Brillo medio y calidez ligera para hojas de cálculo, correo y tareas diarias.", "#B8D9C8", "#7696A0", 55, 76, 46, 0, 1.00, 1.00, 0.99, 0.94, "Usuario (RGB)"),
         Profile("eyes-sunset", "Atardecer", "Cuidado visual", "Transición cálida para las últimas horas de trabajo sin teñir demasiado la imagen.", "#E9B664", "#9C684D", 32, 72, 44, 0, 1.00, 1.00, 0.94, 0.80, "Usuario (RGB)"),
         Profile("eyes-red-night", "Noche roja", "Cuidado visual", "Brillo muy bajo y reducción intensa del azul para consultas breves durante la noche.", "#D95C45", "#643A35", 14, 68, 35, 0, 1.00, 1.00, 0.72, 0.52, "Usuario (RGB)"),
-        Profile("eyes-sensitive", "Sensibilidad suave", "Cuidado visual", "Contraste y brillo reducidos para momentos en los que la pantalla se siente demasiado intensa.", "#D4C89A", "#7B7768", 24, 65, 38, 0, 0.96, 1.00, 0.96, 0.86, "Usuario (RGB)")
+        Profile("eyes-sensitive", "Sensibilidad suave", "Cuidado visual", "Contraste y brillo reducidos para momentos en los que la pantalla se siente demasiado intensa.", "#D4C89A", "#7B7768", 24, 65, 38, 0, 0.96, 1.00, 0.96, 0.86, "Usuario (RGB)"),
+        Profile("eyes-monochrome", "Blanco y negro", "Cuidado visual", "Elimina el color para lectura, concentración y revisión de contraste sin distracciones.", "#E2E5E8", "#30353A", 38, 78, 0, 0, 1.02, 1.00, 1.00, 1.00, "Neutro 6500 K"),
+        Profile("eyes-yellow-reading", "Lectura amarilla", "Cuidado visual", "Filtro amarillo cálido que reduce el componente azul para leer por la noche.", "#F5D76A", "#8C6A32", 35, 74, 40, 0, 1.00, 1.00, 0.92, 0.68, "Usuario (RGB)"),
+        Profile("creative-blue-filter", "Filtro azul", "Color creativo", "Tono azul frío para ambientes tecnológicos, concentración visual y estilo nocturno.", "#73D6F4", "#315FC7", 50, 78, 45, 0, 1.00, 0.88, 0.96, 1.05, "Usuario (RGB)")
     ];
 
     private static DisplayProfile Profile(

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Diagnostics;
+using System.Windows.Media;
 using LumaProfiles.Models;
 using LumaProfiles.Services;
 
@@ -17,13 +18,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _selectedCategory = "Todos";
     private string _searchText = string.Empty;
     private string _selectedMonitorTarget = "Ambas pantallas";
-    private string _statusMessage = "Listo. Selecciona un perfil para aplicarlo o ajustarlo.";
+    private string _statusMessage = string.Empty;
+    private LanguageOption _selectedLanguage;
+    private bool _isDarkTheme = true;
+    private string _maximizeGlyph = "\uE922";
 
     public ObservableCollection<DisplayProfile> Profiles { get; }
     public ObservableCollection<DisplayProfile> VisibleProfiles { get; } = [];
-    public IReadOnlyList<string> MonitorTargets { get; } = ["Ambas pantallas", "Pantalla 1", "Pantalla 2"];
-    public IReadOnlyList<string> ColorTemperatureOptions { get; } =
-        ["Usuario (RGB)", "Cálido 5000 K", "Neutro 6500 K", "Frío 7500 K"];
+    public IReadOnlyList<LanguageOption> Languages { get; }
+    public ObservableCollection<LocalizedOption> MonitorTargets { get; } = [];
+    public ObservableCollection<LocalizedOption> ColorTemperatureOptions { get; } = [];
 
     public DisplayProfile SelectedProfile
     {
@@ -43,15 +47,55 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         set => Set(ref _statusMessage, value);
     }
 
+    public LanguageOption SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set
+        {
+            if (value is null || Equals(_selectedLanguage, value)) return;
+            _selectedLanguage = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguage)));
+            ApplyLanguage();
+        }
+    }
+
+    public string MaximizeGlyph
+    {
+        get => _maximizeGlyph;
+        private set => Set(ref _maximizeGlyph, value);
+    }
+
+    public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
+    public string ThemeLabel => $"{(_isDarkTheme ? "☾" : "☀")} {T(_isDarkTheme ? "ThemeDark" : "ThemeLight")}";
+    public string MaximizeTooltip => T(WindowState == WindowState.Maximized ? "Restore" : "Maximize");
+    public string this[string key]
+    {
+        get => T(key);
+        set { }
+    }
+
     public MainWindow()
     {
         Profiles = new ObservableCollection<DisplayProfile>(_profileStore.Load());
+        Languages = LocalizationService.DiscoverLanguages();
+        _selectedLanguage = Languages.FirstOrDefault(item => item.Code == "es")
+            ?? Languages.FirstOrDefault()
+            ?? new LanguageOption("es", "Español", string.Empty);
         _selectedProfile = Profiles.First();
+        LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
+        RefreshLocalizedOptions();
         RefreshVisibleProfiles();
 
         InitializeComponent();
         DataContext = this;
-        Loaded += (_, _) => ProfilesScrollViewer.ScrollToTop();
+        StatusMessage = T("Ready");
+        ApplyTheme();
+        StateChanged += (_, _) => UpdateWindowStateIcon();
+        Loaded += (_, _) =>
+        {
+            ProfilesScrollViewer.ScrollToTop();
+            UpdateWindowStateIcon();
+        };
     }
 
     private void Category_Click(object sender, RoutedEventArgs e)
@@ -61,7 +105,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _selectedCategory = category;
             RefreshVisibleProfiles();
             ProfilesScrollViewer?.ScrollToTop();
-            StatusMessage = category == "Todos" ? $"Mostrando los {Profiles.Count} perfiles." : $"Categoría: {category}.";
+            StatusMessage = category == "Todos"
+                ? L("ShowingProfiles", Profiles.Count)
+                : L("CategoryStatus", LocalizationService.Category(category, _selectedLanguage.Code));
         }
     }
 
@@ -71,8 +117,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RefreshVisibleProfiles();
         ProfilesScrollViewer?.ScrollToTop();
         StatusMessage = string.IsNullOrWhiteSpace(_searchText)
-            ? $"Biblioteca completa: {Profiles.Count} perfiles."
-            : $"Resultados para “{_searchText}”.";
+            ? L("CompleteLibrary", Profiles.Count)
+            : L("SearchResults", _searchText);
     }
 
     private void RefreshVisibleProfiles()
@@ -89,9 +135,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (_selectedCategory != "Todos" && profile.Category != _selectedCategory) return false;
         if (string.IsNullOrWhiteSpace(_searchText)) return true;
 
-        return profile.Name.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
-               profile.Category.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
-               profile.Description.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase);
+        return profile.DisplayName.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
+               profile.DisplayCategory.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
+               profile.DisplayDescription.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -114,9 +160,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
+    private void Theme_Click(object sender, RoutedEventArgs e)
+    {
+        _isDarkTheme = !_isDarkTheme;
+        ApplyTheme();
+        RaiseUiProperties();
+    }
+
     private void OpenCodigoLimpio_Click(object sender, RoutedEventArgs e) => OpenUrl("https://codigolimpio.com.co/");
 
-    private void OpenCodigoLimpioGithub_Click(object sender, RoutedEventArgs e) => OpenUrl("https://github.com/CodigoLimpioCo");
+    private void OpenCodigoLimpioGithub_Click(object sender, RoutedEventArgs e) => OpenUrl("https://github.com/CodigoLimpioCo/luma-profiles");
 
     private void OpenHdrSettings_Click(object sender, RoutedEventArgs e)
     {
@@ -129,12 +182,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void ToggleMaximized() =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
+    private void UpdateWindowStateIcon()
+    {
+        MaximizeGlyph = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MaximizeTooltip)));
+    }
+
     private void EditProfile_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: DisplayProfile profile })
         {
             SelectedProfile = profile;
-            StatusMessage = $"Editando {profile.Name}. Ajusta los controles y pulsa Guardar y aplicar.";
+            StatusMessage = L("Editing", profile.DisplayName);
         }
     }
 
@@ -158,40 +217,102 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var restored = _profileStore.GetDefault(SelectedProfile.Id);
         SelectedProfile.CopyAdjustmentsFrom(restored);
         _profileStore.Save(Profiles);
-        StatusMessage = $"{SelectedProfile.Name} volvió a sus valores originales.";
+        StatusMessage = L("Restored", SelectedProfile.DisplayName);
     }
 
     private void Repair_Click(object sender, RoutedEventArgs e)
     {
-        StatusMessage = "Neutralizando la señal de color…";
+        StatusMessage = T("Neutralizing");
         var result = _monitorService.RestoreNeutral(SelectedMonitorTarget);
-        StatusMessage = FormatResult("Color neutralizado", result);
+        StatusMessage = FormatResult(T("Neutralized"), result);
     }
 
     private void Apply(DisplayProfile profile)
     {
-        StatusMessage = $"Aplicando {profile.Name}…";
+        StatusMessage = L("Applying", profile.DisplayName);
         var result = _monitorService.Apply(profile, SelectedMonitorTarget);
         foreach (var item in Profiles) item.IsActive = false;
         profile.IsActive = result.DisplayCount > 0;
         _profileStore.Save(Profiles);
-        StatusMessage = FormatResult($"{profile.Name} aplicado", result);
+        StatusMessage = FormatResult(L("Applied", profile.DisplayName), result);
         if (profile.IsHdr)
         {
-            StatusMessage += " Activa HDR en Windows; al hacerlo, el monitor administra y bloquea varios controles SDR.";
+            StatusMessage += T("HdrReminder");
         }
     }
 
-    private static string FormatResult(string successText, ApplyResult result)
+    private string FormatResult(string successText, ApplyResult result)
     {
         if (result.Failures.Count == 0)
         {
-            return $"{successText} en {result.DisplayCount} pantalla(s).";
+            return L("AppliedDisplays", successText, result.DisplayCount);
         }
 
         var summary = string.Join(" ", result.Failures.Distinct().Take(2));
-        return $"{successText} en {result.DisplayCount} pantalla(s), con avisos: {summary}";
+        return L("AppliedWarnings", successText, result.DisplayCount, summary);
     }
+
+    private void ApplyLanguage()
+    {
+        LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
+        RefreshLocalizedOptions();
+        RefreshVisibleProfiles();
+        StatusMessage = T("Ready");
+        RaiseUiProperties();
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
+    }
+
+    private void RaiseUiProperties()
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ProfileCountSubtitle)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ThemeLabel)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MaximizeTooltip)));
+    }
+
+    private void RefreshLocalizedOptions()
+    {
+        MonitorTargets.Clear();
+        MonitorTargets.Add(new LocalizedOption("Ambas pantallas", T("BothDisplays")));
+        MonitorTargets.Add(new LocalizedOption("Pantalla 1", T("Display1")));
+        MonitorTargets.Add(new LocalizedOption("Pantalla 2", T("Display2")));
+
+        ColorTemperatureOptions.Clear();
+        ColorTemperatureOptions.Add(new LocalizedOption("Usuario (RGB)", T("UserRgb")));
+        ColorTemperatureOptions.Add(new LocalizedOption("Cálido 5000 K", T("Warm5000")));
+        ColorTemperatureOptions.Add(new LocalizedOption("Neutro 6500 K", T("Neutral6500")));
+        ColorTemperatureOptions.Add(new LocalizedOption("Frío 7500 K", T("Cool7500")));
+    }
+
+    private void ApplyTheme()
+    {
+        var palette = _isDarkTheme
+            ? new Dictionary<string, string>
+            {
+                ["WindowBrush"] = "#090E14", ["TitleBarBrush"] = "#0A1118", ["SidebarBrush"] = "#0C141C",
+                ["InspectorBrush"] = "#0E161F", ["PanelBrush"] = "#121A23", ["CardBrush"] = "#151F29",
+                ["SurfaceBrush"] = "#111B24", ["SurfaceAltBrush"] = "#17222C", ["InputBrush"] = "#17232D",
+                ["BorderThemeBrush"] = "#21313E", ["BorderStrongBrush"] = "#334756", ["PrimaryTextBrush"] = "#F5F8FB",
+                ["SecondaryTextBrush"] = "#DCE7F0", ["MutedBrush"] = "#9DAFC0", ["HoverBrush"] = "#1D2A36",
+                ["SelectedBrush"] = "#17303B", ["SecondaryButtonBrush"] = "#22303C", ["ChipBrush"] = "#22313D"
+            }
+            : new Dictionary<string, string>
+            {
+                ["WindowBrush"] = "#F3F7FA", ["TitleBarBrush"] = "#FFFFFF", ["SidebarBrush"] = "#F8FBFD",
+                ["InspectorBrush"] = "#F7FAFC", ["PanelBrush"] = "#FFFFFF", ["CardBrush"] = "#FFFFFF",
+                ["SurfaceBrush"] = "#EEF4F7", ["SurfaceAltBrush"] = "#E8F1F5", ["InputBrush"] = "#FFFFFF",
+                ["BorderThemeBrush"] = "#CCD9E1", ["BorderStrongBrush"] = "#AFC2CE", ["PrimaryTextBrush"] = "#13232E",
+                ["SecondaryTextBrush"] = "#29404F", ["MutedBrush"] = "#607887", ["HoverBrush"] = "#E6F1F5",
+                ["SelectedBrush"] = "#D8F1F7", ["SecondaryButtonBrush"] = "#DDE9EF", ["ChipBrush"] = "#E3EDF2"
+            };
+
+        foreach (var (key, color) in palette)
+        {
+            Resources[key] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
+        }
+    }
+
+    private string T(string key) => LocalizationService.Text(key, _selectedLanguage.Code);
+    private string L(string key, params object[] values) => LocalizationService.Format(key, _selectedLanguage.Code, values);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

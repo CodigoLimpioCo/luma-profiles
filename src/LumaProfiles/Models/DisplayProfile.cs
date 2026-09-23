@@ -15,6 +15,9 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     private double _blue;
     private string _colorTemperature = "Usuario (RGB)";
     private bool _isActive;
+    private string? _localizedName;
+    private string? _localizedCategory;
+    private string? _localizedDescription;
 
     public required string Id { get; init; }
     public required string Name { get; init; }
@@ -24,6 +27,9 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public required string PreviewEnd { get; init; }
     public string PowerPlan { get; init; } = "Balanced";
     public bool IsHdr { get; init; }
+    public string DisplayName => _localizedName ?? Name;
+    public string DisplayCategory => _localizedCategory ?? Category;
+    public string DisplayDescription => _localizedDescription ?? Description;
 
     public int Brightness { get => _brightness; set => Set(ref _brightness, value); }
     public int Contrast { get => _contrast; set => Set(ref _contrast, value); }
@@ -36,6 +42,16 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public string ColorTemperature { get => _colorTemperature; set => Set(ref _colorTemperature, value); }
 
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
+
+    public void SetLocalizedText(string name, string category, string description)
+    {
+        _localizedName = name;
+        _localizedCategory = category;
+        _localizedDescription = description;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayName)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayCategory)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayDescription)));
+    }
 
     public DisplayProfile Clone() => new()
     {

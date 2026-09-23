@@ -6,20 +6,35 @@
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="Luma Profiles — Código Limpio" Icon="/Assets/LumaProfiles.ico" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
-        WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB"
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
         WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0"
                             CornerRadius="0" UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
     <Window.Resources>
+        <SolidColorBrush x:Key="WindowBrush" Color="#090E14"/>
+        <SolidColorBrush x:Key="TitleBarBrush" Color="#0A1118"/>
+        <SolidColorBrush x:Key="SidebarBrush" Color="#0C141C"/>
+        <SolidColorBrush x:Key="InspectorBrush" Color="#0E161F"/>
         <SolidColorBrush x:Key="PanelBrush" Color="#121A23"/>
         <SolidColorBrush x:Key="CardBrush" Color="#151F29"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#111B24"/>
+        <SolidColorBrush x:Key="SurfaceAltBrush" Color="#17222C"/>
+        <SolidColorBrush x:Key="InputBrush" Color="#17232D"/>
+        <SolidColorBrush x:Key="BorderThemeBrush" Color="#21313E"/>
+        <SolidColorBrush x:Key="BorderStrongBrush" Color="#334756"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#F5F8FB"/>
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#DCE7F0"/>
         <SolidColorBrush x:Key="MutedBrush" Color="#9DAFC0"/>
+        <SolidColorBrush x:Key="HoverBrush" Color="#1D2A36"/>
+        <SolidColorBrush x:Key="SelectedBrush" Color="#17303B"/>
+        <SolidColorBrush x:Key="SecondaryButtonBrush" Color="#22303C"/>
+        <SolidColorBrush x:Key="ChipBrush" Color="#22313D"/>
         <SolidColorBrush x:Key="AccentBrush" Color="#55D6F5"/>
 
         <Style TargetType="Button" x:Key="FlatButton">
-            <Setter Property="Foreground" Value="#DCE7F0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="14,11"/>
@@ -35,7 +50,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Root" Property="Background" Value="#1D2A36"/>
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource HoverBrush}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="#253746"/>
@@ -47,7 +62,7 @@
         </Style>
 
         <Style TargetType="Button" x:Key="WindowButton">
-            <Setter Property="Foreground" Value="#94A8B7"/>
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Width" Value="48"/>
@@ -96,7 +111,7 @@
         </Style>
 
         <Style TargetType="RadioButton" x:Key="NavButton">
-            <Setter Property="Foreground" Value="#B8C7D3"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,2"/>
@@ -111,13 +126,13 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Selection" Property="Background" Value="#16232E"/>
-                                <Setter Property="Foreground" Value="#F5FAFD"/>
+                                <Setter TargetName="Selection" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Selection" Property="Background" Value="#17303B"/>
+                                <Setter TargetName="Selection" Property="Background" Value="{DynamicResource SelectedBrush}"/>
                                 <Setter TargetName="Indicator" Property="Visibility" Value="Visible"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -154,8 +169,8 @@
         </Style>
 
         <Style TargetType="Button" x:Key="SecondaryButton" BasedOn="{StaticResource PrimaryButton}">
-            <Setter Property="Foreground" Value="#DCE7F0"/>
-            <Setter Property="Background" Value="#22303C"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SecondaryButtonBrush}"/>
         </Style>
 
         <Style TargetType="Slider">
@@ -189,16 +204,16 @@
         </Style>
 
         <Style TargetType="ComboBox">
-            <Setter Property="Foreground" Value="#EAF4FA"/>
-            <Setter Property="Background" Value="#17232D"/>
-            <Setter Property="BorderBrush" Value="#334756"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource InputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="MinHeight" Value="38"/>
             <Setter Property="ItemContainerStyle">
                 <Setter.Value>
                     <Style TargetType="ComboBoxItem">
-                        <Setter Property="Foreground" Value="#EAF4FA"/>
-                        <Setter Property="Background" Value="#17232D"/>
+                        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                        <Setter Property="Background" Value="{DynamicResource InputBrush}"/>
                         <Setter Property="Padding" Value="12,8"/>
                         <Setter Property="Template">
                             <Setter.Value>
@@ -228,14 +243,14 @@
                                           IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="#17232D" BorderBrush="#334756" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                                        <Border Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="20"/>
                                                 </Grid.ColumnDefinitions>
                                                 <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
-                                                                  VerticalAlignment="Center" TextElement.Foreground="#EAF4FA"/>
+                                                                  VerticalAlignment="Center" TextElement.Foreground="{DynamicResource PrimaryTextBrush}"/>
                                                 <TextBlock Grid.Column="1" Text="⌄" Foreground="#8EA5B6" FontSize="16" HorizontalAlignment="Right"/>
                                             </Grid>
                                         </Border>
@@ -243,7 +258,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
                             <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="#131E27" BorderBrush="#334756" BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="220">
+                                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="220">
                                     <ScrollViewer MaxHeight="260">
                                         <StackPanel IsItemsHost="True"/>
                                     </ScrollViewer>
@@ -256,7 +271,7 @@
         </Style>
 
         <Style TargetType="ComboBox" x:Key="DestinationComboBox">
-            <Setter Property="Foreground" Value="#F2F8FC"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
             <Setter Property="MinHeight" Value="48"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="ItemContainerStyle">
@@ -368,14 +383,14 @@
                             </ToggleButton>
                             <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="9"
                                    IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="#101A22" BorderBrush="#2E4553" BorderThickness="1"
+                                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
                                         CornerRadius="13" Padding="5" MinWidth="225">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="7" Opacity="0.55"/>
                                     </Border.Effect>
                                     <StackPanel>
-                                        <TextBlock Text="SELECCIONAR DESTINO" Foreground="#617B8C" FontSize="9" FontWeight="SemiBold" Margin="11,8,11,6"/>
-                                        <Border Height="1" Background="#20323E" Margin="6,0,6,3"/>
+                                        <TextBlock Text="{Binding [SelectTarget]}" Foreground="{DynamicResource MutedBrush}" FontSize="9" FontWeight="SemiBold" Margin="11,8,11,6"/>
+                                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="6,0,6,3"/>
                                         <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
                                             <StackPanel IsItemsHost="True"/>
                                         </ScrollViewer>
@@ -389,9 +404,9 @@
         </Style>
 
         <Style TargetType="TextBox">
-            <Setter Property="Foreground" Value="#EAF4FA"/>
-            <Setter Property="Background" Value="#131E27"/>
-            <Setter Property="BorderBrush" Value="#2E4250"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource InputBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,9"/>
             <Setter Property="CaretBrush" Value="#55D6F5"/>
@@ -440,12 +455,13 @@
             <ColumnDefinition Width="365"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Row="0" Grid.ColumnSpan="3" Background="#0A1118" BorderBrush="#21313E" BorderThickness="0,0,0,1"
+        <Border Grid.Row="0" Grid.ColumnSpan="3" Background="{DynamicResource TitleBarBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="0,0,0,1"
                 MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
@@ -456,38 +472,46 @@
                             <Ellipse Width="12" Height="12" Fill="#7B65FF" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
                         </Grid>
                     </Border>
-                    <TextBlock Text="Luma Profiles" FontSize="13" FontWeight="SemiBold" Foreground="#EDF7FC" VerticalAlignment="Center"/>
-                    <Border Width="1" Height="16" Background="#2A3B47" Margin="12,0"/>
-                    <TextBlock Text="MONITOR STUDIO" FontSize="9" FontWeight="SemiBold" Foreground="#718A9C" VerticalAlignment="Center"/>
+                    <TextBlock Text="Luma Profiles" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center"/>
+                    <Border Width="1" Height="16" Background="{DynamicResource BorderThemeBrush}" Margin="12,0"/>
+                    <TextBlock Text="{Binding [MonitorStudio]}" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Background="#0F1B23" BorderBrush="#1D303C" BorderThickness="1" CornerRadius="11" Padding="10,5">
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="11" Padding="10,5">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="6" Height="6" Fill="#54D6A0" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                        <TextBlock Foreground="#8CA2B1" FontSize="10" VerticalAlignment="Center">
-                            <Run Text="CONTROL LOCAL"/><Run Text="  ·  "/><Run Text="{Binding Profiles.Count, Mode=OneWay}"/><Run Text=" PERFILES"/>
+                        <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="10" VerticalAlignment="Center">
+                            <Run Text="{Binding [LocalControl]}"/><Run Text="  ·  "/><Run Text="{Binding Profiles.Count, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding [Profiles]}"/>
                         </TextBlock>
                     </StackPanel>
                 </Border>
 
-                <Button Grid.Column="2" Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click"
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                    <Button Style="{StaticResource FlatButton}" Click="Theme_Click" Content="{Binding ThemeLabel}"
+                            Padding="10,6" HorizontalContentAlignment="Center" ToolTip="Tema claro u oscuro"/>
+                    <ComboBox Width="112" MinHeight="32" Padding="9,5" Margin="4,0,0,0"
+                              ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                </StackPanel>
+
+                <Button Grid.Column="3" Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click"
                         Padding="10,6" Margin="0,0,8,0" VerticalAlignment="Center" HorizontalContentAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Código Limpio" Foreground="#BBD0DC" FontSize="11"/>
+                        <TextBlock Text="Código Limpio" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11"/>
                         <TextBlock Text=" ↗" Foreground="#55D6F5" FontSize="11"/>
                     </StackPanel>
                 </Button>
 
-                <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Style="{StaticResource WindowButton}" Content="—" Click="Minimize_Click" ToolTip="Minimizar"/>
-                    <Button Style="{StaticResource WindowButton}" Content="□" Click="Maximize_Click" ToolTip="Maximizar o restaurar"/>
-                    <Button Style="{StaticResource CloseWindowButton}" Content="×" Click="Close_Click" ToolTip="Cerrar"/>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource WindowButton}" Content="—" Click="Minimize_Click" ToolTip="{Binding [Minimize]}"/>
+                    <Button x:Name="MaximizeButton" Style="{StaticResource WindowButton}" Content="{Binding MaximizeGlyph}"
+                            FontFamily="Segoe Fluent Icons" FontSize="16" Click="Maximize_Click" ToolTip="{Binding MaximizeTooltip}"/>
+                    <Button Style="{StaticResource CloseWindowButton}" Content="×" Click="Close_Click" ToolTip="{Binding [Close]}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Grid.Column="0" Background="#0C141C" BorderBrush="#21313E" BorderThickness="0,0,1,0">
+        <Border Grid.Row="1" Grid.Column="0" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="0,0,1,0">
             <Grid Margin="18,22,18,18">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -507,40 +531,40 @@
                             </LinearGradientBrush>
                         </Border.Background>
                         <Grid>
-                            <Ellipse Width="27" Height="27" Fill="#0C141C" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
+                            <Ellipse Width="27" Height="27" Fill="{DynamicResource SidebarBrush}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
                             <Ellipse Width="10" Height="10" Fill="#DDF9FF" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"/>
                         </Grid>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold" Foreground="#F4FAFD"/>
-                        <TextBlock Text="Monitor Studio" FontSize="11" Foreground="#8198A9"/>
+                        <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}"/>
+                        <TextBlock Text="Monitor Studio" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
                     </StackPanel>
                 </StackPanel>
 
                 <Grid Grid.Row="2" Margin="4,0">
                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="BIBLIOTECA" Foreground="#607A8D" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <Border Grid.Column="1" Background="#15232D" CornerRadius="8" Padding="8,3">
+                    <TextBlock Text="{Binding [Library]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <Border Grid.Column="1" Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="8,3">
                         <TextBlock Text="{Binding Profiles.Count}" Foreground="#8EDFF2" FontSize="10" FontWeight="SemiBold"/>
                     </Border>
                 </Grid>
 
                 <StackPanel Grid.Row="4">
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Checked="Category_Click" Tag="Todos" Content="▦    Todos los perfiles"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color fiel" Content="◉    Color fiel"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="ASUS GameVisual" Content="◆    ASUS GameVisual"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="HDR" Content="◐    HDR"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color creativo" Content="✦    Color creativo"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Entretenimiento" Content="▶    Entretenimiento"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Rendimiento" Content="ϟ    Rendimiento"/>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Cuidado visual" Content="◒    Cuidado visual"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Checked="Category_Click" Tag="Todos"><TextBlock><Run Text="▦    "/><Run Text="{Binding [AllProfiles]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color fiel"><TextBlock><Run Text="◉    "/><Run Text="{Binding [FaithfulColor]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="ASUS GameVisual"><TextBlock Text="◆    ASUS GameVisual"/></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="HDR"><TextBlock Text="◐    HDR"/></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color creativo"><TextBlock><Run Text="✦    "/><Run Text="{Binding [CreativeColor]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Entretenimiento"><TextBlock><Run Text="▶    "/><Run Text="{Binding [Entertainment]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Rendimiento"><TextBlock><Run Text="ϟ    "/><Run Text="{Binding [Performance]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Cuidado visual"><TextBlock><Run Text="◒    "/><Run Text="{Binding [EyeCare]}"/></TextBlock></RadioButton>
                 </StackPanel>
 
                 <StackPanel Grid.Row="5">
-                    <Border Background="#101E27" BorderBrush="#203643" BorderThickness="1" CornerRadius="12" Padding="5" Margin="0,0,0,10">
-                        <Button Style="{StaticResource FlatButton}" Click="Repair_Click" ToolTip="Restablece una gamma RGB neutra y elimina dominantes de color." Content="↺    Neutralizar color"/>
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="12" Padding="5" Margin="0,0,0,10">
+                        <Button Style="{StaticResource FlatButton}" Click="Repair_Click" ToolTip="{Binding [RepairTooltip]}"><TextBlock><Run Text="↺    "/><Run Text="{Binding [Neutralize]}"/></TextBlock></Button>
                     </Border>
-                    <Border Background="#111B24" BorderBrush="#20313D" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="12" Padding="12,10">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -558,12 +582,12 @@
                                        ToolTip="Código Limpio"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="CREADO POR" Foreground="#607A8D" FontWeight="SemiBold" FontSize="9"/>
-                                <TextBlock Text="Código Limpio" Foreground="#E8F7FC" FontWeight="SemiBold" Margin="0,3,0,0"/>
-                                <TextBlock Text="Software con intención." Foreground="#7790A2" FontSize="10" Margin="0,2,0,0"/>
+                                <TextBlock Text="{Binding [CreatedBy]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="9"/>
+                                <TextBlock Text="Código Limpio" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" Margin="0,3,0,0"/>
+                                <TextBlock Text="{Binding [Intent]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,9,0,0">
-                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="Sitio ↗" Foreground="#55D6F5" Padding="0,4" Margin="0,0,18,0"/>
+                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="{Binding [Website]}" Foreground="#55D6F5" Padding="0,4" Margin="0,0,18,0"/>
                                 <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub ↗" Padding="0,4"/>
                             </StackPanel>
                         </Grid>
@@ -588,16 +612,17 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Biblioteca de perfiles" FontSize="31" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding Profiles.Count, StringFormat={}{0} modos ajustables para cada momento}" FontSize="16" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
+                    <TextBlock Text="{Binding [ProfileLibrary]}" FontSize="31" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding ProfileCountSubtitle}" FontSize="16" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="Buscar perfiles" Foreground="{StaticResource MutedBrush}" Margin="2,0,0,5"/>
-                    <TextBox TextChanged="Search_TextChanged" ToolTip="Busca por nombre, categoría o descripción"/>
+                    <TextBlock Text="{Binding [SearchProfiles]}" Foreground="{DynamicResource MutedBrush}" Margin="2,0,0,5"/>
+                    <TextBox TextChanged="Search_TextChanged" ToolTip="{Binding [SearchTooltip]}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="3" Width="205">
-                    <TextBlock Text="DESTINO DE COLOR" Foreground="#7890A1" FontSize="10" FontWeight="SemiBold" Margin="3,0,0,6"/>
-                    <ComboBox Style="{StaticResource DestinationComboBox}" ItemsSource="{Binding MonitorTargets}" SelectedItem="{Binding SelectedMonitorTarget}"/>
+                    <TextBlock Text="{Binding [ColorTarget]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" FontWeight="SemiBold" Margin="3,0,0,6"/>
+                    <ComboBox Style="{StaticResource DestinationComboBox}" ItemsSource="{Binding MonitorTargets}"
+                              DisplayMemberPath="DisplayName" SelectedValuePath="Value" SelectedValue="{Binding SelectedMonitorTarget}"/>
                 </StackPanel>
             </Grid>
 
@@ -611,14 +636,14 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Width="264" Height="340" Margin="0,0,12,14" Padding="11"
-                                    Background="{StaticResource CardBrush}" BorderBrush="#263746" BorderThickness="1"
-                                    CornerRadius="13" ToolTip="{Binding Description}">
+                                    Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
+                                    CornerRadius="13" ToolTip="{Binding DisplayDescription}">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter Property="BorderBrush" Value="#55D6F5"/>
-                                                <Setter Property="Background" Value="#192631"/>
+                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -648,29 +673,29 @@
                                             </Rectangle>
                                             <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
                                                 <Grid>
-                                                    <TextBlock Text="{Binding Category}" FontSize="10" Foreground="#DCEAF3"/>
-                                                    <TextBlock Text="VISTA PREVIA" FontSize="9" Foreground="#91A8B8" HorizontalAlignment="Right"/>
+                                                    <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="#DCEAF3"/>
+                                                    <TextBlock Text="{Binding DataContext[Preview], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="9" Foreground="#91A8B8" HorizontalAlignment="Right"/>
                                                 </Grid>
                                             </Border>
                                             <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
                                                     Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
-                                                <TextBlock Text="ACTIVO" FontSize="10" FontWeight="Bold" Foreground="#55D6F5"/>
+                                                <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="#55D6F5"/>
                                             </Border>
                                         </Grid>
                                     </Border>
 
                                     <StackPanel Grid.Row="1" Margin="2,10,2,8">
-                                        <TextBlock Text="{Binding Name}" FontSize="19" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Height="45" Margin="0,4,0,8" FontSize="12"/>
+                                        <TextBlock Text="{Binding DisplayName}" FontSize="19" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding DisplayDescription}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Height="45" Margin="0,4,0,8" FontSize="12"/>
                                         <WrapPanel>
-                                            <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
-                                                <TextBlock Foreground="#C7D5E0"><Run Text="Brillo "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
+                                            <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="{Binding DataContext[BrightnessShort], RelativeSource={RelativeSource AncestorType=Window}}"/><Run Text=" "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
                                             </Border>
-                                            <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
-                                                <TextBlock Foreground="#C7D5E0"><Run Text="Sat. "/><Run Text="{Binding Saturation}" FontWeight="SemiBold"/></TextBlock>
+                                            <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="Sat. "/><Run Text="{Binding Saturation}" FontWeight="SemiBold"/></TextBlock>
                                             </Border>
-                                            <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
-                                                <TextBlock Foreground="#C7D5E0"><Run Text="γ "/><Run Text="{Binding Gamma, StringFormat={}{0:F2}}" FontWeight="SemiBold"/></TextBlock>
+                                            <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="γ "/><Run Text="{Binding Gamma, StringFormat={}{0:F2}}" FontWeight="SemiBold"/></TextBlock>
                                             </Border>
                                         </WrapPanel>
                                     </StackPanel>
@@ -681,8 +706,8 @@
                                             <ColumnDefinition Width="8"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Style="{StaticResource SecondaryButton}" Content="Ajustar" Tag="{Binding}" Click="EditProfile_Click"/>
-                                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Content="Aplicar" Tag="{Binding}" Click="ApplyProfile_Click"/>
+                                        <Button Grid.Column="0" Style="{StaticResource SecondaryButton}" Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}" Tag="{Binding}" Click="EditProfile_Click"/>
+                                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}" Tag="{Binding}" Click="ApplyProfile_Click"/>
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -691,61 +716,61 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <Border Grid.Row="3" Background="#101922" CornerRadius="9" Padding="12,9" Margin="0,6,16,0">
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#9DB2C2"/>
+            <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" CornerRadius="9" Padding="12,9" Margin="0,6,16,0">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>
             </Border>
         </Grid>
 
-        <Border Grid.Row="1" Grid.Column="2" Background="#0E161F" BorderBrush="#1E2B36" BorderThickness="1,0,0,0">
+        <Border Grid.Row="1" Grid.Column="2" Background="{DynamicResource InspectorBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1,0,0,0">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="24,28">
-                    <TextBlock Text="Ajustar perfil" FontSize="23" FontWeight="SemiBold"/>
-                    <TextBlock Text="Personaliza el perfil seleccionado. Los cambios afectan la próxima aplicación." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,5,0,18"/>
+                    <TextBlock Text="{Binding [AdjustProfile]}" FontSize="23" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding [CustomizeProfile]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,5,0,18"/>
 
-                    <Border Background="#17222C" CornerRadius="9" Padding="13" Margin="0,0,0,18">
+                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="9" Padding="13" Margin="0,0,0,18">
                         <StackPanel>
-                            <TextBlock Text="{Binding SelectedProfile.Name}" FontSize="17" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding SelectedProfile.Category}" Foreground="#55D6F5" Margin="0,3,0,0"/>
+                            <TextBlock Text="{Binding SelectedProfile.DisplayName}" FontSize="17" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SelectedProfile.DisplayCategory}" Foreground="#55D6F5" Margin="0,3,0,0"/>
                         </StackPanel>
                     </Border>
 
-                    <TextBlock Text="IMAGEN" Foreground="#6E8798" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,11"/>
-                    <TextBlock><Run Text="Brillo"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock Text="{Binding [Image]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,11"/>
+                    <TextBlock><Run Text="{Binding [Brightness]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Brightness, Mode=TwoWay}"/>
-                    <TextBlock><Run Text="Contraste"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Contrast}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock><Run Text="{Binding [Contrast]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Contrast}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Contrast, Mode=TwoWay}"/>
-                    <TextBlock><Run Text="Gamma"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Gamma, StringFormat={}{0:F2}}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock><Run Text="{Binding [Gamma]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Gamma, StringFormat={}{0:F2}}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0.70" Maximum="1.30" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Gamma, Mode=TwoWay}"/>
 
-                    <Border Height="1" Background="#263744" Margin="0,4,0,16"/>
-                    <TextBlock Text="COLOR" Foreground="#6E8798" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,10"/>
-                    <TextBlock Text="Temperatura de color" Margin="0,0,0,6"/>
-                    <ComboBox ItemsSource="{Binding ColorTemperatureOptions}"
-                              SelectedItem="{Binding SelectedProfile.ColorTemperature, Mode=TwoWay}" Margin="0,0,0,14"/>
-                    <TextBlock><Run Text="Saturación"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="#55D6F5"/></TextBlock>
+                    <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,4,0,16"/>
+                    <TextBlock Text="{Binding [Color]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,10"/>
+                    <TextBlock Text="{Binding [ColorTemperature]}" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding ColorTemperatureOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                              SelectedValue="{Binding SelectedProfile.ColorTemperature, Mode=TwoWay}" Margin="0,0,0,14"/>
+                    <TextBlock><Run Text="{Binding [Saturation]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="#55D6F5"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Saturation, Mode=TwoWay}"/>
-                    <TextBlock ToolTip="Algunos modos del monitor bloquean el matiz, igual que ASUS DisplayWidget."><Run Text="Matiz"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Hue}" Foreground="#55D6F5"/></TextBlock>
-                    <Slider Minimum="-50" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Hue, Mode=TwoWay}" ToolTip="Disponible únicamente si el modo del monitor permite modificar el matiz."/>
+                    <TextBlock ToolTip="{Binding [HueTooltip]}"><Run Text="{Binding [Hue]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Hue}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="-50" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Hue, Mode=TwoWay}" ToolTip="{Binding [HueControlTooltip]}"/>
 
-                    <TextBlock Text="Balance RGB personalizado" FontWeight="SemiBold" Margin="0,2,0,10"/>
-                    <TextBlock Foreground="#FF7B86"><Run Text="Rojo"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Red, StringFormat={}{0:F2}}"/></TextBlock>
+                    <TextBlock Text="{Binding [CustomRgb]}" FontWeight="SemiBold" Margin="0,2,0,10"/>
+                    <TextBlock Foreground="#FF7B86"><Run Text="{Binding [Red]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Red, StringFormat={}{0:F2}}"/></TextBlock>
                     <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Red, Mode=TwoWay}"/>
-                    <TextBlock Foreground="#68DB98"><Run Text="Verde"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Green, StringFormat={}{0:F2}}"/></TextBlock>
+                    <TextBlock Foreground="#68DB98"><Run Text="{Binding [Green]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Green, StringFormat={}{0:F2}}"/></TextBlock>
                     <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Green, Mode=TwoWay}"/>
-                    <TextBlock Foreground="#6DA3FF"><Run Text="Azul"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Blue, StringFormat={}{0:F2}}"/></TextBlock>
+                    <TextBlock Foreground="#6DA3FF"><Run Text="{Binding [Blue]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Blue, StringFormat={}{0:F2}}"/></TextBlock>
                     <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Blue, Mode=TwoWay}"/>
 
                     <Border Background="#18253A" BorderBrush="#36537D" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,4,0,10"
                             Visibility="{Binding SelectedProfile.IsHdr, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
-                            <TextBlock Text="HDR requiere activación en Windows" Foreground="#86B7FF" FontWeight="SemiBold"/>
-                            <TextBlock Text="Al activar HDR, el monitor bloquea GameVisual y varios controles SDR." Foreground="#A9BBD0" TextWrapping="Wrap" Margin="0,4,0,8"/>
-                            <Button Style="{StaticResource SecondaryButton}" Content="Abrir configuración HDR" Click="OpenHdrSettings_Click"/>
+                            <TextBlock Text="{Binding [HdrRequires]}" Foreground="#86B7FF" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding [HdrDescription]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                            <Button Style="{StaticResource SecondaryButton}" Content="{Binding [OpenHdr]}" Click="OpenHdrSettings_Click"/>
                         </StackPanel>
                     </Border>
 
-                    <Button Style="{StaticResource PrimaryButton}" Content="Guardar y aplicar" Click="SaveAndApply_Click" Margin="0,10,0,9"/>
-                    <Button Style="{StaticResource SecondaryButton}" Content="Restaurar valores originales" Click="RestoreDefaults_Click"/>
+                    <Button Style="{StaticResource PrimaryButton}" Content="{Binding [SaveApply]}" Click="SaveAndApply_Click" Margin="0,10,0,9"/>
+                    <Button Style="{StaticResource SecondaryButton}" Content="{Binding [RestoreDefaults]}" Click="RestoreDefaults_Click"/>
 
                     <Border BorderBrush="#29434F" BorderThickness="1" CornerRadius="12" Margin="0,18,0,0" ClipToBounds="True">
                         <Border.Background>
@@ -768,14 +793,12 @@
                                 </Border>
                                 <StackPanel Grid.Column="1">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Precisión de color" Foreground="#EFF8FB" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding [ColorAccuracy]}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                         <Border Background="#183641" CornerRadius="7" Padding="7,2" Margin="8,0,0,0">
-                                            <TextBlock Text="RECOMENDADO" Foreground="#6DDDF4" FontSize="8" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding [Recommended]}" Foreground="#6DDDF4" FontSize="8" FontWeight="SemiBold"/>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Foreground="#9FB2BF" TextWrapping="Wrap" LineHeight="17" Margin="0,6,0,0">
-                                        <Run Text="Usa "/><Run Text="Natural" Foreground="#DDF8FF" FontWeight="SemiBold"/><Run Text=" o "/><Run Text="Referencia" Foreground="#DDF8FF" FontWeight="SemiBold"/><Run Text=" para trabajo de color. Los perfiles cálidos modifican intencionalmente el balance RGB."/>
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding [AccuracyAdvice]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" LineHeight="17" Margin="0,6,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </Grid>
