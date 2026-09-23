@@ -8,7 +8,8 @@
     <AssemblyName>LumaProfiles</AssemblyName>
     <RootNamespace>LumaProfiles</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.4.0</Version>
+    <ApplicationIcon>Assets\LumaProfiles.ico</ApplicationIcon>
+    <Version>0.4.1</Version>
     <AssemblyTitle>Luma Profiles</AssemblyTitle>
     <Product>Luma Profiles by Código Limpio</Product>
     <Company>Código Limpio</Company>
@@ -19,5 +20,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Assets\color-reference.png" />
+    <Resource Include="Assets\LumaProfiles.ico" />
   </ItemGroup>
 </Project>

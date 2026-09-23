@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
-        Title="Luma Profiles — Código Limpio" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
+        Title="Luma Profiles — Código Limpio" Icon="/Assets/LumaProfiles.ico" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
         WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB"
         WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text">
     <shell:WindowChrome.WindowChrome>
