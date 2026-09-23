@@ -15,6 +15,7 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     private double _blue;
     private string _colorTemperature = "Usuario (RGB)";
     private bool _isActive;
+    private bool _isFavorite;
     private string? _localizedName;
     private string? _localizedCategory;
     private string? _localizedDescription;
@@ -42,6 +43,7 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public string ColorTemperature { get => _colorTemperature; set => Set(ref _colorTemperature, value); }
 
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
+    public bool IsFavorite { get => _isFavorite; set => Set(ref _isFavorite, value); }
 
     public void SetLocalizedText(string name, string category, string description)
     {
@@ -71,7 +73,8 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         Red = Red,
         Green = Green,
         Blue = Blue,
-        ColorTemperature = ColorTemperature
+        ColorTemperature = ColorTemperature,
+        IsFavorite = IsFavorite
     };
 
     public void CopyAdjustmentsFrom(DisplayProfile source)

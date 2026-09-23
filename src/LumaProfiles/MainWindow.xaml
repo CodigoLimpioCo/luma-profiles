@@ -553,6 +553,7 @@
 
                 <StackPanel Grid.Row="4">
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Checked="Category_Click" Tag="Todos"><TextBlock><Run Text="▦    "/><Run Text="{Binding [AllProfiles]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Favoritos"><TextBlock><Run Text="★    "/><Run Text="{Binding [Favorites]}"/></TextBlock></RadioButton>
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color fiel"><TextBlock><Run Text="◉    "/><Run Text="{Binding [FaithfulColor]}"/></TextBlock></RadioButton>
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="ASUS GameVisual"><TextBlock Text="◆    ASUS GameVisual"/></RadioButton>
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="HDR"><TextBlock Text="◐    HDR"/></RadioButton>
@@ -684,6 +685,36 @@
                                                     Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
                                                 <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="#55D6F5"/>
                                             </Border>
+                                            <Button Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"
+                                                    Tag="{Binding}" Click="ToggleFavorite_Click"
+                                                    ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    Cursor="Hand" BorderThickness="0" FontSize="20">
+                                                <Button.Style>
+                                                    <Style TargetType="Button">
+                                                        <Setter Property="Content" Value="☆"/>
+                                                        <Setter Property="Foreground" Value="#F4D67A"/>
+                                                        <Setter Property="Background" Value="#B00A1118"/>
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    </Border>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                                <Setter Property="Content" Value="★"/>
+                                                                <Setter Property="Background" Value="#C43B3020"/>
+                                                            </DataTrigger>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#DF3B3020"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
                                         </Grid>
                                     </Border>
 

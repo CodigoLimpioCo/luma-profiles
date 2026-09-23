@@ -132,7 +132,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private bool MatchesCurrentFilter(DisplayProfile profile)
     {
-        if (_selectedCategory != "Todos" && profile.Category != _selectedCategory) return false;
+        if (_selectedCategory == "Favoritos" && !profile.IsFavorite) return false;
+        if (_selectedCategory != "Todos" && _selectedCategory != "Favoritos" && profile.Category != _selectedCategory) return false;
         if (string.IsNullOrWhiteSpace(_searchText)) return true;
 
         return profile.DisplayName.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
@@ -204,6 +205,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             SelectedProfile = profile;
             Apply(profile);
         }
+    }
+
+    private void ToggleFavorite_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: DisplayProfile profile }) return;
+
+        profile.IsFavorite = !profile.IsFavorite;
+        _profileStore.Save(Profiles);
+        StatusMessage = L(profile.IsFavorite ? "FavoriteAdded" : "FavoriteRemoved", profile.DisplayName);
+        if (_selectedCategory == "Favoritos") RefreshVisibleProfiles();
     }
 
     private void SaveAndApply_Click(object sender, RoutedEventArgs e)
