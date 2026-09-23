@@ -586,13 +586,19 @@
                                        ToolTip="Código Limpio"/>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding [CreatedBy]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="9"/>
+                                <Grid>
+                                    <TextBlock Text="{Binding [CreatedBy]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="9" VerticalAlignment="Center"/>
+                                    <Border HorizontalAlignment="Right" Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="6,2">
+                                        <TextBlock Foreground="#8EDFF2" FontSize="9" FontWeight="SemiBold"><Run Text="v"/><Run Text="{Binding AppVersion, Mode=OneWay}"/></TextBlock>
+                                    </Border>
+                                </Grid>
                                 <TextBlock Text="Código Limpio" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" Margin="0,3,0,0"/>
                                 <TextBlock Text="{Binding [Intent]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,9,0,0">
-                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="{Binding [Website]}" Foreground="#55D6F5" Padding="0,4" Margin="0,0,18,0"/>
-                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub ↗" Padding="0,4"/>
+                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="{Binding [Website]}" Foreground="#55D6F5" Padding="0,4" Margin="0,0,13,0"/>
+                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub ↗" Padding="0,4" Margin="0,0,13,0"/>
+                                <Button Style="{StaticResource FlatButton}" Click="About_Click" Content="{Binding [About]}" Padding="0,4"/>
                             </StackPanel>
                         </Grid>
                     </Border>

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Diagnostics;
+using System.Reflection;
 using System.Windows.Media;
 using LumaProfiles.Models;
 using LumaProfiles.Services;
@@ -66,6 +67,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
 
     public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
+    public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
     public string ThemeLabel => $"{(_isDarkTheme ? "☾" : "☀")} {T(_isDarkTheme ? "ThemeDark" : "ThemeLight")}";
     public string MaximizeTooltip => T(WindowState == WindowState.Maximized ? "Restore" : "Maximize");
     public string this[string key]
@@ -171,6 +173,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void OpenCodigoLimpio_Click(object sender, RoutedEventArgs e) => OpenUrl("https://codigolimpio.com.co/");
 
     private void OpenCodigoLimpioGithub_Click(object sender, RoutedEventArgs e) => OpenUrl("https://github.com/CodigoLimpioCo/luma-profiles");
+
+    private void About_Click(object sender, RoutedEventArgs e) =>
+        MessageBox.Show(this, L("AboutBody", AppVersion), T("AboutTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
 
     private void OpenHdrSettings_Click(object sender, RoutedEventArgs e)
     {
