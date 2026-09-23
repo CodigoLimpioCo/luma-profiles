@@ -1,0 +1,277 @@
+<Window x:Class="LumaProfiles.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Luma Profiles" Height="900" Width="1500" MinHeight="720" MinWidth="1180"
+        WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB">
+    <Window.Resources>
+        <SolidColorBrush x:Key="PanelBrush" Color="#121A23"/>
+        <SolidColorBrush x:Key="CardBrush" Color="#151F29"/>
+        <SolidColorBrush x:Key="MutedBrush" Color="#9DAFC0"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#55D6F5"/>
+
+        <Style TargetType="Button" x:Key="FlatButton">
+            <Setter Property="Foreground" Value="#DCE7F0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,11"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="9"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#1D2A36"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#253746"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" x:Key="PrimaryButton">
+            <Setter Property="Foreground" Value="#051016"/>
+            <Setter Property="Background" Value="#55D6F5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="9"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#83E5FA"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.78"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" x:Key="SecondaryButton" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="Foreground" Value="#DCE7F0"/>
+            <Setter Property="Background" Value="#22303C"/>
+        </Style>
+
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="0,4,0,13"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="#101820"/>
+            <Setter Property="Background" Value="#F1F5F8"/>
+            <Setter Property="BorderBrush" Value="#334756"/>
+            <Setter Property="Padding" Value="12,8"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="340"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#0D141C" BorderBrush="#1E2B36" BorderThickness="0,0,1,0">
+            <Grid Margin="16,24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="28"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal">
+                    <Grid Width="36" Height="36" Margin="0,0,10,0">
+                        <Ellipse Fill="#6D5DFB"/>
+                        <Ellipse Width="23" Height="23" Fill="#0D141C" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                        <Ellipse Width="13" Height="13" Fill="#55D6F5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    </Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold"/>
+                        <TextBlock Text="Monitor Studio" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2">
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Todos" Content="▦   Todos"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Color fiel" Content="◉   Color fiel"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Entretenimiento" Content="▶   Entretenimiento"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Rendimiento" Content="⚡   Rendimiento"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Cuidado visual" Content="◒   Cuidado visual"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="3">
+                    <Button Style="{StaticResource FlatButton}" Click="Repair_Click" ToolTip="Restablece una gamma RGB neutra y elimina dominantes de color." Content="↺   Neutralizar color"/>
+                    <TextBlock Text="Los cambios se guardan en este equipo." Foreground="#6F8495" FontSize="11" TextWrapping="Wrap" Margin="14,10"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="30,26,24,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="18"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Perfiles de pantalla" FontSize="31" FontWeight="SemiBold"/>
+                    <TextBlock Text="Color preciso para cada momento" FontSize="16" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Width="190">
+                    <TextBlock Text="Destino" Foreground="{StaticResource MutedBrush}" Margin="2,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding MonitorTargets}" SelectedItem="{Binding SelectedMonitorTarget}"/>
+                </StackPanel>
+            </Grid>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding VisibleProfiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Width="278" Height="328" Margin="0,0,16,16" Padding="12"
+                                    Background="{StaticResource CardBrush}" BorderBrush="#263746" BorderThickness="1"
+                                    CornerRadius="13" ToolTip="{Binding Description}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="BorderBrush" Value="#55D6F5"/>
+                                                <Setter Property="Background" Value="#192631"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="122"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Border CornerRadius="9" ClipToBounds="True">
+                                        <Grid>
+                                            <Grid.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                                    <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Grid.Background>
+                                            <Ellipse Width="46" Height="46" Fill="#CCFFF3C4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,15,22,0"/>
+                                            <Polygon Points="0,112 65,52 120,104 166,63 278,122" Fill="#B9233440" VerticalAlignment="Bottom"/>
+                                            <Polygon Points="0,122 88,80 142,115 202,78 278,118 278,122" Fill="#CC0B1A22" VerticalAlignment="Bottom"/>
+                                            <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                                                    Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+                                                <TextBlock Text="ACTIVO" FontSize="10" FontWeight="Bold" Foreground="#55D6F5"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel Grid.Row="1" Margin="2,10,2,8">
+                                        <TextBlock Text="{Binding Name}" FontSize="19" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Height="42" Margin="0,4,0,8"/>
+                                        <WrapPanel>
+                                            <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                                                <TextBlock Foreground="#C7D5E0"><Run Text="Brillo "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
+                                            </Border>
+                                            <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                                                <TextBlock Foreground="#C7D5E0"><Run Text="Sat. "/><Run Text="{Binding Saturation}" FontWeight="SemiBold"/></TextBlock>
+                                            </Border>
+                                            <Border Background="#22313D" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                                                <TextBlock Foreground="#C7D5E0"><Run Text="γ "/><Run Text="{Binding Gamma, StringFormat={}{0:F2}}" FontWeight="SemiBold"/></TextBlock>
+                                            </Border>
+                                        </WrapPanel>
+                                    </StackPanel>
+
+                                    <Grid Grid.Row="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Style="{StaticResource SecondaryButton}" Content="Ajustar" Tag="{Binding}" Click="EditProfile_Click"/>
+                                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Content="Aplicar" Tag="{Binding}" Click="ApplyProfile_Click"/>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Border Grid.Row="3" Background="#101922" CornerRadius="9" Padding="12,9" Margin="0,6,16,0">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#9DB2C2"/>
+            </Border>
+        </Grid>
+
+        <Border Grid.Column="2" Background="#0E161F" BorderBrush="#1E2B36" BorderThickness="1,0,0,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24,28">
+                    <TextBlock Text="Ajustar perfil" FontSize="23" FontWeight="SemiBold"/>
+                    <TextBlock Text="Personaliza el perfil seleccionado. Los cambios afectan la próxima aplicación." Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,5,0,18"/>
+
+                    <Border Background="#17222C" CornerRadius="9" Padding="13" Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedProfile.Name}" FontSize="17" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding SelectedProfile.Category}" Foreground="#55D6F5" Margin="0,3,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock><Run Text="Brillo"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Brightness, Mode=TwoWay}"/>
+                    <TextBlock><Run Text="Contraste"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Contrast}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Contrast, Mode=TwoWay}"/>
+                    <TextBlock><Run Text="Saturación"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Saturation, Mode=TwoWay}"/>
+                    <TextBlock><Run Text="Gamma"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Gamma, StringFormat={}{0:F2}}" Foreground="#55D6F5"/></TextBlock>
+                    <Slider Minimum="0.70" Maximum="1.30" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Gamma, Mode=TwoWay}"/>
+
+                    <TextBlock Text="Balance RGB" FontWeight="SemiBold" Margin="0,5,0,10"/>
+                    <TextBlock Foreground="#FF7B86"><Run Text="Rojo"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Red, StringFormat={}{0:F2}}"/></TextBlock>
+                    <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Red, Mode=TwoWay}"/>
+                    <TextBlock Foreground="#68DB98"><Run Text="Verde"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Green, StringFormat={}{0:F2}}"/></TextBlock>
+                    <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Green, Mode=TwoWay}"/>
+                    <TextBlock Foreground="#6DA3FF"><Run Text="Azul"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Blue, StringFormat={}{0:F2}}"/></TextBlock>
+                    <Slider Minimum="0.50" Maximum="1.10" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Blue, Mode=TwoWay}"/>
+
+                    <Button Style="{StaticResource PrimaryButton}" Content="Guardar y aplicar" Click="SaveAndApply_Click" Margin="0,10,0,9"/>
+                    <Button Style="{StaticResource SecondaryButton}" Content="Restaurar valores originales" Click="RestoreDefaults_Click"/>
+
+                    <Border Background="#251F16" BorderBrush="#5E4B29" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,18,0,0">
+                        <TextBlock Text="Consejo: para trabajo de color usa Natural o Referencia. Los modos cálidos modifican intencionalmente el balance RGB." Foreground="#D7BE88" TextWrapping="Wrap"/>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>
