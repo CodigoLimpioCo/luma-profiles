@@ -68,7 +68,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
     public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
-    public string ThemeLabel => $"{(_isDarkTheme ? "☾" : "☀")} {T(_isDarkTheme ? "ThemeDark" : "ThemeLight")}";
+    public bool IsDarkTheme => _isDarkTheme;
+    public string ThemeLabel => T(_isDarkTheme ? "ThemeDark" : "ThemeLight");
     public string MaximizeTooltip => T(WindowState == WindowState.Maximized ? "Restore" : "Maximize");
     public string this[string key]
     {
@@ -281,6 +282,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void RaiseUiProperties()
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ProfileCountSubtitle)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDarkTheme)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ThemeLabel)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MaximizeTooltip)));
     }
