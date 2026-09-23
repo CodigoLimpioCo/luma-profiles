@@ -542,13 +542,27 @@
                     </Border>
                     <Border Background="#111B24" BorderBrush="#20313D" BorderThickness="1" CornerRadius="12" Padding="12,10">
                         <Grid>
-                            <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                            <StackPanel>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="42"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="34" Height="34" CornerRadius="10" Background="#F6F8FA"
+                                    BorderBrush="#355060" BorderThickness="1" Padding="3"
+                                    HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <Image Source="/Assets/CodigoLimpioLogo.png" Stretch="Uniform"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       ToolTip="Código Limpio"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="CREADO POR" Foreground="#607A8D" FontWeight="SemiBold" FontSize="9"/>
                                 <TextBlock Text="Código Limpio" Foreground="#E8F7FC" FontWeight="SemiBold" Margin="0,3,0,0"/>
                                 <TextBlock Text="Software con intención." Foreground="#7790A2" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,9,0,0">
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,9,0,0">
                                 <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="Sitio ↗" Foreground="#55D6F5" Padding="0,4" Margin="0,0,18,0"/>
                                 <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub ↗" Padding="0,4"/>
                             </StackPanel>
