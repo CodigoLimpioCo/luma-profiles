@@ -201,6 +201,112 @@
             </Setter>
         </Style>
 
+        <Style TargetType="ComboBox" x:Key="DestinationComboBox">
+            <Setter Property="Foreground" Value="#F2F8FC"/>
+            <Setter Property="MinHeight" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="#C8D5DE"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="ItemRoot" Background="Transparent" CornerRadius="8" Padding="10,10" Margin="3,2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="27"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="22"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="▣" Foreground="#6F8B9D" FontSize="12" VerticalAlignment="Center"/>
+                                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="Checkmark" Grid.Column="2" Text="✓" Foreground="#78E4F8"
+                                                       FontSize="13" FontWeight="Bold" HorizontalAlignment="Right"
+                                                       VerticalAlignment="Center" Visibility="Collapsed"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="ItemRoot" Property="Background" Value="#182A35"/>
+                                            <Setter Property="Foreground" Value="#F4FAFD"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="ItemRoot" Property="Background" Value="#17404C"/>
+                                            <Setter TargetName="Checkmark" Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Field" Background="#14212B" BorderBrush="#314653"
+                                                BorderThickness="1" CornerRadius="10" Padding="11,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="27"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="22"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="22" Height="22" CornerRadius="6" Background="#1D3440" VerticalAlignment="Center">
+                                                    <TextBlock Text="▣" Foreground="#73DDF4" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ContentPresenter Grid.Column="1"
+                                                                  Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                  VerticalAlignment="Center" TextElement.Foreground="#F2F8FC"
+                                                                  TextElement.FontWeight="SemiBold"/>
+                                                <Path x:Name="Chevron" Grid.Column="2" Data="M 1 1 L 5 5 L 9 1"
+                                                      Stroke="#8FA6B6" StrokeThickness="1.6" StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Field" Property="Background" Value="#182A35"/>
+                                                <Setter TargetName="Field" Property="BorderBrush" Value="#476675"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="Field" Property="Background" Value="#152C36"/>
+                                                <Setter TargetName="Field" Property="BorderBrush" Value="#55D6F5"/>
+                                                <Setter TargetName="Chevron" Property="RenderTransform">
+                                                    <Setter.Value><RotateTransform Angle="180" CenterX="5" CenterY="3"/></Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="7"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Fade">
+                                <Border Background="#101A22" BorderBrush="#2E4553" BorderThickness="1"
+                                        CornerRadius="11" Padding="4" MinWidth="220">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="7" Opacity="0.55"/>
+                                    </Border.Effect>
+                                    <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="TextBox">
             <Setter Property="Foreground" Value="#EAF4FA"/>
             <Setter Property="Background" Value="#131E27"/>
@@ -372,7 +478,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="3" Width="190">
                     <TextBlock Text="Destino" Foreground="{StaticResource MutedBrush}" Margin="2,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding MonitorTargets}" SelectedItem="{Binding SelectedMonitorTarget}"/>
+                    <ComboBox Style="{StaticResource DestinationComboBox}" ItemsSource="{Binding MonitorTargets}" SelectedItem="{Binding SelectedMonitorTarget}"/>
                 </StackPanel>
             </Grid>
 
