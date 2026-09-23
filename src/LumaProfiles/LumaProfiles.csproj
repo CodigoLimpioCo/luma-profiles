@@ -8,7 +8,7 @@
     <AssemblyName>LumaProfiles</AssemblyName>
     <RootNamespace>LumaProfiles</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <AssemblyTitle>Luma Profiles</AssemblyTitle>
     <Product>Luma Profiles by Código Limpio</Product>
     <Company>Código Limpio</Company>

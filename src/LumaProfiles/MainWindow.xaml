@@ -41,6 +41,37 @@
             </Setter>
         </Style>
 
+        <Style TargetType="RadioButton" x:Key="NavButton">
+            <Setter Property="Foreground" Value="#B8C7D3"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid Height="44">
+                            <Border x:Name="Selection" Background="Transparent" CornerRadius="10"/>
+                            <Border x:Name="Indicator" Width="3" Height="22" CornerRadius="2"
+                                    Background="#55D6F5" HorizontalAlignment="Left" Visibility="Collapsed"/>
+                            <ContentPresenter Margin="13,0,10,0" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Selection" Property="Background" Value="#16232E"/>
+                                <Setter Property="Foreground" Value="#F5FAFD"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Selection" Property="Background" Value="#17303B"/>
+                                <Setter TargetName="Indicator" Property="Visibility" Value="Visible"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="Button" x:Key="PrimaryButton">
             <Setter Property="Foreground" Value="#051016"/>
             <Setter Property="Background" Value="#55D6F5"/>
@@ -213,70 +244,105 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"/>
+            <RowDefinition Height="46"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="248"/>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="365"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Row="0" Grid.ColumnSpan="3" Background="#0B1219" BorderBrush="#1D2B36" BorderThickness="0,0,0,1"
+        <Border Grid.Row="0" Grid.ColumnSpan="3" Background="#0A1118" BorderBrush="#21313E" BorderThickness="0,0,0,1"
                 MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
-                    <Ellipse Width="12" Height="12" Fill="#55D6F5" Margin="0,0,8,0"/>
-                    <TextBlock Text="Luma Profiles" FontWeight="SemiBold" Foreground="#DCEAF3"/>
-                    <TextBlock Text="  •  creado por Código Limpio" Foreground="#55D6F5"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0">
+                    <Border Width="24" Height="24" CornerRadius="7" Background="#172B37" Margin="0,0,9,0">
+                        <Grid>
+                            <Ellipse Width="11" Height="11" Fill="#55D6F5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4"/>
+                            <Ellipse Width="11" Height="11" Fill="#7B65FF" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="4"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock Text="Luma Profiles" FontWeight="SemiBold" Foreground="#EDF7FC" VerticalAlignment="Center"/>
+                    <Border Background="#122A34" CornerRadius="9" Padding="8,3" Margin="10,0,0,0">
+                        <TextBlock Text="CÓDIGO LIMPIO" FontSize="9" FontWeight="SemiBold" Foreground="#65DDF7"/>
+                    </Border>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="—" Click="Minimize_Click"/>
-                    <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="□" Click="Maximize_Click"/>
-                    <Button Style="{StaticResource FlatButton}" Width="46" Height="39" Padding="0" HorizontalContentAlignment="Center" Content="×" Click="Close_Click"/>
+                    <Button Style="{StaticResource FlatButton}" Width="46" Height="45" Padding="0" HorizontalContentAlignment="Center" Content="—" Click="Minimize_Click"/>
+                    <Button Style="{StaticResource FlatButton}" Width="46" Height="45" Padding="0" HorizontalContentAlignment="Center" Content="□" Click="Maximize_Click"/>
+                    <Button Style="{StaticResource FlatButton}" Width="46" Height="45" Padding="0" HorizontalContentAlignment="Center" Content="×" Click="Close_Click"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Grid.Column="0" Background="#0D141C" BorderBrush="#1E2B36" BorderThickness="0,0,1,0">
-            <Grid Margin="16,24">
+        <Border Grid.Row="1" Grid.Column="0" Background="#0C141C" BorderBrush="#21313E" BorderThickness="0,0,1,0">
+            <Grid Margin="18,22,18,18">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="28"/>
+                    <RowDefinition Height="26"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Orientation="Horizontal">
-                    <Grid Width="36" Height="36" Margin="0,0,10,0">
-                        <Ellipse Fill="#6D5DFB"/>
-                        <Ellipse Width="23" Height="23" Fill="#0D141C" HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
-                        <Ellipse Width="13" Height="13" Fill="#55D6F5" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    </Grid>
+                <StackPanel Orientation="Horizontal" Margin="4,0">
+                    <Border Width="46" Height="46" CornerRadius="13" Margin="0,0,12,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#55D6F5" Offset="0"/>
+                                <GradientStop Color="#725DFA" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid>
+                            <Ellipse Width="27" Height="27" Fill="#0C141C" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
+                            <Ellipse Width="10" Height="10" Fill="#DDF9FF" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"/>
+                        </Grid>
+                    </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold"/>
-                        <TextBlock Text="por Código Limpio" FontSize="11" Foreground="#55D6F5"/>
+                        <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold" Foreground="#F4FAFD"/>
+                        <TextBlock Text="Monitor Studio" FontSize="11" Foreground="#8198A9"/>
                     </StackPanel>
                 </StackPanel>
 
-                <StackPanel Grid.Row="2">
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Todos" Content="▦   Todos"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Color fiel" Content="◉   Color fiel"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="ASUS GameVisual" Content="◆   ASUS GameVisual"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="HDR" Content="◐   HDR"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Color creativo" Content="✦   Color creativo"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Entretenimiento" Content="▶   Entretenimiento"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Rendimiento" Content="⚡   Rendimiento"/>
-                    <Button Style="{StaticResource FlatButton}" Click="Category_Click" Tag="Cuidado visual" Content="◒   Cuidado visual"/>
+                <Grid Grid.Row="2" Margin="4,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="BIBLIOTECA" Foreground="#607A8D" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <Border Grid.Column="1" Background="#15232D" CornerRadius="8" Padding="8,3">
+                        <TextBlock Text="{Binding Profiles.Count}" Foreground="#8EDFF2" FontSize="10" FontWeight="SemiBold"/>
+                    </Border>
+                </Grid>
+
+                <StackPanel Grid.Row="4">
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Checked="Category_Click" Tag="Todos" Content="▦    Todos los perfiles"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color fiel" Content="◉    Color fiel"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="ASUS GameVisual" Content="◆    ASUS GameVisual"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="HDR" Content="◐    HDR"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color creativo" Content="✦    Color creativo"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Entretenimiento" Content="▶    Entretenimiento"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Rendimiento" Content="ϟ    Rendimiento"/>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Cuidado visual" Content="◒    Cuidado visual"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="3">
-                    <Button Style="{StaticResource FlatButton}" Click="Repair_Click" ToolTip="Restablece una gamma RGB neutra y elimina dominantes de color." Content="↺   Neutralizar color"/>
-                    <TextBlock Text="Los cambios se guardan en este equipo." Foreground="#6F8495" FontSize="11" TextWrapping="Wrap" Margin="14,10"/>
-                    <Border Height="1" Background="#263744" Margin="10,8"/>
-                    <TextBlock Text="CREADO POR" Foreground="#5F788A" FontWeight="SemiBold" FontSize="10" Margin="14,5,0,2"/>
-                    <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="Código Limpio  ↗" Foreground="#55D6F5"/>
-                    <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub de la organización  ↗" FontSize="11"/>
+                <StackPanel Grid.Row="5">
+                    <Border Background="#101E27" BorderBrush="#203643" BorderThickness="1" CornerRadius="12" Padding="5" Margin="0,0,0,10">
+                        <Button Style="{StaticResource FlatButton}" Click="Repair_Click" ToolTip="Restablece una gamma RGB neutra y elimina dominantes de color." Content="↺    Neutralizar color"/>
+                    </Border>
+                    <Border Background="#111B24" BorderBrush="#20313D" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CREADO POR" Foreground="#607A8D" FontWeight="SemiBold" FontSize="9"/>
+                                <TextBlock Text="Código Limpio" Foreground="#E8F7FC" FontWeight="SemiBold" Margin="0,3,0,0"/>
+                                <TextBlock Text="Software con intención." Foreground="#7790A2" FontSize="10" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,9,0,0">
+                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="Sitio ↗" Foreground="#55D6F5" Padding="0,4" Margin="0,0,18,0"/>
+                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub ↗" Padding="0,4"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Grid>
         </Border>

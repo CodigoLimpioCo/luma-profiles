@@ -56,11 +56,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Category_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string category })
+        if (sender is FrameworkElement { Tag: string category })
         {
             _selectedCategory = category;
             RefreshVisibleProfiles();
-            ProfilesScrollViewer.ScrollToTop();
+            ProfilesScrollViewer?.ScrollToTop();
             StatusMessage = category == "Todos" ? $"Mostrando los {Profiles.Count} perfiles." : $"Categoría: {category}.";
         }
     }
@@ -69,7 +69,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _searchText = (sender as TextBox)?.Text?.Trim() ?? string.Empty;
         RefreshVisibleProfiles();
-        ProfilesScrollViewer.ScrollToTop();
+        ProfilesScrollViewer?.ScrollToTop();
         StatusMessage = string.IsNullOrWhiteSpace(_searchText)
             ? $"Biblioteca completa: {Profiles.Count} perfiles."
             : $"Resultados para “{_searchText}”.";
