@@ -3,10 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="Luma Profiles — Código Limpio" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
         WindowStartupLocation="CenterScreen" Background="#090E14" Foreground="#F5F8FB"
         WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0"
+                            CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
     <Window.Resources>
         <SolidColorBrush x:Key="PanelBrush" Color="#121A23"/>
         <SolidColorBrush x:Key="CardBrush" Color="#151F29"/>
@@ -34,6 +39,55 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="#253746"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" x:Key="WindowButton">
+            <Setter Property="Foreground" Value="#94A8B7"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="51"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#18242E"/>
+                                <Setter Property="Foreground" Value="#F1F7FA"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#21333F"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" x:Key="CloseWindowButton" BasedOn="{StaticResource WindowButton}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#C83B4B"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#A92D3D"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -350,7 +404,7 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="46"/>
+            <RowDefinition Height="52"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -362,22 +416,46 @@
         <Border Grid.Row="0" Grid.ColumnSpan="3" Background="#0A1118" BorderBrush="#21313E" BorderThickness="0,0,0,1"
                 MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0">
-                    <Border Width="24" Height="24" CornerRadius="7" Background="#172B37" Margin="0,0,9,0">
+                    <Border Width="28" Height="28" CornerRadius="8" Background="#172B37" Margin="0,0,10,0">
                         <Grid>
-                            <Ellipse Width="11" Height="11" Fill="#55D6F5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4"/>
-                            <Ellipse Width="11" Height="11" Fill="#7B65FF" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="4"/>
+                            <Ellipse Width="12" Height="12" Fill="#55D6F5" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"/>
+                            <Ellipse Width="12" Height="12" Fill="#7B65FF" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"/>
                         </Grid>
                     </Border>
-                    <TextBlock Text="Luma Profiles" FontWeight="SemiBold" Foreground="#EDF7FC" VerticalAlignment="Center"/>
-                    <Border Background="#122A34" CornerRadius="9" Padding="8,3" Margin="10,0,0,0">
-                        <TextBlock Text="CÓDIGO LIMPIO" FontSize="9" FontWeight="SemiBold" Foreground="#65DDF7"/>
-                    </Border>
+                    <TextBlock Text="Luma Profiles" FontSize="13" FontWeight="SemiBold" Foreground="#EDF7FC" VerticalAlignment="Center"/>
+                    <Border Width="1" Height="16" Background="#2A3B47" Margin="12,0"/>
+                    <TextBlock Text="MONITOR STUDIO" FontSize="9" FontWeight="SemiBold" Foreground="#718A9C" VerticalAlignment="Center"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Style="{StaticResource FlatButton}" Width="46" Height="45" Padding="0" HorizontalContentAlignment="Center" Content="—" Click="Minimize_Click"/>
-                    <Button Style="{StaticResource FlatButton}" Width="46" Height="45" Padding="0" HorizontalContentAlignment="Center" Content="□" Click="Maximize_Click"/>
-                    <Button Style="{StaticResource FlatButton}" Width="46" Height="45" Padding="0" HorizontalContentAlignment="Center" Content="×" Click="Close_Click"/>
+
+                <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Background="#0F1B23" BorderBrush="#1D303C" BorderThickness="1" CornerRadius="11" Padding="10,5">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="6" Height="6" Fill="#54D6A0" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                        <TextBlock Foreground="#8CA2B1" FontSize="10" VerticalAlignment="Center">
+                            <Run Text="CONTROL LOCAL"/><Run Text="  ·  "/><Run Text="{Binding Profiles.Count, Mode=OneWay}"/><Run Text=" PERFILES"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Button Grid.Column="2" Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click"
+                        Padding="10,6" Margin="0,0,8,0" VerticalAlignment="Center" HorizontalContentAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Código Limpio" Foreground="#BBD0DC" FontSize="11"/>
+                        <TextBlock Text=" ↗" Foreground="#55D6F5" FontSize="11"/>
+                    </StackPanel>
+                </Button>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Style="{StaticResource WindowButton}" Content="—" Click="Minimize_Click" ToolTip="Minimizar"/>
+                    <Button Style="{StaticResource WindowButton}" Content="□" Click="Maximize_Click" ToolTip="Maximizar o restaurar"/>
+                    <Button Style="{StaticResource CloseWindowButton}" Content="×" Click="Close_Click" ToolTip="Cerrar"/>
                 </StackPanel>
             </Grid>
         </Border>
