@@ -272,6 +272,136 @@
             </Setter>
         </Style>
 
+        <Style TargetType="ComboBox" x:Key="LanguageComboBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="MinHeight" Value="34"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="LanguageItem" Background="Transparent" CornerRadius="8" Padding="8,7" Margin="3,2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="34"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="24"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="27" Height="22" CornerRadius="6" Background="{DynamicResource ChipBrush}"
+                                                    BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Code}" Foreground="{DynamicResource MutedBrush}" FontSize="9"
+                                                           FontWeight="Bold" TextOptions.TextFormattingMode="Display"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="11"
+                                                       VerticalAlignment="Center"/>
+                                            <Border x:Name="LanguageCheck" Grid.Column="2" Width="18" Height="18" CornerRadius="9"
+                                                    Background="{DynamicResource AccentBrush}" Visibility="Collapsed" HorizontalAlignment="Right">
+                                                <Path Data="M 4 9 L 7.5 12.5 L 14 5.5" Stroke="#07141C" StrokeThickness="1.7"
+                                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="LanguageItem" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="LanguageItem" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+                                            <Setter TargetName="LanguageCheck" Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Grid>
+                                            <Border x:Name="LanguageField" Background="{DynamicResource SurfaceBrush}"
+                                                    BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
+                                                    CornerRadius="10" Padding="5,4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="28"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="24"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Width="24" Height="24" CornerRadius="7" Background="{DynamicResource SelectedBrush}">
+                                                        <TextBlock Text="&#xE774;" FontFamily="Segoe Fluent Icons" FontSize="13"
+                                                                   Foreground="{DynamicResource AccentBrush}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ContentPresenter Grid.Column="1" Margin="6,0,4,0"
+                                                                      Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                      VerticalAlignment="Center" TextElement.Foreground="{DynamicResource PrimaryTextBrush}"
+                                                                      TextElement.FontSize="11" TextElement.FontWeight="SemiBold"/>
+                                                    <Border Grid.Column="2" Width="22" Height="22" CornerRadius="7"
+                                                            Background="{DynamicResource ChipBrush}" HorizontalAlignment="Right">
+                                                        <Path x:Name="LanguageChevron" Data="M 2 3 L 6 7 L 10 3"
+                                                              Stroke="{DynamicResource MutedBrush}" StrokeThickness="1.6"
+                                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              RenderTransformOrigin="0.5,0.5">
+                                                            <Path.RenderTransform>
+                                                                <RotateTransform Angle="0"/>
+                                                            </Path.RenderTransform>
+                                                        </Path>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                            <Border x:Name="LanguageGlow" CornerRadius="10" BorderBrush="{DynamicResource AccentBrush}"
+                                                    BorderThickness="1" Opacity="0" IsHitTestVisible="False"/>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="LanguageField" Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+                                                <Setter TargetName="LanguageGlow" Property="Opacity" Value="0.28"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="LanguageField" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                                <Setter TargetName="LanguageGlow" Property="Opacity" Value="0.45"/>
+                                                <Setter TargetName="LanguageChevron" Property="RenderTransform">
+                                                    <Setter.Value><RotateTransform Angle="180"/></Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="6"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Slide">
+                                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1" CornerRadius="11" Padding="4" MinWidth="190">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="18" ShadowDepth="6" Opacity="0.35" Color="#000000"/>
+                                    </Border.Effect>
+                                    <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="ComboBox" x:Key="DestinationComboBox">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
             <Setter Property="MinHeight" Value="48"/>
@@ -553,7 +683,7 @@
                             </Grid>
                         </Border>
                     </Button>
-                    <ComboBox Width="112" MinHeight="32" Padding="9,5" Margin="4,0,0,0"
+                    <ComboBox Style="{StaticResource LanguageComboBox}" Width="148" Margin="6,0,0,0"
                               ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
                 </StackPanel>
 
