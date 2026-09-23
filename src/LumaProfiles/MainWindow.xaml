@@ -557,6 +557,7 @@
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Color creativo"><TextBlock><Run Text="✦    "/><Run Text="{Binding [CreativeColor]}"/></TextBlock></RadioButton>
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Entretenimiento"><TextBlock><Run Text="▶    "/><Run Text="{Binding [Entertainment]}"/></TextBlock></RadioButton>
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Rendimiento"><TextBlock><Run Text="ϟ    "/><Run Text="{Binding [Performance]}"/></TextBlock></RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Gamer"><TextBlock><Run Text="🎮    "/><Run Text="{Binding [Gamer]}"/></TextBlock></RadioButton>
                     <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Checked="Category_Click" Tag="Cuidado visual"><TextBlock><Run Text="◒    "/><Run Text="{Binding [EyeCare]}"/></TextBlock></RadioButton>
                 </StackPanel>
 

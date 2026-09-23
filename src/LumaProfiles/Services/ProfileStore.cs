@@ -111,6 +111,11 @@ public sealed class ProfileStore
         Profile("performance-esports", "eSports", "Rendimiento", "Contraste alto y sombras abiertas para partidas competitivas a máxima frecuencia.", "#FF445F", "#3975FF", 90, 90, 55, 0, 1.10, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
         Profile("performance-latency", "Respuesta rápida", "Rendimiento", "Imagen contenida para sesiones rápidas, priorizando legibilidad y rendimiento sostenido.", "#41D5E8", "#5168F2", 75, 85, 50, 0, 1.00, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
 
+        Profile("gamer-competitive", "Gamer competitivo", "Gamer", "Sombras abiertas, contraste alto y máxima claridad para partidas clasificatorias.", "#FF405C", "#3B7CFF", 90, 92, 54, 0, 1.10, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
+        Profile("gamer-immersive", "Gamer inmersivo", "Gamer", "Contraste cinematográfico y color amplio para aventuras, mundos abiertos y campañas.", "#7657F5", "#18C6C8", 80, 88, 60, 0, 1.03, 1.00, 0.99, 1.00, "Usuario (RGB)", "HighPerformance"),
+        Profile("gamer-shadows", "Gamer sombras", "Gamer", "Eleva el detalle en zonas oscuras sin lavar por completo los negros.", "#435A76", "#8BBBD0", 82, 84, 50, 0, 1.12, 1.00, 1.00, 1.00, "Neutro 6500 K", "HighPerformance"),
+        Profile("gamer-arcade", "Arcade vibrante", "Gamer", "Color expresivo y respuesta brillante para plataformas, carreras arcade y juegos casuales.", "#FF4FA3", "#5CE1E6", 85, 84, 66, 0, 1.04, 1.00, 0.98, 1.01, "Usuario (RGB)", "HighPerformance"),
+
         Profile("eyes-reading", "Lectura cálida", "Cuidado visual", "Fondo cálido y saturación baja para lectura prolongada de documentos y páginas web.", "#E4C98B", "#8D744F", 40, 78, 38, 0, 1.00, 1.00, 0.97, 0.88, "Usuario (RGB)"),
         Profile("eyes-office", "Oficina suave", "Cuidado visual", "Brillo medio y calidez ligera para hojas de cálculo, correo y tareas diarias.", "#B8D9C8", "#7696A0", 55, 76, 46, 0, 1.00, 1.00, 0.99, 0.94, "Usuario (RGB)"),
         Profile("eyes-sunset", "Atardecer", "Cuidado visual", "Transición cálida para las últimas horas de trabajo sin teñir demasiado la imagen.", "#E9B664", "#9C684D", 32, 72, 44, 0, 1.00, 1.00, 0.94, 0.80, "Usuario (RGB)"),
