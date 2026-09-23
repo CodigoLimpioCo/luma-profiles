@@ -10,8 +10,8 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 
 - 43 perfiles iniciales organizados por finalidad.
 - Siete modos inspirados en ASUS GameVisual: RTS/RPG, FPS, Cine, Escenario, Carrera, sRGB y MOBA.
-- Tres puntos de partida HDR: Gaming HDR, Cine HDR y Consola HDR.
-- Cinco estilos creativos: Vibrante realista, Piel natural, Atardecer dorado, Océano frío y Monocromo editorial.
+- Cinco perfiles HDR para juegos, cine, consola, habitaciones luminosas y salas oscuras.
+- Diez estilos creativos, desde Piel natural y Monocromo editorial hasta Bosque profundo y Cyber nocturno.
 - Veinte perfiles adicionales para fotografía, diseño, impresión, HDR, anime, deportes, documentales, eSports, estilos creativos y comodidad visual.
 - Natural, Referencia, Entretenimiento, Rendimiento, Cine cálido y tres niveles de cuidado visual.
 - Tarjetas con vista previa, descripción y valores principales.
