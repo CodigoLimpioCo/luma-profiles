@@ -4,7 +4,12 @@ Aplicación creada por **[Código Limpio](https://codigolimpio.com.co/)** · [Re
 
 Luma Profiles es una aplicación de escritorio para Windows que permite guardar, personalizar y aplicar perfiles de color a uno o varios monitores compatibles con DDC/CI.
 
-![Captura de Luma Profiles](docs/luma-profiles-v0.5.0-dark.png)
+![Captura de Luma Profiles](docs/app-screenshot.png)
+
+También puedes consultar la vista previa en tiempo real y el tema claro:
+
+![Vista previa en tiempo real](docs/luma-profiles-v0.7.0-live-preview.png)
+![Tema claro con contraste corregido](docs/luma-profiles-v0.7.2-light-contrast.png)
 
 ## Funciones
 
@@ -73,6 +78,10 @@ Luma Profiles no instala controladores ni necesita privilegios de administrador.
 ## Diseño
 
 Las capturas de los temas oscuro, claro y de la ventana maximizada se encuentran en `docs`. El concepto visual inicial está conservado en `docs/design-concept.png`.
+
+## Microsoft Store
+
+La guía de publicación, el manifiesto MSIX y el comando para generar `.msix`/`.msixupload` están en [docs/MICROSOFT-STORE.md](docs/MICROSOFT-STORE.md). Los recursos de marca para la ficha se encuentran en `store-assets/`.
 
 ## Licencia
 
