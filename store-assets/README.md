@@ -9,3 +9,5 @@ Para regenerarlos:
 ```
 
 La identidad de publicador, el nombre reservado y la firma del paquete se configuran durante el flujo de Partner Center; estos recursos no contienen certificados ni credenciales.
+
+Las capturas preparadas para la ficha están en `screenshots/`. Puedes cargarlas en Partner Center junto con el paquete y sustituirlas por capturas de equipos adicionales si la certificación lo requiere.
