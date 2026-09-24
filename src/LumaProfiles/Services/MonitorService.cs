@@ -10,6 +10,12 @@ public sealed class MonitorService
     private const string HighPerformancePlan = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
 
     public ApplyResult Apply(DisplayProfile profile, string target)
+        => ApplyCore(profile, target, updatePowerPlan: true);
+
+    public ApplyResult Preview(DisplayProfile profile, string target)
+        => ApplyCore(profile, target, updatePowerPlan: false);
+
+    private static ApplyResult ApplyCore(DisplayProfile profile, string target, bool updatePowerPlan)
     {
         var failures = new List<string>();
         var appliedDisplays = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -37,7 +43,7 @@ public sealed class MonitorService
             }
         }
 
-        if (target == "Ambas pantallas")
+        if (updatePowerPlan && target == "Ambas pantallas")
         {
             SetPowerPlan(profile.PowerPlan == "HighPerformance" ? HighPerformancePlan : BalancedPlan, failures);
         }

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using LumaProfiles.Models;
 
 namespace LumaProfiles.Services;
@@ -101,17 +102,49 @@ public static class LocalizationService
             {
                 var segments = resourceName.Split('.');
                 var destination = Path.Combine(LocalesDirectory, $"{segments[^2]}.lang");
-                if (File.Exists(destination)) continue;
-
                 using var source = assembly.GetManifestResourceStream(resourceName);
-                using var target = File.Create(destination);
-                source?.CopyTo(target);
+                if (source is not null) MergeMissingEntries(destination, source);
             }
         }
         catch
         {
             // A read-only install directory must not prevent the app from opening.
         }
+    }
+
+    private static void MergeMissingEntries(string destination, Stream bundledSource)
+    {
+        using var reader = new StreamReader(bundledSource, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+        var bundledLines = reader.ReadToEnd().Replace("\r\n", "\n").Split('\n');
+
+        if (!File.Exists(destination))
+        {
+            File.WriteAllLines(destination, bundledLines, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            return;
+        }
+
+        var installedKeys = File.ReadLines(destination)
+            .Select(EntryKey)
+            .Where(key => key is not null)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var missingEntries = bundledLines
+            .Where(line => EntryKey(line) is { } key && !installedKeys.Contains(key))
+            .ToArray();
+
+        if (missingEntries.Length == 0) return;
+
+        File.AppendAllLines(destination,
+            new[] { string.Empty, "# Added automatically from the bundled language update." }.Concat(missingEntries),
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+    }
+
+    private static string? EntryKey(string line)
+    {
+        var trimmed = line.Trim();
+        if (trimmed.Length == 0 || trimmed.StartsWith('#')) return null;
+        var separator = trimmed.IndexOf('=');
+        return separator > 0 ? trimmed[..separator].Trim() : null;
     }
 
     private static string Value(IReadOnlyDictionary<string, string> values, string key, string fallback) =>

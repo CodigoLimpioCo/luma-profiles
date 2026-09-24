@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Luma Profiles — Código Limpio" Icon="/Assets/LumaProfiles.ico" Height="920" Width="1540" MinHeight="760" MinWidth="1240"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
-        WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text">
+        WindowStyle="None" ResizeMode="CanResize" FontFamily="Segoe UI Variable Text" PreviewKeyDown="Window_PreviewKeyDown">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0"
                             CornerRadius="0" UseAeroCaptionButtons="False"/>
@@ -105,6 +105,37 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="#A92D3D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="CheckBox" x:Key="LivePreviewToggle">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Width="46" Height="26">
+                            <Border x:Name="Track" Background="{DynamicResource ChipBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                                    BorderThickness="1" CornerRadius="13"/>
+                            <Ellipse x:Name="Knob" Width="18" Height="18" Fill="{DynamicResource MutedBrush}"
+                                     HorizontalAlignment="Left" Margin="4,0,0,0"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Knob" Property="Fill" Value="#07141C"/>
+                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="Knob" Property="Margin" Value="0,0,4,0"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -958,6 +989,28 @@
                     <TextBlock Text="{Binding [AdjustProfile]}" FontSize="23" FontWeight="SemiBold"/>
                     <TextBlock Text="{Binding [CustomizeProfile]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,5,0,18"/>
 
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                            BorderThickness="1" CornerRadius="11" Padding="12,10" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE945;" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}"
+                                               FontSize="13" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                                    <TextBlock Text="{Binding [LivePreview]}" FontWeight="SemiBold" FontSize="12"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding [LivePreviewDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                           FontSize="10" TextWrapping="Wrap" Margin="0,4,12,0"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                                      IsChecked="{Binding IsLivePreviewEnabled, Mode=TwoWay}" VerticalAlignment="Center"
+                                      ToolTip="{Binding [LivePreview]}" AutomationProperties.Name="{Binding [LivePreview]}"/>
+                        </Grid>
+                    </Border>
+
                     <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="9" Padding="13" Margin="0,0,0,18">
                         <StackPanel>
                             <TextBlock Text="{Binding SelectedProfile.DisplayName}" FontSize="17" FontWeight="SemiBold"/>
@@ -1037,5 +1090,106 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
+
+        <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="100"
+              Background="#B8090E14" Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVisibility}}">
+            <Border Width="520" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                    BorderThickness="1" CornerRadius="20" Padding="0" ClipToBounds="True">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="36" ShadowDepth="12" Opacity="0.55" Color="#000000"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="7"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Border CornerRadius="20,20,0,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#55D6F5" Offset="0"/>
+                                <GradientStop Color="#7B65FF" Offset="0.55"/>
+                                <GradientStop Color="#D84FA8" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <Grid Grid.Row="1" Margin="28,25,28,26">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="54" Height="54" CornerRadius="16" Background="#FFFFFF" Padding="8">
+                                <Image Source="/Assets/LumaProfiles.ico" Stretch="Uniform"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="14,2,0,0">
+                                <TextBlock Text="Luma Profiles" FontSize="22" FontWeight="SemiBold"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <Border Background="{DynamicResource SelectedBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                                            BorderThickness="1" CornerRadius="7" Padding="7,3">
+                                        <TextBlock Foreground="{DynamicResource AccentBrush}" FontSize="10" FontWeight="SemiBold">
+                                            <Run Text="v"/><Run Text="{Binding AppVersion, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </Border>
+                                    <TextBlock Text="  ·  Windows" Foreground="{DynamicResource MutedBrush}" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Grid.Column="2" Style="{StaticResource FlatButton}" Click="CloseAbout_Click"
+                                    Width="34" Height="34" Padding="0" HorizontalContentAlignment="Center"
+                                    ToolTip="{Binding [Close]}" AutomationProperties.Name="{Binding [Close]}">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="13"/>
+                            </Button>
+                        </Grid>
+
+                        <TextBlock Grid.Row="1" Text="{Binding AboutDescription}" Foreground="{DynamicResource SecondaryTextBrush}"
+                                   TextWrapping="Wrap" LineHeight="20" Margin="0,24,0,20"/>
+
+                        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                                BorderThickness="1" CornerRadius="12" Padding="14,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="38" Height="38" CornerRadius="10" Background="#FFFFFF" Padding="5">
+                                    <Image Source="/Assets/CodigoLimpioLogo.png" Stretch="Uniform"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="11,0,12,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Código Limpio" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding [Intent]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click"
+                                        Padding="10,7" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="GitHub" FontWeight="SemiBold" FontSize="11"/>
+                                        <TextBlock Text="  &#xE8A7;" FontFamily="Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}" FontSize="10"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="3" Margin="0,22,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource SecondaryButton}" Content="{Binding [Website]}"
+                                    Click="OpenCodigoLimpio_Click" Padding="16,10" HorizontalAlignment="Left"/>
+                            <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="{Binding [Close]}"
+                                    Click="CloseAbout_Click" Padding="24,10"/>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

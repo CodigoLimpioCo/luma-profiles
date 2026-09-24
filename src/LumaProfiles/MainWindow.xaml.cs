@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LumaProfiles.Models;
 using LumaProfiles.Services;
 
@@ -15,6 +16,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly ProfileStore _profileStore = new();
     private readonly MonitorService _monitorService = new();
+    private readonly DispatcherTimer _livePreviewTimer = new() { Interval = TimeSpan.FromMilliseconds(280) };
     private DisplayProfile _selectedProfile;
     private string _selectedCategory = "Todos";
     private string _searchText = string.Empty;
@@ -22,6 +24,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string _statusMessage = string.Empty;
     private LanguageOption _selectedLanguage;
     private bool _isDarkTheme = true;
+    private bool _isLivePreviewEnabled;
+    private bool _isAboutOpen;
     private string _maximizeGlyph = "\uE922";
 
     public ObservableCollection<DisplayProfile> Profiles { get; }
@@ -33,13 +37,46 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public DisplayProfile SelectedProfile
     {
         get => _selectedProfile;
-        set => Set(ref _selectedProfile, value);
+        set
+        {
+            if (ReferenceEquals(_selectedProfile, value)) return;
+            _selectedProfile.PropertyChanged -= SelectedProfile_PropertyChanged;
+            _selectedProfile = value;
+            _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedProfile)));
+            ScheduleLivePreview();
+        }
     }
 
     public string SelectedMonitorTarget
     {
         get => _selectedMonitorTarget;
-        set => Set(ref _selectedMonitorTarget, value);
+        set
+        {
+            if (_selectedMonitorTarget == value) return;
+            _selectedMonitorTarget = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedMonitorTarget)));
+            ScheduleLivePreview();
+        }
+    }
+
+    public bool IsLivePreviewEnabled
+    {
+        get => _isLivePreviewEnabled;
+        set
+        {
+            if (_isLivePreviewEnabled == value) return;
+            _isLivePreviewEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLivePreviewEnabled)));
+            StatusMessage = T(value ? "LivePreviewOn" : "LivePreviewOff");
+            if (value) ScheduleLivePreview(); else _livePreviewTimer.Stop();
+        }
+    }
+
+    public bool IsAboutOpen
+    {
+        get => _isAboutOpen;
+        private set => Set(ref _isAboutOpen, value);
     }
 
     public string StatusMessage
@@ -68,6 +105,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
     public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+    public string AboutDescription => L("AboutBody", AppVersion);
     public bool IsDarkTheme => _isDarkTheme;
     public string ThemeLabel => T(_isDarkTheme ? "ThemeDark" : "ThemeLight");
     public string MaximizeTooltip => T(WindowState == WindowState.Maximized ? "Restore" : "Maximize");
@@ -85,6 +123,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ?? Languages.FirstOrDefault()
             ?? new LanguageOption("es", "Español", string.Empty);
         _selectedProfile = Profiles.First();
+        _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
         RefreshLocalizedOptions();
         RefreshVisibleProfiles();
@@ -93,6 +132,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         DataContext = this;
         StatusMessage = T("Ready");
         ApplyTheme();
+        _livePreviewTimer.Tick += LivePreviewTimer_Tick;
         StateChanged += (_, _) => UpdateWindowStateIcon();
         Loaded += (_, _) =>
         {
@@ -175,8 +215,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void OpenCodigoLimpioGithub_Click(object sender, RoutedEventArgs e) => OpenUrl("https://github.com/CodigoLimpioCo/luma-profiles");
 
-    private void About_Click(object sender, RoutedEventArgs e) =>
-        MessageBox.Show(this, L("AboutBody", AppVersion), T("AboutTitle"), MessageBoxButton.OK, MessageBoxImage.Information);
+    private void About_Click(object sender, RoutedEventArgs e) => IsAboutOpen = true;
+
+    private void CloseAbout_Click(object sender, RoutedEventArgs e) => IsAboutOpen = false;
+
+    private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Escape && IsAboutOpen)
+        {
+            IsAboutOpen = false;
+            e.Handled = true;
+        }
+    }
 
     private void OpenHdrSettings_Click(object sender, RoutedEventArgs e)
     {
@@ -227,6 +277,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _profileStore.Save(Profiles);
         Apply(SelectedProfile);
+    }
+
+    private void SelectedProfile_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DisplayProfile.Brightness) or nameof(DisplayProfile.Contrast)
+            or nameof(DisplayProfile.Saturation) or nameof(DisplayProfile.Hue)
+            or nameof(DisplayProfile.Gamma) or nameof(DisplayProfile.Red)
+            or nameof(DisplayProfile.Green) or nameof(DisplayProfile.Blue)
+            or nameof(DisplayProfile.ColorTemperature))
+        {
+            ScheduleLivePreview();
+        }
+    }
+
+    private void ScheduleLivePreview()
+    {
+        if (!_isLivePreviewEnabled) return;
+        _livePreviewTimer.Stop();
+        _livePreviewTimer.Start();
+    }
+
+    private void LivePreviewTimer_Tick(object? sender, EventArgs e)
+    {
+        _livePreviewTimer.Stop();
+        var result = _monitorService.Preview(SelectedProfile, SelectedMonitorTarget);
+        StatusMessage = FormatResult(T("LivePreviewApplied"), result);
     }
 
     private void RestoreDefaults_Click(object sender, RoutedEventArgs e)
@@ -282,6 +358,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void RaiseUiProperties()
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ProfileCountSubtitle)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AboutDescription)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDarkTheme)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ThemeLabel)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MaximizeTooltip)));

@@ -14,6 +14,9 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 - Versión visible y sección Acerca de con información del producto, autor y repositorio.
 - Selector de tema renovado con iconos Fluent de sol y luna e indicador del modo activo.
 - Selector de idiomas renovado con icono, códigos, selección visible y menú preparado para futuras traducciones.
+- Vista previa opcional en tiempo real para observar brillo, contraste, gamma, saturación y RGB mientras se ajustan.
+- Modal Acerca de integrado con el diseño de Luma Profiles, información de versión y enlaces de Código Limpio.
+- Actualización compatible de idiomas incorporados: agrega textos nuevos sin reemplazar traducciones existentes.
 - Siete modos inspirados en ASUS GameVisual: RTS/RPG, FPS, Cine, Escenario, Carrera, sRGB y MOBA.
 - Cinco perfiles HDR para juegos, cine, consola, habitaciones luminosas y salas oscuras.
 - Diez estilos creativos, desde Piel natural y Monocromo editorial hasta Bosque profundo y Cyber nocturno.
