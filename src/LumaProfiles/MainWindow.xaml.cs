@@ -388,7 +388,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ["SurfaceBrush"] = "#111B24", ["SurfaceAltBrush"] = "#17222C", ["InputBrush"] = "#17232D",
                 ["BorderThemeBrush"] = "#21313E", ["BorderStrongBrush"] = "#334756", ["PrimaryTextBrush"] = "#F5F8FB",
                 ["SecondaryTextBrush"] = "#DCE7F0", ["MutedBrush"] = "#9DAFC0", ["HoverBrush"] = "#1D2A36",
-                ["SelectedBrush"] = "#17303B", ["SecondaryButtonBrush"] = "#22303C", ["ChipBrush"] = "#22313D"
+                ["SelectedBrush"] = "#17303B", ["SecondaryButtonBrush"] = "#22303C", ["ChipBrush"] = "#22313D",
+                ["AccentTextBrush"] = "#8EDFF2"
             }
             : new Dictionary<string, string>
             {
@@ -397,7 +398,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ["SurfaceBrush"] = "#EEF4F7", ["SurfaceAltBrush"] = "#E8F1F5", ["InputBrush"] = "#FFFFFF",
                 ["BorderThemeBrush"] = "#CCD9E1", ["BorderStrongBrush"] = "#AFC2CE", ["PrimaryTextBrush"] = "#13232E",
                 ["SecondaryTextBrush"] = "#29404F", ["MutedBrush"] = "#607887", ["HoverBrush"] = "#E6F1F5",
-                ["SelectedBrush"] = "#D8F1F7", ["SecondaryButtonBrush"] = "#DDE9EF", ["ChipBrush"] = "#E3EDF2"
+                ["SelectedBrush"] = "#D8F1F7", ["SecondaryButtonBrush"] = "#DDE9EF", ["ChipBrush"] = "#E3EDF2",
+                ["AccentTextBrush"] = "#087B95"
             };
 
         foreach (var (key, color) in palette)

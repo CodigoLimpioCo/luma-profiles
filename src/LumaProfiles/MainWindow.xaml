@@ -32,6 +32,7 @@
         <SolidColorBrush x:Key="SecondaryButtonBrush" Color="#22303C"/>
         <SolidColorBrush x:Key="ChipBrush" Color="#22313D"/>
         <SolidColorBrush x:Key="AccentBrush" Color="#55D6F5"/>
+        <SolidColorBrush x:Key="AccentTextBrush" Color="#8EDFF2"/>
 
         <Style TargetType="Button" x:Key="FlatButton">
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
@@ -204,6 +205,14 @@
         <Style TargetType="Button" x:Key="SecondaryButton" BasedOn="{StaticResource PrimaryButton}">
             <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
             <Setter Property="Background" Value="{DynamicResource SecondaryButtonBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#07141C"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Foreground" Value="#07141C"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="Slider">
@@ -722,7 +731,7 @@
                         Padding="10,6" Margin="0,0,8,0" VerticalAlignment="Center" HorizontalContentAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Código Limpio" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11"/>
-                        <TextBlock Text=" ↗" Foreground="#55D6F5" FontSize="11"/>
+                        <TextBlock Text=" ↗" Foreground="{DynamicResource AccentTextBrush}" FontSize="11"/>
                     </StackPanel>
                 </Button>
 
@@ -769,7 +778,7 @@
                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding [Library]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     <Border Grid.Column="1" Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="8,3">
-                        <TextBlock Text="{Binding Profiles.Count}" Foreground="#8EDFF2" FontSize="10" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Profiles.Count}" Foreground="{DynamicResource AccentTextBrush}" FontSize="10" FontWeight="SemiBold"/>
                     </Border>
                 </Grid>
 
@@ -811,14 +820,14 @@
                                 <Grid>
                                     <TextBlock Text="{Binding [CreatedBy]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="9" VerticalAlignment="Center"/>
                                     <Border HorizontalAlignment="Right" Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="6,2">
-                                        <TextBlock Foreground="#8EDFF2" FontSize="9" FontWeight="SemiBold"><Run Text="v"/><Run Text="{Binding AppVersion, Mode=OneWay}"/></TextBlock>
+                                        <TextBlock Foreground="{DynamicResource AccentTextBrush}" FontSize="9" FontWeight="SemiBold"><Run Text="v"/><Run Text="{Binding AppVersion, Mode=OneWay}"/></TextBlock>
                                     </Border>
                                 </Grid>
                                 <TextBlock Text="Código Limpio" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" Margin="0,3,0,0"/>
                                 <TextBlock Text="{Binding [Intent]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,9,0,0">
-                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="{Binding [Website]}" Foreground="#55D6F5" Padding="0,4" Margin="0,0,13,0"/>
+                                <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click" Content="{Binding [Website]}" Foreground="{DynamicResource AccentTextBrush}" Padding="0,4" Margin="0,0,13,0"/>
                                 <Button Style="{StaticResource FlatButton}" Click="OpenCodigoLimpioGithub_Click" Content="GitHub ↗" Padding="0,4" Margin="0,0,13,0"/>
                                 <Button Style="{StaticResource FlatButton}" Click="About_Click" Content="{Binding [About]}" Padding="0,4"/>
                             </StackPanel>
@@ -911,7 +920,7 @@
                                             </Border>
                                             <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
                                                     Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
-                                                <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="#55D6F5"/>
+                                                <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}"/>
                                             </Border>
                                             <Button Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"
                                                     Tag="{Binding}" Click="ToggleFavorite_Click"
@@ -1014,16 +1023,16 @@
                     <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="9" Padding="13" Margin="0,0,0,18">
                         <StackPanel>
                             <TextBlock Text="{Binding SelectedProfile.DisplayName}" FontSize="17" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding SelectedProfile.DisplayCategory}" Foreground="#55D6F5" Margin="0,3,0,0"/>
+                            <TextBlock Text="{Binding SelectedProfile.DisplayCategory}" Foreground="{DynamicResource AccentTextBrush}" Margin="0,3,0,0"/>
                         </StackPanel>
                     </Border>
 
                     <TextBlock Text="{Binding [Image]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,11"/>
-                    <TextBlock><Run Text="{Binding [Brightness]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock><Run Text="{Binding [Brightness]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="{DynamicResource AccentTextBrush}"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Brightness, Mode=TwoWay}"/>
-                    <TextBlock><Run Text="{Binding [Contrast]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Contrast}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock><Run Text="{Binding [Contrast]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Contrast}" Foreground="{DynamicResource AccentTextBrush}"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Contrast, Mode=TwoWay}"/>
-                    <TextBlock><Run Text="{Binding [Gamma]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Gamma, StringFormat={}{0:F2}}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock><Run Text="{Binding [Gamma]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Gamma, StringFormat={}{0:F2}}" Foreground="{DynamicResource AccentTextBrush}"/></TextBlock>
                     <Slider Minimum="0.70" Maximum="1.30" TickFrequency="0.01" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Gamma, Mode=TwoWay}"/>
 
                     <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,4,0,16"/>
@@ -1031,9 +1040,9 @@
                     <TextBlock Text="{Binding [ColorTemperature]}" Margin="0,0,0,6"/>
                     <ComboBox ItemsSource="{Binding ColorTemperatureOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
                               SelectedValue="{Binding SelectedProfile.ColorTemperature, Mode=TwoWay}" Margin="0,0,0,14"/>
-                    <TextBlock><Run Text="{Binding [Saturation]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock><Run Text="{Binding [Saturation]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Saturation}" Foreground="{DynamicResource AccentTextBrush}"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" Value="{Binding SelectedProfile.Saturation, Mode=TwoWay}"/>
-                    <TextBlock ToolTip="{Binding [HueTooltip]}"><Run Text="{Binding [Hue]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Hue}" Foreground="#55D6F5"/></TextBlock>
+                    <TextBlock ToolTip="{Binding [HueTooltip]}"><Run Text="{Binding [Hue]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Hue}" Foreground="{DynamicResource AccentTextBrush}"/></TextBlock>
                     <Slider Minimum="-50" Maximum="50" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SelectedProfile.Hue, Mode=TwoWay}" ToolTip="{Binding [HueControlTooltip]}"/>
 
                     <TextBlock Text="{Binding [CustomRgb]}" FontWeight="SemiBold" Margin="0,2,0,10"/>
@@ -1079,7 +1088,7 @@
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="{Binding [ColorAccuracy]}" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                         <Border Background="#183641" CornerRadius="7" Padding="7,2" Margin="8,0,0,0">
-                                            <TextBlock Text="{Binding [Recommended]}" Foreground="#6DDDF4" FontSize="8" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding [Recommended]}" Foreground="{DynamicResource AccentTextBrush}" FontSize="8" FontWeight="SemiBold"/>
                                         </Border>
                                     </StackPanel>
                                     <TextBlock Text="{Binding [AccuracyAdvice]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" LineHeight="17" Margin="0,6,0,0"/>
