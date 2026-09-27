@@ -15,11 +15,40 @@ public sealed class MonitorService
     public ApplyResult Preview(DisplayProfile profile, string target)
         => ApplyCore(profile, target, updatePowerPlan: false);
 
+    public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections)
+    {
+        var saved = corrections.ToList();
+        var failures = new List<string>();
+        var applied = new List<AppliedMonitor>();
+
+        foreach (var monitor in EnumerateMonitors())
+        {
+            var correction = saved.FirstOrDefault(item =>
+                    !string.IsNullOrWhiteSpace(item.MonitorId) &&
+                    item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase))
+                ?? saved.FirstOrDefault(item =>
+                    item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+            if (correction is null) continue;
+
+            var profile = correction.ToProfile();
+            ApplyDdc(monitor.Handle, profile, failures, correction.ApplyImageControls);
+            if (!ApplyGamma(monitor.DeviceName, profile.Gamma, profile.Red, profile.Green, profile.Blue))
+            {
+                failures.Add($"No fue posible aplicar gamma en {monitor.DeviceName}.");
+            }
+
+            applied.Add(new AppliedMonitor(monitor.MonitorId, monitor.DeviceName));
+        }
+
+        return new ApplyResult(applied.Count, failures, applied);
+    }
+
     private static ApplyResult ApplyCore(DisplayProfile profile, string target, bool updatePowerPlan)
     {
         var failures = new List<string>();
         var appliedDisplays = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        var monitors = new List<AppliedMonitor>();
         NativeMethods.MonitorEnumProc callback = (monitor, _, _, _) =>
         {
             var info = NativeMethods.MONITORINFOEX.Create();
@@ -29,7 +58,8 @@ public sealed class MonitorService
             }
 
             appliedDisplays.Add(info.szDevice);
-            ApplyDdc(monitor, profile, failures);
+            monitors.Add(new AppliedMonitor(GetMonitorId(info.szDevice), info.szDevice));
+            ApplyDdc(monitor, profile, failures, applyImageControls: true);
             return true;
         };
 
@@ -53,36 +83,76 @@ public sealed class MonitorService
             failures.Add("No se encontró una pantalla activa para el destino seleccionado.");
         }
 
-        return new ApplyResult(appliedDisplays.Count, failures);
+        return new ApplyResult(appliedDisplays.Count, failures, monitors);
     }
 
     public ApplyResult RestoreNeutral(string target)
     {
-        var neutral = new DisplayProfile
+        var neutral = NeutralProfile();
+        var failures = new List<string>();
+        var applied = new List<AppliedMonitor>();
+        foreach (var monitor in EnumerateMonitors().Where(item => MatchesTarget(item.DeviceName, target)))
         {
-            Id = "neutral-repair",
-            Name = "Neutro",
-            Category = "Sistema",
-            Description = "Gamma neutra",
-            PreviewStart = "#000000",
-            PreviewEnd = "#000000",
-            Brightness = 80,
-            Contrast = 80,
-            Saturation = 50,
-            Gamma = 1.0,
-            Red = 1.0,
-            Green = 1.0,
-            Blue = 1.0
-        };
-        return Apply(neutral, target);
+            ApplyDdc(monitor.Handle, neutral, failures, applyImageControls: false);
+            if (!ApplyGamma(monitor.DeviceName, 1.0, 1.0, 1.0, 1.0))
+            {
+                failures.Add($"No fue posible aplicar gamma en {monitor.DeviceName}.");
+            }
+            applied.Add(new AppliedMonitor(monitor.MonitorId, monitor.DeviceName));
+        }
+
+        if (applied.Count == 0)
+        {
+            failures.Add("No se encontró una pantalla activa para el destino seleccionado.");
+        }
+
+        return new ApplyResult(applied.Count, failures, applied);
     }
+
+    public static MonitorColorCorrection CreateCorrection(
+        DisplayProfile profile, AppliedMonitor monitor, bool applyImageControls = true) => new()
+    {
+        MonitorId = monitor.MonitorId,
+        DeviceName = monitor.DeviceName,
+        ProfileId = profile.Id,
+        ProfileName = profile.Name,
+        ApplyImageControls = applyImageControls,
+        Brightness = profile.Brightness,
+        Contrast = profile.Contrast,
+        Saturation = profile.Saturation,
+        Hue = profile.Hue,
+        Gamma = profile.Gamma,
+        Red = profile.Red,
+        Green = profile.Green,
+        Blue = profile.Blue,
+        ColorTemperature = profile.ColorTemperature
+    };
+
+    public static DisplayProfile NeutralProfile() => new()
+    {
+        Id = "neutral-repair",
+        Name = "Neutro",
+        Category = "Sistema",
+        Description = "Gamma y balance RGB neutros",
+        PreviewStart = "#000000",
+        PreviewEnd = "#000000",
+        Brightness = 80,
+        Contrast = 80,
+        Saturation = 50,
+        Hue = 0,
+        Gamma = 1.0,
+        Red = 1.0,
+        Green = 1.0,
+        Blue = 1.0,
+        ColorTemperature = "Neutro 6500 K"
+    };
 
     private static bool MatchesTarget(string deviceName, string target) =>
         target == "Ambas pantallas" ||
         (target == "Pantalla 1" && deviceName.EndsWith("DISPLAY1", StringComparison.OrdinalIgnoreCase)) ||
         (target == "Pantalla 2" && deviceName.EndsWith("DISPLAY2", StringComparison.OrdinalIgnoreCase));
 
-    private static void ApplyDdc(IntPtr monitor, DisplayProfile profile, List<string> failures)
+    private static void ApplyDdc(IntPtr monitor, DisplayProfile profile, List<string> failures, bool applyImageControls)
     {
         if (!NativeMethods.GetNumberOfPhysicalMonitorsFromHMONITOR(monitor, out var count) || count == 0)
         {
@@ -101,24 +171,48 @@ public sealed class MonitorService
         {
             foreach (var physical in physicalMonitors)
             {
-                SetVcp(physical.hPhysicalMonitor, 0x10, (uint)profile.Brightness, "brillo", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x12, (uint)profile.Contrast, "contraste", failures);
+                if (applyImageControls)
+                {
+                    SetVcp(physical.hPhysicalMonitor, 0x10, (uint)profile.Brightness, "brillo", failures);
+                    SetVcp(physical.hPhysicalMonitor, 0x12, (uint)profile.Contrast, "contraste", failures);
+                }
                 SetVcp(physical.hPhysicalMonitor, 0x14, ColorPreset(profile.ColorTemperature), "temperatura de color", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x16, 100, "ganancia roja", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x18, 100, "ganancia verde", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x1A, 100, "ganancia azul", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x87, 0, "nitidez artificial", failures);
                 SetVcp(physical.hPhysicalMonitor, 0x8A, (uint)profile.Saturation, "saturación", failures);
-                if (profile.Hue != 0)
-                {
-                    SetVcp(physical.hPhysicalMonitor, 0x89, (uint)(profile.Hue + 50), "matiz", failures);
-                }
+                SetVcp(physical.hPhysicalMonitor, 0x89, (uint)(profile.Hue + 50), "matiz", failures);
             }
         }
         finally
         {
             NativeMethods.DestroyPhysicalMonitors(count, physicalMonitors);
         }
+    }
+
+    private static IReadOnlyList<ConnectedMonitor> EnumerateMonitors()
+    {
+        var monitors = new List<ConnectedMonitor>();
+        NativeMethods.MonitorEnumProc callback = (handle, _, _, _) =>
+        {
+            var info = NativeMethods.MONITORINFOEX.Create();
+            if (NativeMethods.GetMonitorInfo(handle, ref info))
+            {
+                monitors.Add(new ConnectedMonitor(handle, GetMonitorId(info.szDevice), info.szDevice));
+            }
+            return true;
+        };
+        NativeMethods.EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
+        return monitors;
+    }
+
+    private static string GetMonitorId(string deviceName)
+    {
+        var device = NativeMethods.DISPLAY_DEVICE.Create();
+        return NativeMethods.EnumDisplayDevices(deviceName, 0, ref device, 0) && !string.IsNullOrWhiteSpace(device.DeviceID)
+            ? device.DeviceID
+            : deviceName;
     }
 
     private static uint ColorPreset(string colorTemperature) => colorTemperature switch
@@ -220,6 +314,19 @@ public sealed class MonitorService
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct DISPLAY_DEVICE
+        {
+            public int cb;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
+            public uint StateFlags;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
+
+            public static DISPLAY_DEVICE Create() => new() { cb = Marshal.SizeOf<DISPLAY_DEVICE>() };
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct PHYSICAL_MONITOR
         {
             public IntPtr hPhysicalMonitor;
@@ -234,6 +341,10 @@ public sealed class MonitorService
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool EnumDisplayDevices(string lpDevice, uint deviceNumber, ref DISPLAY_DEVICE displayDevice, uint flags);
 
         [DllImport("dxva2.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -264,7 +375,11 @@ public sealed class MonitorService
     }
 }
 
-public sealed record ApplyResult(int DisplayCount, IReadOnlyList<string> Failures)
+internal sealed record ConnectedMonitor(IntPtr Handle, string MonitorId, string DeviceName);
+
+public sealed record AppliedMonitor(string MonitorId, string DeviceName);
+
+public sealed record ApplyResult(int DisplayCount, IReadOnlyList<string> Failures, IReadOnlyList<AppliedMonitor> AppliedMonitors)
 {
     public bool Success => DisplayCount > 0 && Failures.Count == 0;
 }

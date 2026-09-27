@@ -725,6 +725,15 @@
                     </Button>
                     <ComboBox Style="{StaticResource LanguageComboBox}" Width="148" Margin="6,0,0,0"
                               ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                    <Button Style="{StaticResource FlatButton}" Click="Settings_Click" Padding="0" Margin="6,0,0,0"
+                            Width="36" Height="36" HorizontalContentAlignment="Center"
+                            ToolTip="{Binding [Settings]}" AutomationProperties.Name="{Binding [Settings]}">
+                        <Border Width="34" Height="34" Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="10">
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe Fluent Icons" FontSize="15"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Button>
                 </StackPanel>
 
                 <Button Grid.Column="3" Style="{StaticResource FlatButton}" Click="OpenCodigoLimpio_Click"
@@ -1099,6 +1108,87 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
+
+        <Grid x:Name="SettingsOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="110"
+              Background="#B8090E14" Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVisibility}}">
+            <Border Width="520" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                    BorderThickness="1" CornerRadius="20" Padding="28,25">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="36" ShadowDepth="12" Opacity="0.55" Color="#000000"/>
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding [Settings]}" FontSize="22" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding [SettingsDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                       FontSize="11" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Style="{StaticResource FlatButton}" Click="CloseSettings_Click"
+                                Width="34" Height="34" Padding="0" HorizontalContentAlignment="Center"
+                                ToolTip="{Binding [Close]}" AutomationProperties.Name="{Binding [Close]}">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="13"/>
+                        </Button>
+                    </Grid>
+
+                    <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,22,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding [StartWithWindows]}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding [StartWithWindowsDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                           FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                                      IsChecked="{Binding StartWithWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding [Language]}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding [LanguageDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                           FontSize="10" Margin="0,4,16,0"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Style="{StaticResource LanguageComboBox}" Width="165"
+                                      ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding [DarkMode]}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding [DarkModeDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                           FontSize="10" Margin="0,4,16,0"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                                      IsChecked="{Binding IsDarkTheme, Mode=TwoWay}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <Button Grid.Row="4" Style="{StaticResource PrimaryButton}" Content="{Binding [Done]}"
+                            Click="CloseSettings_Click" Padding="24,10" Margin="0,22,0,0" HorizontalAlignment="Right"/>
+                </Grid>
+            </Border>
+        </Grid>
 
         <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="100"
               Background="#B8090E14" Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVisibility}}">

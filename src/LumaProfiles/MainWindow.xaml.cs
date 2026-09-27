@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LumaProfiles.Models;
@@ -15,8 +17,11 @@ namespace LumaProfiles;
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly ProfileStore _profileStore = new();
+    private readonly ApplicationSettingsStore _settingsStore = new();
     private readonly MonitorService _monitorService = new();
     private readonly DispatcherTimer _livePreviewTimer = new() { Interval = TimeSpan.FromMilliseconds(280) };
+    private readonly DispatcherTimer _reapplyTimer = new() { Interval = TimeSpan.FromMilliseconds(1600) };
+    private readonly ApplicationSettings _settings;
     private DisplayProfile _selectedProfile;
     private string _selectedCategory = "Todos";
     private string _searchText = string.Empty;
@@ -26,7 +31,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _isDarkTheme = true;
     private bool _isLivePreviewEnabled;
     private bool _isAboutOpen;
+    private bool _isSettingsOpen;
+    private bool _startWithWindows;
+    private bool _isReapplyingCorrections;
+    private bool _reapplyRequested;
     private string _maximizeGlyph = "\uE922";
+    private HwndSource? _windowSource;
+    private IntPtr _consoleDisplayNotification;
+    private IntPtr _sessionDisplayNotification;
 
     public ObservableCollection<DisplayProfile> Profiles { get; }
     public ObservableCollection<DisplayProfile> VisibleProfiles { get; } = [];
@@ -56,6 +68,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (_selectedMonitorTarget == value) return;
             _selectedMonitorTarget = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedMonitorTarget)));
+            _settings.SelectedMonitorTarget = value;
+            SaveSettings();
             ScheduleLivePreview();
         }
     }
@@ -79,6 +93,33 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         private set => Set(ref _isAboutOpen, value);
     }
 
+    public bool IsSettingsOpen
+    {
+        get => _isSettingsOpen;
+        private set => Set(ref _isSettingsOpen, value);
+    }
+
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set
+        {
+            if (_startWithWindows == value) return;
+            if (!_settingsStore.SetStartupEnabled(value))
+            {
+                StatusMessage = T("StartupChangeFailed");
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StartWithWindows)));
+                return;
+            }
+
+            _startWithWindows = value;
+            _settings.StartWithWindows = value;
+            SaveSettings();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StartWithWindows)));
+            StatusMessage = T(value ? "StartupEnabled" : "StartupDisabled");
+        }
+    }
+
     public string StatusMessage
     {
         get => _statusMessage;
@@ -93,6 +134,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (value is null || Equals(_selectedLanguage, value)) return;
             _selectedLanguage = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedLanguage)));
+            _settings.LanguageCode = value.Code;
+            SaveSettings();
             ApplyLanguage();
         }
     }
@@ -106,7 +149,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
     public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
     public string AboutDescription => L("AboutBody", AppVersion);
-    public bool IsDarkTheme => _isDarkTheme;
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            if (_isDarkTheme == value) return;
+            _isDarkTheme = value;
+            _settings.IsDarkTheme = value;
+            SaveSettings();
+            ApplyTheme();
+            RaiseUiProperties();
+        }
+    }
     public string ThemeLabel => T(_isDarkTheme ? "ThemeDark" : "ThemeLight");
     public string MaximizeTooltip => T(WindowState == WindowState.Maximized ? "Restore" : "Maximize");
     public string this[string key]
@@ -117,11 +172,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public MainWindow()
     {
+        _settings = _settingsStore.Load();
         Profiles = new ObservableCollection<DisplayProfile>(_profileStore.Load());
         Languages = LocalizationService.DiscoverLanguages();
-        _selectedLanguage = Languages.FirstOrDefault(item => item.Code == "es")
+        _selectedLanguage = Languages.FirstOrDefault(item => item.Code.Equals(_settings.LanguageCode, StringComparison.OrdinalIgnoreCase))
+            ?? Languages.FirstOrDefault(item => item.Code == "es")
             ?? Languages.FirstOrDefault()
             ?? new LanguageOption("es", "Español", string.Empty);
+        _isDarkTheme = _settings.IsDarkTheme;
+        _startWithWindows = _settings.StartWithWindows;
+        _selectedMonitorTarget = IsKnownMonitorTarget(_settings.SelectedMonitorTarget)
+            ? _settings.SelectedMonitorTarget
+            : "Ambas pantallas";
         _selectedProfile = Profiles.First();
         _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
@@ -133,12 +195,42 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         StatusMessage = T("Ready");
         ApplyTheme();
         _livePreviewTimer.Tick += LivePreviewTimer_Tick;
+        _reapplyTimer.Tick += ReapplyTimer_Tick;
         StateChanged += (_, _) => UpdateWindowStateIcon();
         Loaded += (_, _) =>
         {
             ProfilesScrollViewer.ScrollToTop();
             UpdateWindowStateIcon();
+            SchedulePersistentCorrectionReapply(immediate: true);
         };
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        var handle = new WindowInteropHelper(this).Handle;
+        _windowSource = HwndSource.FromHwnd(handle);
+        _windowSource?.AddHook(WindowMessageHook);
+        _consoleDisplayNotification = NativeMethods.RegisterPowerSettingNotification(
+            handle, NativeMethods.GuidConsoleDisplayState, NativeMethods.DeviceNotifyWindowHandle);
+        _sessionDisplayNotification = NativeMethods.RegisterPowerSettingNotification(
+            handle, NativeMethods.GuidSessionDisplayStatus, NativeMethods.DeviceNotifyWindowHandle);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _reapplyTimer.Stop();
+        _livePreviewTimer.Stop();
+        _windowSource?.RemoveHook(WindowMessageHook);
+        if (_consoleDisplayNotification != IntPtr.Zero)
+        {
+            NativeMethods.UnregisterPowerSettingNotification(_consoleDisplayNotification);
+        }
+        if (_sessionDisplayNotification != IntPtr.Zero)
+        {
+            NativeMethods.UnregisterPowerSettingNotification(_sessionDisplayNotification);
+        }
+        base.OnClosed(e);
     }
 
     private void Category_Click(object sender, RoutedEventArgs e)
@@ -206,10 +298,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Theme_Click(object sender, RoutedEventArgs e)
     {
-        _isDarkTheme = !_isDarkTheme;
-        ApplyTheme();
-        RaiseUiProperties();
+        IsDarkTheme = !IsDarkTheme;
     }
+
+    private void Settings_Click(object sender, RoutedEventArgs e) => IsSettingsOpen = true;
+
+    private void CloseSettings_Click(object sender, RoutedEventArgs e) => IsSettingsOpen = false;
 
     private void OpenCodigoLimpio_Click(object sender, RoutedEventArgs e) => OpenUrl("https://codigolimpio.com.co/");
 
@@ -221,9 +315,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (e.Key == System.Windows.Input.Key.Escape && IsAboutOpen)
+        if (e.Key == System.Windows.Input.Key.Escape && (IsAboutOpen || IsSettingsOpen))
         {
             IsAboutOpen = false;
+            IsSettingsOpen = false;
             e.Handled = true;
         }
     }
@@ -317,6 +412,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         StatusMessage = T("Neutralizing");
         var result = _monitorService.RestoreNeutral(SelectedMonitorTarget);
+        SaveMonitorCorrections(MonitorService.NeutralProfile(), result, applyImageControls: false);
         StatusMessage = FormatResult(T("Neutralized"), result);
     }
 
@@ -327,12 +423,117 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         foreach (var item in Profiles) item.IsActive = false;
         profile.IsActive = result.DisplayCount > 0;
         _profileStore.Save(Profiles);
+        SaveMonitorCorrections(profile, result, applyImageControls: true);
         StatusMessage = FormatResult(L("Applied", profile.DisplayName), result);
         if (profile.IsHdr)
         {
             StatusMessage += T("HdrReminder");
         }
     }
+
+    private void SaveMonitorCorrections(DisplayProfile profile, ApplyResult result, bool applyImageControls)
+    {
+        foreach (var monitor in result.AppliedMonitors)
+        {
+            _settings.MonitorCorrections.RemoveAll(item =>
+                item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+            _settings.MonitorCorrections.Add(MonitorService.CreateCorrection(profile, monitor, applyImageControls));
+        }
+        SaveSettings();
+    }
+
+    private void SchedulePersistentCorrectionReapply(bool immediate = false)
+    {
+        if (_settings.MonitorCorrections.Count == 0) return;
+        _reapplyTimer.Stop();
+        if (immediate)
+        {
+            ReapplyPersistentCorrections();
+        }
+        else
+        {
+            _reapplyTimer.Start();
+        }
+    }
+
+    private void ReapplyTimer_Tick(object? sender, EventArgs e)
+    {
+        _reapplyTimer.Stop();
+        ReapplyPersistentCorrections();
+    }
+
+    private async void ReapplyPersistentCorrections()
+    {
+        if (_isReapplyingCorrections)
+        {
+            _reapplyRequested = true;
+            return;
+        }
+
+        _isReapplyingCorrections = true;
+        var corrections = _settings.MonitorCorrections.ToArray();
+        try
+        {
+            var result = await Task.Run(() => _monitorService.Reapply(corrections));
+            if (result.DisplayCount > 0)
+            {
+                StatusMessage = FormatResult(T("PersistentCorrectionRestored"), result);
+            }
+        }
+        catch (Exception exception)
+        {
+            StatusMessage = L("PersistentCorrectionFailed", exception.Message);
+        }
+        finally
+        {
+            _isReapplyingCorrections = false;
+            if (_reapplyRequested)
+            {
+                _reapplyRequested = false;
+                SchedulePersistentCorrectionReapply();
+            }
+        }
+    }
+
+    private IntPtr WindowMessageHook(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (message is NativeMethods.WmDisplayChange or NativeMethods.WmDeviceChange)
+        {
+            SchedulePersistentCorrectionReapply();
+        }
+        else if (message == NativeMethods.WmPowerBroadcast)
+        {
+            var powerEvent = wParam.ToInt32();
+            if (powerEvent is NativeMethods.PbtApmResumeAutomatic or NativeMethods.PbtApmResumeSuspend)
+            {
+                SchedulePersistentCorrectionReapply();
+            }
+            else if (powerEvent == NativeMethods.PbtPowerSettingChange && lParam != IntPtr.Zero)
+            {
+                var setting = Marshal.PtrToStructure<NativeMethods.PowerBroadcastSetting>(lParam);
+                if (setting.DataLength > 0 && setting.Data != 0)
+                {
+                    SchedulePersistentCorrectionReapply();
+                }
+            }
+        }
+        return IntPtr.Zero;
+    }
+
+    private void SaveSettings()
+    {
+        try
+        {
+            _settingsStore.Save(_settings);
+        }
+        catch
+        {
+            StatusMessage = T("SettingsSaveFailed");
+        }
+    }
+
+    private static bool IsKnownMonitorTarget(string target) =>
+        target is "Ambas pantallas" or "Pantalla 1" or "Pantalla 2";
 
     private string FormatResult(string successText, ApplyResult result)
     {
@@ -418,5 +619,33 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         if (EqualityComparer<T>.Default.Equals(field, value)) return;
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    private static class NativeMethods
+    {
+        internal const int WmDisplayChange = 0x007E;
+        internal const int WmDeviceChange = 0x0219;
+        internal const int WmPowerBroadcast = 0x0218;
+        internal const int PbtApmResumeSuspend = 0x0007;
+        internal const int PbtApmResumeAutomatic = 0x0012;
+        internal const int PbtPowerSettingChange = 0x8013;
+        internal const int DeviceNotifyWindowHandle = 0;
+        internal static readonly Guid GuidConsoleDisplayState = new("6FE69556-704A-47A0-8F24-C28D936FDA47");
+        internal static readonly Guid GuidSessionDisplayStatus = new("2B84C20E-AD23-4DDF-93DB-05FFBD7EFCA5");
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PowerBroadcastSetting
+        {
+            public Guid PowerSetting;
+            public int DataLength;
+            public byte Data;
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr RegisterPowerSettingNotification(IntPtr recipient, in Guid powerSettingGuid, int flags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool UnregisterPowerSettingNotification(IntPtr handle);
     }
 }
