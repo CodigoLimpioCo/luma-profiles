@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace LumaProfiles.Models;
 
@@ -28,8 +29,11 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public required string PreviewEnd { get; init; }
     public string PowerPlan { get; init; } = "Balanced";
     public bool IsHdr { get; init; }
+    [JsonIgnore]
     public string DisplayName => _localizedName ?? Name;
+    [JsonIgnore]
     public string DisplayCategory => _localizedCategory ?? Category;
+    [JsonIgnore]
     public string DisplayDescription => _localizedDescription ?? Description;
 
     public int Brightness { get => _brightness; set => Set(ref _brightness, value); }
@@ -42,6 +46,7 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public double Blue { get => _blue; set => Set(ref _blue, value); }
     public string ColorTemperature { get => _colorTemperature; set => Set(ref _colorTemperature, value); }
 
+    [JsonIgnore]
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
     public bool IsFavorite { get => _isFavorite; set => Set(ref _isFavorite, value); }
 

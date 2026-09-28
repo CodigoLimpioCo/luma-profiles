@@ -33,6 +33,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _isAboutOpen;
     private bool _isSettingsOpen;
     private bool _startWithWindows;
+    private bool _leftPanelRequested;
+    private bool _rightPanelRequested;
+    private bool _isLeftPanelVisible;
+    private bool _isRightPanelVisible;
     private bool _isReapplyingCorrections;
     private bool _reapplyRequested;
     private string _maximizeGlyph = "\uE922";
@@ -164,6 +168,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     }
     public string ThemeLabel => T(_isDarkTheme ? "ThemeDark" : "ThemeLight");
     public string MaximizeTooltip => T(WindowState == WindowState.Maximized ? "Restore" : "Maximize");
+    public string LeftPanelTooltip => T(_isLeftPanelVisible ? "HideNavigationPanel" : "ShowNavigationPanel");
+    public string RightPanelTooltip => T(_isRightPanelVisible ? "HideColorPanel" : "ShowColorPanel");
     public string this[string key]
     {
         get => T(key);
@@ -181,6 +187,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ?? new LanguageOption("es", "Español", string.Empty);
         _isDarkTheme = _settings.IsDarkTheme;
         _startWithWindows = _settings.StartWithWindows;
+        _leftPanelRequested = _settings.IsLeftPanelOpen;
+        _rightPanelRequested = _settings.IsRightPanelOpen;
         _selectedMonitorTarget = IsKnownMonitorTarget(_settings.SelectedMonitorTarget)
             ? _settings.SelectedMonitorTarget
             : "Ambas pantallas";
@@ -201,6 +209,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             ProfilesScrollViewer.ScrollToTop();
             UpdateWindowStateIcon();
+            CaptureOriginalDisplayState();
             SchedulePersistentCorrectionReapply(immediate: true);
         };
     }
@@ -210,6 +219,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         base.OnSourceInitialized(e);
         var handle = new WindowInteropHelper(this).Handle;
         _windowSource = HwndSource.FromHwnd(handle);
+        FitWindowToCurrentMonitor(handle);
         _windowSource?.AddHook(WindowMessageHook);
         _consoleDisplayNotification = NativeMethods.RegisterPowerSettingNotification(
             handle, NativeMethods.GuidConsoleDisplayState, NativeMethods.DeviceNotifyWindowHandle);
@@ -231,6 +241,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             NativeMethods.UnregisterPowerSettingNotification(_sessionDisplayNotification);
         }
         base.OnClosed(e);
+    }
+
+    protected override void OnContentRendered(EventArgs e)
+    {
+        base.OnContentRendered(e);
+        ApplyResponsiveLayout(enforceCompactMode: true);
     }
 
     private void Category_Click(object sender, RoutedEventArgs e)
@@ -301,6 +317,95 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IsDarkTheme = !IsDarkTheme;
     }
 
+    private void ToggleLeftPanel_Click(object sender, RoutedEventArgs e)
+    {
+        _leftPanelRequested = !_isLeftPanelVisible;
+        if (_leftPanelRequested && ActualWidth < 1120)
+        {
+            _rightPanelRequested = false;
+        }
+        SavePanelPreferences();
+        ApplyResponsiveLayout(enforceCompactMode: false);
+    }
+
+    private void ToggleRightPanel_Click(object sender, RoutedEventArgs e)
+    {
+        _rightPanelRequested = !_isRightPanelVisible;
+        if (_rightPanelRequested && ActualWidth < 1120)
+        {
+            _leftPanelRequested = false;
+        }
+        SavePanelPreferences();
+        ApplyResponsiveLayout(enforceCompactMode: false);
+    }
+
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        ApplyResponsiveLayout(enforceCompactMode: true);
+    }
+
+    private void ApplyResponsiveLayout(bool enforceCompactMode)
+    {
+        var showLeft = _leftPanelRequested;
+        var showRight = _rightPanelRequested;
+
+        if (enforceCompactMode)
+        {
+            if (ActualWidth < 850)
+            {
+                showLeft = false;
+                showRight = false;
+            }
+            else if (ActualWidth < 1120)
+            {
+                showRight = false;
+            }
+        }
+
+        LeftSidebarColumn.Width = showLeft ? new GridLength(220) : new GridLength(0);
+        RightInspectorColumn.Width = showRight ? new GridLength(320) : new GridLength(0);
+        LeftSidebar.Visibility = showLeft ? Visibility.Visible : Visibility.Collapsed;
+        RightInspector.Visibility = showRight ? Visibility.Visible : Visibility.Collapsed;
+        _isLeftPanelVisible = showLeft;
+        _isRightPanelVisible = showRight;
+
+        TitleStatus.Visibility = ActualWidth >= 1280 ? Visibility.Visible : Visibility.Collapsed;
+        TitleWebsiteButton.Visibility = ActualWidth >= 1180 ? Visibility.Visible : Visibility.Collapsed;
+        TitleLanguageSelector.Visibility = ActualWidth >= 960 ? Visibility.Visible : Visibility.Collapsed;
+        BrandSubtitle.Visibility = ActualWidth >= 900 ? Visibility.Visible : Visibility.Collapsed;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LeftPanelTooltip)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RightPanelTooltip)));
+    }
+
+    private void SavePanelPreferences()
+    {
+        _settings.IsLeftPanelOpen = _leftPanelRequested;
+        _settings.IsRightPanelOpen = _rightPanelRequested;
+        SaveSettings();
+    }
+
+    private void FitWindowToCurrentMonitor(IntPtr handle)
+    {
+        var monitor = NativeMethods.MonitorFromWindow(handle, NativeMethods.MonitorDefaultToNearest);
+        var monitorInfo = new NativeMethods.MonitorInfo { Size = Marshal.SizeOf<NativeMethods.MonitorInfo>() };
+        if (monitor == IntPtr.Zero || !NativeMethods.GetMonitorInfo(monitor, ref monitorInfo)) return;
+
+        var fromDevice = _windowSource?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+        var topLeft = fromDevice.Transform(new Point(monitorInfo.WorkArea.Left, monitorInfo.WorkArea.Top));
+        var bottomRight = fromDevice.Transform(new Point(monitorInfo.WorkArea.Right, monitorInfo.WorkArea.Bottom));
+        var workWidth = Math.Max(1, bottomRight.X - topLeft.X);
+        var workHeight = Math.Max(1, bottomRight.Y - topLeft.Y);
+        const double outerMargin = 12;
+
+        MinWidth = Math.Min(720, Math.Max(1, workWidth - outerMargin * 2));
+        MinHeight = Math.Min(560, Math.Max(1, workHeight - outerMargin * 2));
+        Width = Math.Max(MinWidth, Math.Min(1280, workWidth - outerMargin * 2));
+        Height = Math.Max(MinHeight, Math.Min(820, workHeight - outerMargin * 2));
+        Left = topLeft.X + Math.Max(outerMargin, (workWidth - Width) / 2);
+        Top = topLeft.Y + Math.Max(outerMargin, (workHeight - Height) / 2);
+    }
+
     private void Settings_Click(object sender, RoutedEventArgs e) => IsSettingsOpen = true;
 
     private void CloseSettings_Click(object sender, RoutedEventArgs e) => IsSettingsOpen = false;
@@ -338,6 +443,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         MaximizeGlyph = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MaximizeTooltip)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LeftPanelTooltip)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RightPanelTooltip)));
     }
 
     private void EditProfile_Click(object sender, RoutedEventArgs e)
@@ -396,6 +503,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void LivePreviewTimer_Tick(object? sender, EventArgs e)
     {
         _livePreviewTimer.Stop();
+        CaptureOriginalDisplayState();
         var result = _monitorService.Preview(SelectedProfile, SelectedMonitorTarget);
         StatusMessage = FormatResult(T("LivePreviewApplied"), result);
     }
@@ -416,8 +524,30 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         StatusMessage = FormatResult(T("Neutralized"), result);
     }
 
+    private void RestoreOriginalDisplayState_Click(object sender, RoutedEventArgs e)
+    {
+        StatusMessage = T("RestoringOriginalState");
+        var result = _monitorService.RestoreOriginal(
+            _settings.OriginalMonitorStates, SelectedMonitorTarget, _settings.OriginalPowerPlan);
+
+        foreach (var monitor in result.AppliedMonitors)
+        {
+            _settings.MonitorCorrections.RemoveAll(item =>
+                item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase) ||
+                item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+        }
+        if (result.DisplayCount > 0)
+        {
+            foreach (var profile in Profiles) profile.IsActive = false;
+            _profileStore.Save(Profiles);
+        }
+        SaveSettings();
+        StatusMessage = FormatResult(T("OriginalStateRestored"), result);
+    }
+
     private void Apply(DisplayProfile profile)
     {
+        CaptureOriginalDisplayState();
         StatusMessage = L("Applying", profile.DisplayName);
         var result = _monitorService.Apply(profile, SelectedMonitorTarget);
         foreach (var item in Profiles) item.IsActive = false;
@@ -440,6 +570,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _settings.MonitorCorrections.Add(MonitorService.CreateCorrection(profile, monitor, applyImageControls));
         }
         SaveSettings();
+    }
+
+    private void CaptureOriginalDisplayState()
+    {
+        var captured = _monitorService.CaptureOriginalStates(
+            _settings.OriginalMonitorStates.Select(item => item.MonitorId));
+        var changed = false;
+        foreach (var state in captured)
+        {
+            _settings.OriginalMonitorStates.Add(state);
+            changed = true;
+        }
+        if (string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan))
+        {
+            _settings.OriginalPowerPlan = _monitorService.GetActivePowerPlan();
+            changed |= !string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan);
+        }
+        if (changed) SaveSettings();
     }
 
     private void SchedulePersistentCorrectionReapply(bool immediate = false)
@@ -623,6 +771,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static class NativeMethods
     {
+        internal const uint MonitorDefaultToNearest = 2;
         internal const int WmDisplayChange = 0x007E;
         internal const int WmDeviceChange = 0x0219;
         internal const int WmPowerBroadcast = 0x0218;
@@ -632,6 +781,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         internal const int DeviceNotifyWindowHandle = 0;
         internal static readonly Guid GuidConsoleDisplayState = new("6FE69556-704A-47A0-8F24-C28D936FDA47");
         internal static readonly Guid GuidSessionDisplayStatus = new("2B84C20E-AD23-4DDF-93DB-05FFBD7EFCA5");
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct NativeRect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        internal struct MonitorInfo
+        {
+            public int Size;
+            public NativeRect Monitor;
+            public NativeRect WorkArea;
+            public uint Flags;
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct PowerBroadcastSetting
@@ -647,5 +814,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool UnregisterPowerSettingNotification(IntPtr handle);
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo monitorInfo);
     }
 }

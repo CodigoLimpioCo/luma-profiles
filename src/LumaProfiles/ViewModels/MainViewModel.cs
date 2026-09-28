@@ -1,0 +1,841 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Reflection;
+using System.Windows.Input;
+using System.Windows.Threading;
+using LumaProfiles.Models;
+using LumaProfiles.Services;
+
+namespace LumaProfiles.ViewModels;
+
+public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName)
+{
+    public string ProcessName => Rule.ProcessName;
+}
+
+public sealed class MainViewModel : ObservableObject
+{
+    private const string BothDisplays = "Ambas pantallas";
+    private const string AllCategory = "Todos";
+    private const string FavoritesCategory = "Favoritos";
+
+    private readonly IMonitorService _monitor;
+    private readonly ProfileStore _profileStore;
+    private readonly ApplicationSettingsStore _settingsStore;
+    private readonly IShellService _shell;
+    private readonly ApplicationSettings _settings;
+    private readonly AppRuleEngine _ruleEngine = new("LumaProfiles");
+    private readonly DispatcherTimer _livePreviewTimer = new() { Interval = TimeSpan.FromMilliseconds(280) };
+    private readonly DispatcherTimer _reapplyTimer = new() { Interval = TimeSpan.FromMilliseconds(1600) };
+    private readonly DispatcherTimer _scheduleTimer = new() { Interval = TimeSpan.FromSeconds(30) };
+
+    private DisplayProfile _selectedProfile;
+    private LanguageOption _selectedLanguage;
+    private string _selectedCategory = AllCategory;
+    private string _searchText = string.Empty;
+    private string _selectedMonitorTarget;
+    private string _statusMessage = string.Empty;
+    private bool _isDarkTheme;
+    private bool _isLivePreviewEnabled;
+    private bool _isAboutOpen;
+    private bool _isSettingsOpen;
+    private bool _startWithWindows;
+    private bool _isReapplyingCorrections;
+    private bool _reapplyRequested;
+    private bool _isMaximized;
+    private bool _isLeftPanelVisible;
+    private bool _isRightPanelVisible;
+    private ScheduleSlot? _lastScheduleSlot;
+    private string? _profileBeforeRule;
+    private string _newRuleProcess = string.Empty;
+    private string? _newRuleProfileId;
+
+    public MainViewModel(
+        IMonitorService monitor,
+        ProfileStore profileStore,
+        ApplicationSettingsStore settingsStore,
+        IShellService shell)
+    {
+        _monitor = monitor;
+        _profileStore = profileStore;
+        _settingsStore = settingsStore;
+        _shell = shell;
+
+        _settings = settingsStore.Load();
+        Profiles = new ObservableCollection<DisplayProfile>(profileStore.Load());
+        Languages = LocalizationService.DiscoverLanguages();
+        _selectedLanguage = Languages.FirstOrDefault(item => item.Code.Equals(_settings.LanguageCode, StringComparison.OrdinalIgnoreCase))
+            ?? Languages.FirstOrDefault(item => item.Code == "es")
+            ?? Languages.FirstOrDefault()
+            ?? new LanguageOption("es", "Español", string.Empty);
+        _isDarkTheme = _settings.IsDarkTheme;
+        _startWithWindows = _settings.StartWithWindows;
+        _selectedMonitorTarget = IsKnownMonitorTarget(_settings.SelectedMonitorTarget)
+            ? _settings.SelectedMonitorTarget
+            : BothDisplays;
+        _selectedProfile = Profiles.First();
+        _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
+
+        LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
+        RefreshLocalizedOptions();
+        RefreshVisibleProfiles();
+        RefreshAppRules();
+
+        ApplyProfileCommand = new RelayCommand<DisplayProfile>(profile => { SelectedProfile = profile; Apply(profile); });
+        EditProfileCommand = new RelayCommand<DisplayProfile>(profile =>
+        {
+            SelectedProfile = profile;
+            StatusMessage = L("Editing", profile.DisplayName);
+        });
+        ToggleFavoriteCommand = new RelayCommand<DisplayProfile>(ToggleFavorite);
+        SaveAndApplyCommand = new RelayCommand(() =>
+        {
+            SaveProfiles();
+            Apply(SelectedProfile);
+        });
+        RestoreDefaultsCommand = new RelayCommand(RestoreDefaults);
+        RepairCommand = new RelayCommand(Neutralize);
+        RestoreOriginalCommand = new RelayCommand(RestoreOriginalDisplayState);
+        SelectCategoryCommand = new RelayCommand<string>(SelectCategory);
+        ToggleThemeCommand = new RelayCommand(() => IsDarkTheme = !IsDarkTheme);
+        OpenSettingsCommand = new RelayCommand(() => IsSettingsOpen = true);
+        CloseSettingsCommand = new RelayCommand(() => IsSettingsOpen = false);
+        OpenAboutCommand = new RelayCommand(() => IsAboutOpen = true);
+        CloseAboutCommand = new RelayCommand(() => IsAboutOpen = false);
+        CloseOverlaysCommand = new RelayCommand(() => { IsAboutOpen = false; IsSettingsOpen = false; });
+        OpenUrlCommand = new RelayCommand<string>(url => _shell.OpenUrl(url));
+        OpenHdrSettingsCommand = new RelayCommand(() => _shell.OpenUrl("ms-settings:display"));
+        ExportProfilesCommand = new RelayCommand(ExportProfiles);
+        ImportProfilesCommand = new RelayCommand(ImportProfiles);
+        AddAppRuleCommand = new RelayCommand(AddAppRule);
+        RemoveAppRuleCommand = new RelayCommand<AppRuleItem>(RemoveAppRule);
+
+        StatusMessage = T("Ready");
+        _livePreviewTimer.Tick += (_, _) => LivePreviewTick();
+        _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); _ = ReapplyPersistentCorrectionsAsync(); };
+        _scheduleTimer.Tick += (_, _) => EvaluateSchedule();
+    }
+
+    public event EventHandler? ScrollToTopRequested;
+
+    public ObservableCollection<DisplayProfile> Profiles { get; }
+    public ObservableCollection<DisplayProfile> VisibleProfiles { get; } = [];
+    public IReadOnlyList<LanguageOption> Languages { get; }
+    public ObservableCollection<LocalizedOption> MonitorTargets { get; } = [];
+    public ObservableCollection<LocalizedOption> ColorTemperatureOptions { get; } = [];
+    public ObservableCollection<AppRuleItem> AppRules { get; } = [];
+
+    public ICommand ApplyProfileCommand { get; }
+    public ICommand EditProfileCommand { get; }
+    public ICommand ToggleFavoriteCommand { get; }
+    public ICommand SaveAndApplyCommand { get; }
+    public ICommand RestoreDefaultsCommand { get; }
+    public ICommand RepairCommand { get; }
+    public ICommand RestoreOriginalCommand { get; }
+    public ICommand SelectCategoryCommand { get; }
+    public ICommand ToggleThemeCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
+    public ICommand CloseSettingsCommand { get; }
+    public ICommand OpenAboutCommand { get; }
+    public ICommand CloseAboutCommand { get; }
+    public ICommand CloseOverlaysCommand { get; }
+    public ICommand OpenUrlCommand { get; }
+    public ICommand OpenHdrSettingsCommand { get; }
+    public ICommand ExportProfilesCommand { get; }
+    public ICommand ImportProfilesCommand { get; }
+    public ICommand AddAppRuleCommand { get; }
+    public ICommand RemoveAppRuleCommand { get; }
+
+    public DisplayProfile SelectedProfile
+    {
+        get => _selectedProfile;
+        set
+        {
+            if (ReferenceEquals(_selectedProfile, value)) return;
+            _selectedProfile.PropertyChanged -= SelectedProfile_PropertyChanged;
+            _selectedProfile = value;
+            _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
+            Raise();
+            ScheduleLivePreview();
+        }
+    }
+
+    public string SelectedMonitorTarget
+    {
+        get => _selectedMonitorTarget;
+        set
+        {
+            if (!Set(ref _selectedMonitorTarget, value)) return;
+            _settings.SelectedMonitorTarget = value;
+            SaveSettings();
+            ScheduleLivePreview();
+        }
+    }
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            var trimmed = value?.Trim() ?? string.Empty;
+            if (!Set(ref _searchText, trimmed)) return;
+            RefreshVisibleProfiles();
+            ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
+            StatusMessage = string.IsNullOrWhiteSpace(_searchText)
+                ? L("CompleteLibrary", Profiles.Count)
+                : L("SearchResults", _searchText);
+        }
+    }
+
+    public bool IsLivePreviewEnabled
+    {
+        get => _isLivePreviewEnabled;
+        set
+        {
+            if (!Set(ref _isLivePreviewEnabled, value)) return;
+            StatusMessage = T(value ? "LivePreviewOn" : "LivePreviewOff");
+            if (value) ScheduleLivePreview(); else _livePreviewTimer.Stop();
+        }
+    }
+
+    public bool IsAboutOpen { get => _isAboutOpen; private set => Set(ref _isAboutOpen, value); }
+
+    public bool IsSettingsOpen { get => _isSettingsOpen; private set => Set(ref _isSettingsOpen, value); }
+
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set
+        {
+            if (_startWithWindows == value) return;
+            if (!_settingsStore.SetStartupEnabled(value))
+            {
+                StatusMessage = T("StartupChangeFailed");
+                Raise();
+                return;
+            }
+
+            _startWithWindows = value;
+            _settings.StartWithWindows = value;
+            SaveSettings();
+            Raise();
+            StatusMessage = T(value ? "StartupEnabled" : "StartupDisabled");
+        }
+    }
+
+    public bool MinimizeToTray
+    {
+        get => _settings.MinimizeToTray;
+        set
+        {
+            if (_settings.MinimizeToTray == value) return;
+            _settings.MinimizeToTray = value;
+            SaveSettings();
+            Raise();
+        }
+    }
+
+    public bool GlobalHotkeysEnabled
+    {
+        get => _settings.GlobalHotkeysEnabled;
+        set
+        {
+            if (_settings.GlobalHotkeysEnabled == value) return;
+            _settings.GlobalHotkeysEnabled = value;
+            SaveSettings();
+            Raise();
+        }
+    }
+
+    public bool ScheduleEnabled
+    {
+        get => _settings.Schedule.Enabled;
+        set
+        {
+            if (_settings.Schedule.Enabled == value) return;
+            _settings.Schedule.Enabled = value;
+            SaveSettings();
+            Raise();
+            RestartSchedule();
+        }
+    }
+
+    public string? ScheduleDayProfileId
+    {
+        get => _settings.Schedule.DayProfileId;
+        set
+        {
+            if (value is null || _settings.Schedule.DayProfileId == value) return;
+            _settings.Schedule.DayProfileId = value;
+            SaveSettings();
+            Raise();
+            RestartSchedule();
+        }
+    }
+
+    public string? ScheduleNightProfileId
+    {
+        get => _settings.Schedule.NightProfileId;
+        set
+        {
+            if (value is null || _settings.Schedule.NightProfileId == value) return;
+            _settings.Schedule.NightProfileId = value;
+            SaveSettings();
+            Raise();
+            RestartSchedule();
+        }
+    }
+
+    public string ScheduleDayStart
+    {
+        get => _settings.Schedule.DayStart;
+        set => SetScheduleTime(value, time => _settings.Schedule.DayStart = time, nameof(ScheduleDayStart));
+    }
+
+    public string ScheduleNightStart
+    {
+        get => _settings.Schedule.NightStart;
+        set => SetScheduleTime(value, time => _settings.Schedule.NightStart = time, nameof(ScheduleNightStart));
+    }
+
+    public string NewRuleProcess { get => _newRuleProcess; set => Set(ref _newRuleProcess, value); }
+
+    public string? NewRuleProfileId { get => _newRuleProfileId; set => Set(ref _newRuleProfileId, value); }
+
+    public string StatusMessage { get => _statusMessage; set => Set(ref _statusMessage, value); }
+
+    public LanguageOption SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set
+        {
+            if (value is null || Equals(_selectedLanguage, value)) return;
+            _selectedLanguage = value;
+            Raise();
+            _settings.LanguageCode = value.Code;
+            SaveSettings();
+            ApplyLanguage();
+        }
+    }
+
+    public bool IsDarkTheme
+    {
+        get => _isDarkTheme;
+        set
+        {
+            if (!Set(ref _isDarkTheme, value)) return;
+            _settings.IsDarkTheme = value;
+            SaveSettings();
+            RaiseUiProperties();
+        }
+    }
+
+    public bool LeftPanelRequested
+    {
+        get => _settings.IsLeftPanelOpen;
+        set => _settings.IsLeftPanelOpen = value;
+    }
+
+    public bool RightPanelRequested
+    {
+        get => _settings.IsRightPanelOpen;
+        set => _settings.IsRightPanelOpen = value;
+    }
+
+    public string MaximizeGlyph => _isMaximized ? "" : "";
+    public string MaximizeTooltip => T(_isMaximized ? "Restore" : "Maximize");
+    public string LeftPanelTooltip => T(_isLeftPanelVisible ? "HideNavigationPanel" : "ShowNavigationPanel");
+    public string RightPanelTooltip => T(_isRightPanelVisible ? "HideColorPanel" : "ShowColorPanel");
+    public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
+    public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+    public string AboutDescription => L("AboutBody", AppVersion);
+    public string ThemeLabel => T(_isDarkTheme ? "ThemeDark" : "ThemeLight");
+    public string LanguageCode => _selectedLanguage.Code;
+
+    // The empty setter keeps TwoWay-by-default bindings (e.g. Run.Text) from throwing on a read-only indexer.
+    public string this[string key]
+    {
+        get => T(key);
+        set { }
+    }
+
+    public IEnumerable<DisplayProfile> Favorites => Profiles.Where(profile => profile.IsFavorite);
+
+    /// <summary>Called by the window whenever chrome state changes so tooltips and glyphs stay in sync.</summary>
+    public void UpdateWindowState(bool isMaximized, bool isLeftPanelVisible, bool isRightPanelVisible)
+    {
+        _isMaximized = isMaximized;
+        _isLeftPanelVisible = isLeftPanelVisible;
+        _isRightPanelVisible = isRightPanelVisible;
+        Raise(nameof(MaximizeGlyph));
+        Raise(nameof(MaximizeTooltip));
+        Raise(nameof(LeftPanelTooltip));
+        Raise(nameof(RightPanelTooltip));
+    }
+
+    public void SavePanelPreferences() => SaveSettings();
+
+    /// <summary>Runs the start-up work once the window is on screen.</summary>
+    public void Initialize()
+    {
+        CaptureOriginalDisplayState();
+        SchedulePersistentCorrectionReapply(immediate: true);
+        _scheduleTimer.Start();
+        EvaluateSchedule();
+
+        var warning = _profileStore.LoadWarning ?? _settingsStore.LoadWarning;
+        if (warning is not null) StatusMessage = L("StorageWarning", System.IO.Path.GetFileName(warning));
+    }
+
+    public void Shutdown()
+    {
+        _reapplyTimer.Stop();
+        _livePreviewTimer.Stop();
+        _scheduleTimer.Stop();
+    }
+
+    /// <summary>Requests a debounced re-application of the saved per-monitor corrections.</summary>
+    public void RequestReapply() => SchedulePersistentCorrectionReapply();
+
+    public void OnForegroundProcessChanged(string? processName)
+    {
+        if (_settings.AppRules.Count == 0 && _ruleEngine.ActiveRule is null) return;
+
+        var decision = _ruleEngine.Evaluate(processName, _settings.AppRules);
+        switch (decision.Action)
+        {
+            case RuleAction.Apply when FindProfile(decision.Rule!.ProfileId) is { } profile:
+                _profileBeforeRule ??= Profiles.FirstOrDefault(item => item.IsActive)?.Id;
+                Apply(profile, L("RuleApplied", decision.Rule.ProcessName, profile.DisplayName));
+                break;
+            case RuleAction.Apply:
+                _ruleEngine.Reset();
+                break;
+            case RuleAction.Restore:
+                RestoreAfterRule();
+                break;
+        }
+    }
+
+    public void ApplyNeutral() => Neutralize();
+
+    /// <summary>Applies the next/previous profile, preferring favorites when there are any.</summary>
+    public void CycleProfile(int direction)
+    {
+        var pool = Favorites.ToList();
+        if (pool.Count == 0) pool = Profiles.ToList();
+        var current = Profiles.FirstOrDefault(item => item.IsActive)?.Id ?? SelectedProfile.Id;
+        if (Cycle(pool, current, direction) is not { } next) return;
+        SelectedProfile = next;
+        Apply(next);
+    }
+
+    internal static DisplayProfile? Cycle(IReadOnlyList<DisplayProfile> pool, string? currentId, int direction)
+    {
+        if (pool.Count == 0) return null;
+        var index = pool.ToList().FindIndex(item => item.Id == currentId);
+        var next = index < 0
+            ? (direction >= 0 ? 0 : pool.Count - 1)
+            : (((index + direction) % pool.Count) + pool.Count) % pool.Count;
+        return pool[next];
+    }
+
+    public void ApplyProfileById(string profileId)
+    {
+        if (FindProfile(profileId) is not { } profile) return;
+        SelectedProfile = profile;
+        Apply(profile);
+    }
+
+    private DisplayProfile? FindProfile(string id) =>
+        Profiles.FirstOrDefault(item => item.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+
+    private void SelectCategory(string category)
+    {
+        _selectedCategory = category;
+        RefreshVisibleProfiles();
+        ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
+        StatusMessage = category == AllCategory
+            ? L("ShowingProfiles", Profiles.Count)
+            : L("CategoryStatus", LocalizationService.Category(category, _selectedLanguage.Code));
+    }
+
+    private void RefreshVisibleProfiles()
+    {
+        VisibleProfiles.Clear();
+        foreach (var profile in Profiles.Where(MatchesCurrentFilter))
+        {
+            VisibleProfiles.Add(profile);
+        }
+    }
+
+    private bool MatchesCurrentFilter(DisplayProfile profile)
+    {
+        if (_selectedCategory == FavoritesCategory && !profile.IsFavorite) return false;
+        if (_selectedCategory != AllCategory && _selectedCategory != FavoritesCategory && profile.Category != _selectedCategory) return false;
+        if (string.IsNullOrWhiteSpace(_searchText)) return true;
+
+        return profile.DisplayName.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
+               profile.DisplayCategory.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
+               profile.DisplayDescription.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    private void ToggleFavorite(DisplayProfile profile)
+    {
+        profile.IsFavorite = !profile.IsFavorite;
+        SaveProfiles();
+        StatusMessage = L(profile.IsFavorite ? "FavoriteAdded" : "FavoriteRemoved", profile.DisplayName);
+        if (_selectedCategory == FavoritesCategory) RefreshVisibleProfiles();
+    }
+
+    private void RestoreDefaults()
+    {
+        var restored = _profileStore.GetDefault(SelectedProfile.Id);
+        SelectedProfile.CopyAdjustmentsFrom(restored);
+        SaveProfiles();
+        StatusMessage = L("Restored", SelectedProfile.DisplayName);
+    }
+
+    private void Neutralize()
+    {
+        StatusMessage = T("Neutralizing");
+        var result = _monitor.RestoreNeutral(SelectedMonitorTarget);
+        SaveMonitorCorrections(MonitorService.NeutralProfile(), result, applyImageControls: false);
+        foreach (var profile in Profiles) profile.IsActive = false;
+        StatusMessage = FormatResult(T("Neutralized"), result);
+    }
+
+    private void RestoreOriginalDisplayState()
+    {
+        StatusMessage = T("RestoringOriginalState");
+        var result = _monitor.RestoreOriginal(
+            _settings.OriginalMonitorStates, SelectedMonitorTarget, _settings.OriginalPowerPlan);
+
+        foreach (var monitor in result.AppliedMonitors)
+        {
+            _settings.MonitorCorrections.RemoveAll(item =>
+                item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase) ||
+                item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+        }
+        if (result.DisplayCount > 0)
+        {
+            foreach (var profile in Profiles) profile.IsActive = false;
+            SaveProfiles();
+        }
+        SaveSettings();
+        StatusMessage = FormatResult(T("OriginalStateRestored"), result);
+    }
+
+    private void Apply(DisplayProfile profile, string? statusOverride = null)
+    {
+        CaptureOriginalDisplayState();
+        StatusMessage = L("Applying", profile.DisplayName);
+        var result = _monitor.Apply(profile, SelectedMonitorTarget);
+        foreach (var item in Profiles) item.IsActive = false;
+        profile.IsActive = result.DisplayCount > 0;
+        SaveProfiles();
+        SaveMonitorCorrections(profile, result, applyImageControls: true);
+        StatusMessage = FormatResult(statusOverride ?? L("Applied", profile.DisplayName), result);
+        if (profile.IsHdr) StatusMessage += T("HdrReminder");
+    }
+
+    private void RestoreAfterRule()
+    {
+        var previous = _profileBeforeRule;
+        _profileBeforeRule = null;
+        if (previous is not null && FindProfile(previous) is { } profile)
+        {
+            Apply(profile, L("RuleRestored", profile.DisplayName));
+        }
+        else
+        {
+            Neutralize();
+        }
+    }
+
+    private void SaveMonitorCorrections(DisplayProfile profile, ApplyResult result, bool applyImageControls)
+    {
+        foreach (var monitor in result.AppliedMonitors)
+        {
+            _settings.MonitorCorrections.RemoveAll(item =>
+                item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+            _settings.MonitorCorrections.Add(MonitorService.CreateCorrection(profile, monitor, applyImageControls));
+        }
+        SaveSettings();
+    }
+
+    private void CaptureOriginalDisplayState()
+    {
+        var captured = _monitor.CaptureOriginalStates(
+            _settings.OriginalMonitorStates.Select(item => item.MonitorId));
+        var changed = false;
+        foreach (var state in captured)
+        {
+            _settings.OriginalMonitorStates.Add(state);
+            changed = true;
+        }
+        if (string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan))
+        {
+            _settings.OriginalPowerPlan = _monitor.GetActivePowerPlan();
+            changed |= !string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan);
+        }
+        if (changed) SaveSettings();
+    }
+
+    private void SelectedProfile_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DisplayProfile.Brightness) or nameof(DisplayProfile.Contrast)
+            or nameof(DisplayProfile.Saturation) or nameof(DisplayProfile.Hue)
+            or nameof(DisplayProfile.Gamma) or nameof(DisplayProfile.Red)
+            or nameof(DisplayProfile.Green) or nameof(DisplayProfile.Blue)
+            or nameof(DisplayProfile.ColorTemperature))
+        {
+            ScheduleLivePreview();
+        }
+    }
+
+    private void ScheduleLivePreview()
+    {
+        if (!_isLivePreviewEnabled) return;
+        _livePreviewTimer.Stop();
+        _livePreviewTimer.Start();
+    }
+
+    private void LivePreviewTick()
+    {
+        _livePreviewTimer.Stop();
+        CaptureOriginalDisplayState();
+        var result = _monitor.Preview(SelectedProfile, SelectedMonitorTarget);
+        StatusMessage = FormatResult(T("LivePreviewApplied"), result);
+    }
+
+    private void SchedulePersistentCorrectionReapply(bool immediate = false)
+    {
+        if (_settings.MonitorCorrections.Count == 0) return;
+        _reapplyTimer.Stop();
+        if (immediate)
+        {
+            _ = ReapplyPersistentCorrectionsAsync();
+        }
+        else
+        {
+            _reapplyTimer.Start();
+        }
+    }
+
+    private async Task ReapplyPersistentCorrectionsAsync()
+    {
+        if (_isReapplyingCorrections)
+        {
+            _reapplyRequested = true;
+            return;
+        }
+
+        _isReapplyingCorrections = true;
+        var corrections = _settings.MonitorCorrections.ToArray();
+        try
+        {
+            var result = await Task.Run(() => _monitor.Reapply(corrections));
+            if (result.DisplayCount > 0)
+            {
+                StatusMessage = FormatResult(T("PersistentCorrectionRestored"), result);
+            }
+        }
+        catch (Exception exception)
+        {
+            AppLog.Error("Re-applying persistent corrections failed.", exception);
+            StatusMessage = L("PersistentCorrectionFailed", exception.Message);
+        }
+        finally
+        {
+            _isReapplyingCorrections = false;
+            if (_reapplyRequested)
+            {
+                _reapplyRequested = false;
+                SchedulePersistentCorrectionReapply();
+            }
+        }
+    }
+
+    private void SetScheduleTime(string value, Action<string> assign, string propertyName)
+    {
+        if (!ScheduleResolver.TryParseTime(value, out var time))
+        {
+            StatusMessage = T("ScheduleInvalidTime");
+            Raise(propertyName);
+            return;
+        }
+
+        assign(time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture));
+        SaveSettings();
+        Raise(propertyName);
+        RestartSchedule();
+    }
+
+    private void RestartSchedule()
+    {
+        _lastScheduleSlot = null;
+        EvaluateSchedule();
+    }
+
+    /// <summary>Applies the day/night profile once per boundary crossing so manual changes are not overridden.</summary>
+    internal void EvaluateSchedule()
+    {
+        if (!_settings.Schedule.Enabled || _ruleEngine.ActiveRule is not null) return;
+
+        var slot = ScheduleResolver.Resolve(_settings.Schedule, TimeOnly.FromDateTime(DateTime.Now));
+        if (slot == _lastScheduleSlot) return;
+        _lastScheduleSlot = slot;
+
+        if (FindProfile(ScheduleResolver.ProfileFor(_settings.Schedule, slot)) is not { } profile) return;
+        Apply(profile, L("ScheduleApplied", profile.DisplayName));
+    }
+
+    private void AddAppRule()
+    {
+        var process = AppRuleEngine.Normalize(NewRuleProcess ?? string.Empty);
+        if (process.Length == 0 || string.IsNullOrWhiteSpace(NewRuleProfileId)) return;
+
+        _settings.AppRules.RemoveAll(rule => AppRuleEngine.Normalize(rule.ProcessName).Equals(process, StringComparison.OrdinalIgnoreCase));
+        _settings.AppRules.Add(new AppProfileRule { ProcessName = process, ProfileId = NewRuleProfileId });
+        SaveSettings();
+        NewRuleProcess = string.Empty;
+        _ruleEngine.Reset();
+        RefreshAppRules();
+    }
+
+    private void RemoveAppRule(AppRuleItem item)
+    {
+        _settings.AppRules.Remove(item.Rule);
+        SaveSettings();
+        if (ReferenceEquals(_ruleEngine.ActiveRule, item.Rule)) RestoreAfterRule();
+        _ruleEngine.Reset();
+        RefreshAppRules();
+    }
+
+    private void RefreshAppRules()
+    {
+        AppRules.Clear();
+        foreach (var rule in _settings.AppRules)
+        {
+            var name = FindProfile(rule.ProfileId)?.DisplayName ?? rule.ProfileId;
+            AppRules.Add(new AppRuleItem(rule, name));
+        }
+    }
+
+    private void ExportProfiles()
+    {
+        try
+        {
+            var path = _shell.PickSaveFile(T("ExportProfiles"), "luma-profiles.json");
+            if (path is null) return;
+            _profileStore.Export(path, Profiles);
+            StatusMessage = L("ProfilesExported", System.IO.Path.GetFileName(path));
+        }
+        catch (Exception exception)
+        {
+            AppLog.Error("Exporting profiles failed.", exception);
+            StatusMessage = L("ProfilesTransferFailed", exception.Message);
+        }
+    }
+
+    private void ImportProfiles()
+    {
+        try
+        {
+            var path = _shell.PickOpenFile(T("ImportProfiles"));
+            if (path is null) return;
+            var updated = _profileStore.Import(path, Profiles);
+            SaveProfiles();
+            if (_selectedCategory == FavoritesCategory) RefreshVisibleProfiles();
+            StatusMessage = L("ProfilesImported", updated);
+        }
+        catch (Exception exception)
+        {
+            AppLog.Error("Importing profiles failed.", exception);
+            StatusMessage = L("ProfilesTransferFailed", exception.Message);
+        }
+    }
+
+    private void SaveProfiles()
+    {
+        try
+        {
+            _profileStore.Save(Profiles);
+        }
+        catch (Exception exception)
+        {
+            AppLog.Error("Saving profiles failed.", exception);
+            StatusMessage = T("SettingsSaveFailed");
+        }
+    }
+
+    private void SaveSettings()
+    {
+        try
+        {
+            _settingsStore.Save(_settings);
+        }
+        catch (Exception exception)
+        {
+            AppLog.Error("Saving settings failed.", exception);
+            StatusMessage = T("SettingsSaveFailed");
+        }
+    }
+
+    private static bool IsKnownMonitorTarget(string target) =>
+        target is BothDisplays or "Pantalla 1" or "Pantalla 2";
+
+    private string FormatResult(string successText, ApplyResult result)
+    {
+        if (result.Failures.Count == 0)
+        {
+            return L("AppliedDisplays", successText, result.DisplayCount);
+        }
+
+        var summary = string.Join(" ", result.Failures.Distinct().Take(2));
+        return L("AppliedWarnings", successText, result.DisplayCount, summary);
+    }
+
+    private void ApplyLanguage()
+    {
+        LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
+        RefreshLocalizedOptions();
+        RefreshVisibleProfiles();
+        RefreshAppRules();
+        StatusMessage = T("Ready");
+        RaiseUiProperties();
+        Raise(nameof(LanguageCode));
+        Raise("Item[]");
+        Raise(nameof(LeftPanelTooltip));
+        Raise(nameof(RightPanelTooltip));
+    }
+
+    private void RaiseUiProperties()
+    {
+        Raise(nameof(ProfileCountSubtitle));
+        Raise(nameof(AboutDescription));
+        Raise(nameof(IsDarkTheme));
+        Raise(nameof(ThemeLabel));
+        Raise(nameof(MaximizeTooltip));
+    }
+
+    private void RefreshLocalizedOptions()
+    {
+        MonitorTargets.Clear();
+        MonitorTargets.Add(new LocalizedOption(BothDisplays, T("BothDisplays")));
+        MonitorTargets.Add(new LocalizedOption("Pantalla 1", T("Display1")));
+        MonitorTargets.Add(new LocalizedOption("Pantalla 2", T("Display2")));
+
+        ColorTemperatureOptions.Clear();
+        ColorTemperatureOptions.Add(new LocalizedOption("Usuario (RGB)", T("UserRgb")));
+        ColorTemperatureOptions.Add(new LocalizedOption("Cálido 5000 K", T("Warm5000")));
+        ColorTemperatureOptions.Add(new LocalizedOption("Neutro 6500 K", T("Neutral6500")));
+        ColorTemperatureOptions.Add(new LocalizedOption("Frío 7500 K", T("Cool7500")));
+    }
+
+    private string T(string key) => LocalizationService.Text(key, _selectedLanguage.Code);
+
+    private string L(string key, params object[] values) =>
+        LocalizationService.Format(key, _selectedLanguage.Code, values);
+}

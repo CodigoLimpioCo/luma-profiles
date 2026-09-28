@@ -9,6 +9,27 @@ public sealed partial class ApplicationSettings
     public List<MonitorColorCorrection> MonitorCorrections { get; set; } = [];
     public List<OriginalMonitorState> OriginalMonitorStates { get; set; } = [];
     public string? OriginalPowerPlan { get; set; }
+    public bool MinimizeToTray { get; set; }
+    public bool GlobalHotkeysEnabled { get; set; } = true;
+    public ScheduleSettings Schedule { get; set; } = new();
+    public List<AppProfileRule> AppRules { get; set; } = [];
+}
+
+/// <summary>Switches between a day and a night profile at fixed local times.</summary>
+public sealed class ScheduleSettings
+{
+    public bool Enabled { get; set; }
+    public string DayProfileId { get; set; } = "natural";
+    public string NightProfileId { get; set; } = "eyes-night";
+    public string DayStart { get; set; } = "07:00";
+    public string NightStart { get; set; } = "20:00";
+}
+
+/// <summary>Applies a profile while the named process owns the foreground window.</summary>
+public sealed class AppProfileRule
+{
+    public string ProcessName { get; set; } = string.Empty;
+    public string ProfileId { get; set; } = string.Empty;
 }
 
 public sealed class OriginalMonitorState

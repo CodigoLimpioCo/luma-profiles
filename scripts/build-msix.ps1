@@ -38,7 +38,8 @@ $manifest = (Get-Content -LiteralPath $manifestTemplate -Raw).
     Replace('__PUBLISHER__', $Publisher).
     Replace('__PUBLISHER_DISPLAY_NAME__', $PublisherDisplayName).
     Replace('__VERSION__', $packageVersion)
-Set-Content -LiteralPath (Join-Path $stage 'AppxManifest.xml') -Value $manifest -Encoding utf8NoBOM
+$manifestPath = Join-Path $stage 'AppxManifest.xml'
+[System.IO.File]::WriteAllText($manifestPath, $manifest, (New-Object System.Text.UTF8Encoding $false))
 
 $makeAppx = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter MakeAppx.exe -ErrorAction SilentlyContinue |
     Where-Object FullName -Match '\\x64\\MakeAppx\.exe$' | Select-Object -First 1
@@ -50,7 +51,10 @@ $uploadWorkspace = Join-Path $OutputDirectory 'upload-workspace'
 if (Test-Path $uploadWorkspace) { Remove-Item -LiteralPath $uploadWorkspace -Recurse -Force }
 [System.IO.Directory]::CreateDirectory($uploadWorkspace) | Out-Null
 Copy-Item -LiteralPath $package -Destination $uploadWorkspace
-Compress-Archive -Path (Join-Path $uploadWorkspace '*') -DestinationPath $upload -CompressionLevel Optimal
+$uploadZip = [System.IO.Path]::ChangeExtension($upload, '.zip')
+if (Test-Path $uploadZip) { Remove-Item -LiteralPath $uploadZip -Force }
+Compress-Archive -Path (Join-Path $uploadWorkspace '*') -DestinationPath $uploadZip -CompressionLevel Optimal
+Move-Item -LiteralPath $uploadZip -Destination $upload -Force
 Write-Host "MSIX: $package" -ForegroundColor Green
 Write-Host "Carga Partner Center: $upload" -ForegroundColor Green
 Write-Host "Nota: Microsoft Store firma el paquete durante la publicación." -ForegroundColor Yellow

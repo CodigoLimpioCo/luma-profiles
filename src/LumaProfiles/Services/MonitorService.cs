@@ -4,7 +4,18 @@ using LumaProfiles.Models;
 
 namespace LumaProfiles.Services;
 
-public sealed class MonitorService
+public interface IMonitorService
+{
+    ApplyResult Apply(DisplayProfile profile, string target);
+    ApplyResult Preview(DisplayProfile profile, string target);
+    IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds);
+    string? GetActivePowerPlan();
+    ApplyResult RestoreOriginal(IEnumerable<OriginalMonitorState> originalStates, string target, string? originalPowerPlan);
+    ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections);
+    ApplyResult RestoreNeutral(string target);
+}
+
+public sealed class MonitorService : IMonitorService
 {
     private static readonly byte[] ManagedVcpCodes = [0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x87, 0x8A, 0x89];
     private const string BalancedPlan = "381b4222-f694-41f0-9685-ff5bb260df2e";
@@ -153,7 +164,7 @@ public sealed class MonitorService
         return new ApplyResult(applied.Count, failures, applied);
     }
 
-    private static ApplyResult ApplyCore(DisplayProfile profile, string target, bool updatePowerPlan)
+    private ApplyResult ApplyCore(DisplayProfile profile, string target, bool updatePowerPlan)
     {
         var failures = new List<string>();
         var appliedDisplays = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -257,7 +268,7 @@ public sealed class MonitorService
         ColorTemperature = "Neutro 6500 K"
     };
 
-    private static bool MatchesTarget(string deviceName, string target) =>
+    internal static bool MatchesTarget(string deviceName, string target) =>
         target == "Ambas pantallas" ||
         (target == "Pantalla 1" && deviceName.EndsWith("DISPLAY1", StringComparison.OrdinalIgnoreCase)) ||
         (target == "Pantalla 2" && deviceName.EndsWith("DISPLAY2", StringComparison.OrdinalIgnoreCase));
@@ -355,7 +366,7 @@ public sealed class MonitorService
             : deviceName;
     }
 
-    private static uint ColorPreset(string colorTemperature) => colorTemperature switch
+    internal static uint ColorPreset(string colorTemperature) => colorTemperature switch
     {
         "Cálido 5000 K" => 4,
         "Neutro 6500 K" => 5,
@@ -367,6 +378,7 @@ public sealed class MonitorService
     {
         if (!NativeMethods.SetVCPFeature(monitor, code, value))
         {
+            AppLog.Warn($"DDC/CI rejected {label} (VCP 0x{code:X2}, value {value}).");
             failures.Add($"La pantalla rechazó el ajuste de {label}.");
         }
     }
@@ -376,6 +388,23 @@ public sealed class MonitorService
         var hdc = NativeMethods.CreateDC("DISPLAY", display, null, IntPtr.Zero);
         if (hdc == IntPtr.Zero) return false;
 
+        var ramp = BuildGammaRamp(gamma, red, green, blue);
+
+        var handle = GCHandle.Alloc(ramp, GCHandleType.Pinned);
+        try
+        {
+            return NativeMethods.SetDeviceGammaRamp(hdc, handle.AddrOfPinnedObject());
+        }
+        finally
+        {
+            handle.Free();
+            NativeMethods.DeleteDC(hdc);
+        }
+    }
+
+    /// <summary>Builds the 3x256 gamma ramp (red, green, blue) applied through SetDeviceGammaRamp.</summary>
+    internal static ushort[] BuildGammaRamp(double gamma, double red, double green, double blue)
+    {
         var ramp = new ushort[768];
         var gains = new[] { red, green, blue };
         for (var channel = 0; channel < 3; channel++)
@@ -388,16 +417,7 @@ public sealed class MonitorService
             }
         }
 
-        var handle = GCHandle.Alloc(ramp, GCHandleType.Pinned);
-        try
-        {
-            return NativeMethods.SetDeviceGammaRamp(hdc, handle.AddrOfPinnedObject());
-        }
-        finally
-        {
-            handle.Free();
-            NativeMethods.DeleteDC(hdc);
-        }
+        return ramp;
     }
 
     private static ushort[]? ReadGammaRamp(string display)
@@ -454,6 +474,7 @@ public sealed class MonitorService
         }
         catch (Exception exception)
         {
+            AppLog.Warn("powercfg failed.", exception);
             failures.Add($"Plan de energía: {exception.Message}");
         }
     }

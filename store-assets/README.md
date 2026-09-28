@@ -1,13 +1,47 @@
-# Recursos de Microsoft Store
+# Recursos de Microsoft Store — todo organizado para subir
 
-Estos PNG se generan con `scripts/generate-store-assets.ps1` a partir de la marca de Luma Profiles. Se incluyen variantes cuadradas para el paquete MSIX, el logo de ficha y un recurso panorámico para el mosaico de inicio.
+## 1) Capturas de pantalla (obligatorio, mínimo 1, recomendado 4)
 
-Para regenerarlos:
+Ya están tomadas de la versión actual de la app y copiadas en 3 carpetas (mismas 4 imágenes en los 3 idiomas):
+
+| Carpeta | Va en Partner Center → Store listings → idioma → Screenshots (Desktop) |
+|---|---|
+| `capturas-es-es/` | Spanish (Spain) |
+| `capturas-en-us/` | English (United States) |
+| `capturas-pt-br/` | Portuguese (Brazil) |
+
+Cada carpeta contiene:
+- `1-biblioteca.png` — Biblioteca de perfiles
+- `2-tema-claro.png` — Tema claro
+- `3-panel-ajuste.png` — Panel de ajuste de perfil (Gaming HDR)
+- `4-cuidado-visual.png` — Categoría Cuidado visual
+
+Estado de subida ahora mismo:
+- Spanish (Spain): 1 de 4 subida (biblioteca). Faltan 3.
+- English (United States) y Portuguese (Brazil): 0 subidas. Faltan las 4.
+
+## 2) Logos de Store — NUEVOS, generados con las medidas exactas
+
+Carpeta: **`logos-microsoft-store/`**
+
+| Archivo | Sección en Partner Center | Medida |
+|---|---|---|
+| `poster-art-720x1080.png` | Store logos → 9:16 Poster art | 720 x 1080 |
+| `poster-art-1440x2160.png` | Store logos → 9:16 Poster art (alta resolución) | 1440 x 2160 |
+| `box-art-1080x1080.png` | Store logos → 1:1 Box art | 1080 x 1080 |
+| `box-art-2160x2160.png` | Store logos → 1:1 Box art (alta resolución) | 2160 x 2160 |
+| `app-tile-300x300.png` | Store display images → 1:1 App tile icon | 300 x 300 |
+| `app-tile-150x150.png` | Store display images → 1:1 | 150 x 150 |
+| `app-tile-71x71.png` | Store display images → 1:1 | 71 x 71 |
+
+Diseño: fondo degradado oscuro de marca (igual al que usa el paquete .msix), ícono de Luma Profiles centrado, y en el Poster art el nombre "Luma Profiles" + "Monitor Studio · Código Limpio". Estas imágenes son **opcionales** (Partner Center toma el logo del paquete si no subes nada), pero ya están listas por si prefieres usarlas.
+
+Solo se sube **una sola vez por idioma** — a diferencia de las capturas, los logos son a nivel de producto, no por idioma (se configuran en la misma pantalla donde apareció el bloque "Store logos" / "Store display images").
+
+## Regenerar
 
 ```powershell
 .\scripts\generate-store-assets.ps1
 ```
 
-La identidad de publicador, el nombre reservado y la firma del paquete se configuran durante el flujo de Partner Center; estos recursos no contienen certificados ni credenciales.
-
-Las capturas preparadas para la ficha están en `screenshots/`. Puedes cargarlas en Partner Center junto con el paquete y sustituirlas por capturas de equipos adicionales si la certificación lo requiere.
+(esto solo regenera los assets del paquete .msix; los logos de `logos-microsoft-store/` se generaron aparte a partir del mismo ícono fuente `src/LumaProfiles/Assets/LumaProfilesIcon.png`)
