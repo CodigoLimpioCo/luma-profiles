@@ -640,9 +640,9 @@
                     <ControlTemplate TargetType="Thumb">
                         <!-- 7px bar squeezed to ~3px; hovering the scrollbar eases it to full width. -->
                         <Border x:Name="Bar" Width="7" HorizontalAlignment="Right" Margin="0,1,2,1" CornerRadius="4"
-                                Background="{DynamicResource AccentBrush}" Opacity="0.45" RenderTransformOrigin="1,0.5">
+                                Background="{DynamicResource AccentBrush}" Opacity="0.75" RenderTransformOrigin="1,0.5">
                             <Border.RenderTransform>
-                                <ScaleTransform x:Name="BarScale" ScaleX="0.43"/>
+                                <ScaleTransform x:Name="BarScale" ScaleX="0.57"/>
                             </Border.RenderTransform>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -659,15 +659,15 @@
                                     <BeginStoryboard>
                                         <Storyboard>
                                             <DoubleAnimation Storyboard.TargetName="BarScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
-                                            <DoubleAnimation Storyboard.TargetName="Bar" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.12"/>
+                                            <DoubleAnimation Storyboard.TargetName="Bar" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </DataTrigger.EnterActions>
                                 <DataTrigger.ExitActions>
                                     <BeginStoryboard>
                                         <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetName="BarScale" Storyboard.TargetProperty="ScaleX" To="0.43" Duration="0:0:0.18"/>
-                                            <DoubleAnimation Storyboard.TargetName="Bar" Storyboard.TargetProperty="Opacity" To="0.45" Duration="0:0:0.18"/>
+                                            <DoubleAnimation Storyboard.TargetName="BarScale" Storyboard.TargetProperty="ScaleX" To="0.57" Duration="0:0:0.18"/>
+                                            <DoubleAnimation Storyboard.TargetName="Bar" Storyboard.TargetProperty="Opacity" To="0.75" Duration="0:0:0.18"/>
                                         </Storyboard>
                                     </BeginStoryboard>
                                 </DataTrigger.ExitActions>
@@ -693,7 +693,7 @@
                                     <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0"/>
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb MinHeight="36" MinWidth="36" Style="{StaticResource ThinScrollThumb}"/>
+                                    <Thumb MinHeight="36" Style="{StaticResource ThinScrollThumb}"/>
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
                                     <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0"/>
