@@ -37,6 +37,7 @@ También puedes consultar la vista previa en tiempo real y el tema claro:
 - Idiomas extensibles mediante archivos de texto plano `.lang`, sin modificar el código de la aplicación.
 - Aplicación a ambas pantallas o a una pantalla específica.
 - Guardado de personalizaciones en `%LOCALAPPDATA%\LumaProfiles\profiles.json`.
+- Copia de seguridad automática por monitor del brillo, contraste, color y gamma existentes antes del primer cambio, con opción para restaurarlos desde Configuración.
 - Botón para recuperar una señal RGB neutra cuando aparece una dominante de color.
 - Cambio opcional al plan de energía Alto rendimiento.
 

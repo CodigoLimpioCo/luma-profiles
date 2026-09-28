@@ -31,6 +31,7 @@ public sealed class ApplicationSettingsStore
                 if (settings is not null)
                 {
                     settings.MonitorCorrections ??= [];
+                    settings.OriginalMonitorStates ??= [];
                     settings.StartWithWindows = IsStartupEnabled();
                     return settings;
                 }

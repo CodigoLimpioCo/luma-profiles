@@ -6,6 +6,7 @@ namespace LumaProfiles.Services;
 
 public sealed class MonitorService
 {
+    private static readonly byte[] ManagedVcpCodes = [0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x87, 0x8A, 0x89];
     private const string BalancedPlan = "381b4222-f694-41f0-9685-ff5bb260df2e";
     private const string HighPerformancePlan = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
 
@@ -14,6 +15,115 @@ public sealed class MonitorService
 
     public ApplyResult Preview(DisplayProfile profile, string target)
         => ApplyCore(profile, target, updatePowerPlan: false);
+
+    public IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds)
+    {
+        var known = knownMonitorIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var captured = new List<OriginalMonitorState>();
+
+        foreach (var monitor in EnumerateMonitors().Where(item => !known.Contains(item.MonitorId)))
+        {
+            var state = new OriginalMonitorState
+            {
+                MonitorId = monitor.MonitorId,
+                DeviceName = monitor.DeviceName,
+                GammaRamp = ReadGammaRamp(monitor.DeviceName) ?? []
+            };
+
+            if (NativeMethods.GetNumberOfPhysicalMonitorsFromHMONITOR(monitor.Handle, out var count) && count > 0)
+            {
+                var physicalMonitors = new NativeMethods.PHYSICAL_MONITOR[count];
+                if (NativeMethods.GetPhysicalMonitorsFromHMONITOR(monitor.Handle, count, physicalMonitors))
+                {
+                    try
+                    {
+                        for (var index = 0; index < physicalMonitors.Length; index++)
+                        {
+                            var physical = physicalMonitors[index];
+                            var physicalState = new OriginalPhysicalMonitorState
+                            {
+                                Index = index,
+                                Description = physical.szPhysicalMonitorDescription
+                            };
+                            foreach (var code in ManagedVcpCodes)
+                            {
+                                if (NativeMethods.GetVCPFeatureAndVCPFeatureReply(
+                                    physical.hPhysicalMonitor, code, out _, out var currentValue, out _))
+                                {
+                                    physicalState.Values.Add(new OriginalVcpValue { Code = code, Value = currentValue });
+                                }
+                            }
+                            state.PhysicalMonitors.Add(physicalState);
+                        }
+                    }
+                    finally
+                    {
+                        NativeMethods.DestroyPhysicalMonitors(count, physicalMonitors);
+                    }
+                }
+            }
+
+            if (state.GammaRamp.Length == 768 || state.PhysicalMonitors.Any(item => item.Values.Count > 0))
+            {
+                captured.Add(state);
+            }
+        }
+
+        return captured;
+    }
+
+    public string? GetActivePowerPlan()
+    {
+        if (NativeMethods.PowerGetActiveScheme(IntPtr.Zero, out var schemePointer) != 0 || schemePointer == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        try
+        {
+            return Marshal.PtrToStructure<Guid>(schemePointer).ToString();
+        }
+        finally
+        {
+            NativeMethods.LocalFree(schemePointer);
+        }
+    }
+
+    public ApplyResult RestoreOriginal(
+        IEnumerable<OriginalMonitorState> originalStates, string target, string? originalPowerPlan)
+    {
+        var saved = originalStates.ToList();
+        var failures = new List<string>();
+        var applied = new List<AppliedMonitor>();
+
+        foreach (var monitor in EnumerateMonitors().Where(item => MatchesTarget(item.DeviceName, target)))
+        {
+            var state = saved.FirstOrDefault(item =>
+                    !string.IsNullOrWhiteSpace(item.MonitorId) &&
+                    item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase))
+                ?? saved.FirstOrDefault(item =>
+                    item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+            if (state is null) continue;
+
+            RestoreDdc(monitor.Handle, state, failures);
+            if (state.GammaRamp.Length == 768 && !ApplyGammaRamp(monitor.DeviceName, state.GammaRamp))
+            {
+                failures.Add($"No fue posible restaurar la gamma original en {monitor.DeviceName}.");
+            }
+            applied.Add(new AppliedMonitor(monitor.MonitorId, monitor.DeviceName));
+        }
+
+        if (target == "Ambas pantallas" && !string.IsNullOrWhiteSpace(originalPowerPlan))
+        {
+            SetPowerPlan(originalPowerPlan, failures);
+        }
+        if (applied.Count == 0)
+        {
+            failures.Add("No se encontró un estado original guardado para el destino seleccionado.");
+        }
+
+        return new ApplyResult(applied.Count, failures, applied);
+    }
 
     public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections)
     {
@@ -191,6 +301,36 @@ public sealed class MonitorService
         }
     }
 
+    private static void RestoreDdc(IntPtr monitor, OriginalMonitorState state, List<string> failures)
+    {
+        if (!NativeMethods.GetNumberOfPhysicalMonitorsFromHMONITOR(monitor, out var count) || count == 0) return;
+
+        var physicalMonitors = new NativeMethods.PHYSICAL_MONITOR[count];
+        if (!NativeMethods.GetPhysicalMonitorsFromHMONITOR(monitor, count, physicalMonitors)) return;
+
+        try
+        {
+            foreach (var physicalState in state.PhysicalMonitors)
+            {
+                if (physicalState.Index < 0 || physicalState.Index >= physicalMonitors.Length) continue;
+                var physical = physicalMonitors[physicalState.Index];
+                // Restore a named color preset last; writing RGB gains can make some monitors
+                // switch back to their user-defined preset.
+                foreach (var value in physicalState.Values.OrderBy(item => item.Code == 0x14 ? 1 : 0))
+                {
+                    if (!NativeMethods.SetVCPFeature(physical.hPhysicalMonitor, value.Code, value.Value))
+                    {
+                        failures.Add($"La pantalla rechazó restaurar el control 0x{value.Code:X2}.");
+                    }
+                }
+            }
+        }
+        finally
+        {
+            NativeMethods.DestroyPhysicalMonitors(count, physicalMonitors);
+        }
+    }
+
     private static IReadOnlyList<ConnectedMonitor> EnumerateMonitors()
     {
         var monitors = new List<ConnectedMonitor>();
@@ -247,6 +387,41 @@ public sealed class MonitorService
                 ramp[(channel * 256) + index] = (ushort)Math.Round(Math.Clamp(adjusted, 0.0, 1.0) * ushort.MaxValue);
             }
         }
+
+        var handle = GCHandle.Alloc(ramp, GCHandleType.Pinned);
+        try
+        {
+            return NativeMethods.SetDeviceGammaRamp(hdc, handle.AddrOfPinnedObject());
+        }
+        finally
+        {
+            handle.Free();
+            NativeMethods.DeleteDC(hdc);
+        }
+    }
+
+    private static ushort[]? ReadGammaRamp(string display)
+    {
+        var hdc = NativeMethods.CreateDC("DISPLAY", display, null, IntPtr.Zero);
+        if (hdc == IntPtr.Zero) return null;
+
+        var ramp = new ushort[768];
+        var handle = GCHandle.Alloc(ramp, GCHandleType.Pinned);
+        try
+        {
+            return NativeMethods.GetDeviceGammaRamp(hdc, handle.AddrOfPinnedObject()) ? ramp : null;
+        }
+        finally
+        {
+            handle.Free();
+            NativeMethods.DeleteDC(hdc);
+        }
+    }
+
+    private static bool ApplyGammaRamp(string display, ushort[] ramp)
+    {
+        var hdc = NativeMethods.CreateDC("DISPLAY", display, null, IntPtr.Zero);
+        if (hdc == IntPtr.Zero) return false;
 
         var handle = GCHandle.Alloc(ramp, GCHandleType.Pinned);
         try
@@ -362,6 +537,11 @@ public sealed class MonitorService
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SetVCPFeature(IntPtr monitor, byte code, uint value);
 
+        [DllImport("dxva2.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetVCPFeatureAndVCPFeatureReply(
+            IntPtr monitor, byte code, out int codeType, out uint currentValue, out uint maximumValue);
+
         [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
         internal static extern IntPtr CreateDC(string driver, string device, string? output, IntPtr initData);
 
@@ -372,6 +552,16 @@ public sealed class MonitorService
         [DllImport("gdi32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool SetDeviceGammaRamp(IntPtr hdc, IntPtr ramp);
+
+        [DllImport("gdi32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetDeviceGammaRamp(IntPtr hdc, IntPtr ramp);
+
+        [DllImport("powrprof.dll")]
+        internal static extern uint PowerGetActiveScheme(IntPtr userRootPowerKey, out IntPtr activePolicyGuid);
+
+        [DllImport("kernel32.dll")]
+        internal static extern IntPtr LocalFree(IntPtr memory);
     }
 }
 

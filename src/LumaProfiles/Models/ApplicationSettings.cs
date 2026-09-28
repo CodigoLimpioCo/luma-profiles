@@ -1,12 +1,35 @@
 namespace LumaProfiles.Models;
 
-public sealed class ApplicationSettings
+public sealed partial class ApplicationSettings
 {
     public string LanguageCode { get; set; } = "es";
     public bool IsDarkTheme { get; set; } = true;
     public bool StartWithWindows { get; set; }
     public string SelectedMonitorTarget { get; set; } = "Ambas pantallas";
     public List<MonitorColorCorrection> MonitorCorrections { get; set; } = [];
+    public List<OriginalMonitorState> OriginalMonitorStates { get; set; } = [];
+    public string? OriginalPowerPlan { get; set; }
+}
+
+public sealed class OriginalMonitorState
+{
+    public string MonitorId { get; set; } = string.Empty;
+    public string DeviceName { get; set; } = string.Empty;
+    public List<OriginalPhysicalMonitorState> PhysicalMonitors { get; set; } = [];
+    public ushort[] GammaRamp { get; set; } = [];
+}
+
+public sealed class OriginalPhysicalMonitorState
+{
+    public int Index { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public List<OriginalVcpValue> Values { get; set; } = [];
+}
+
+public sealed class OriginalVcpValue
+{
+    public byte Code { get; set; }
+    public uint Value { get; set; }
 }
 
 public sealed class MonitorColorCorrection
