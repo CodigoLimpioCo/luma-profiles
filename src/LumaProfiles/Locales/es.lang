@@ -154,3 +154,4 @@ ui.ProfilesExported=Perfiles exportados a {0}.
 ui.ProfilesImported=Se importaron los ajustes de {0} perfiles.
 ui.ProfilesTransferFailed=No fue posible completar la operación: {0}
 ui.StorageWarning=Un archivo de datos estaba dañado y se guardó aparte ({0}). Se restauraron los valores predeterminados.
+ui.ClearSearch=Borrar búsqueda

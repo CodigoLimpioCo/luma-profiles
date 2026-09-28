@@ -561,6 +561,61 @@
             </Setter>
         </Style>
 
+        <Style TargetType="TextBox" x:Key="SearchTextBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="CaretBrush" Value="#55D6F5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Field" Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                                BorderThickness="1" CornerRadius="19" Height="38">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons" FontSize="13" Margin="14,0,0,0"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"/>
+                                <TextBlock x:Name="Placeholder" Grid.Column="1" Text="{TemplateBinding Tag}" Margin="10,0,8,0"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}"
+                                           IsHitTestVisible="False" Visibility="Collapsed" TextTrimming="CharacterEllipsis"/>
+                                <ScrollViewer x:Name="PART_ContentHost" Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center"
+                                              Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                                <Button x:Name="ClearButton" Grid.Column="2" Width="24" Height="24" Margin="0,0,7,0" Padding="0"
+                                        Style="{StaticResource FlatButton}" HorizontalContentAlignment="Center"
+                                        Command="{Binding DataContext.ClearSearchCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        AutomationProperties.Name="{Binding DataContext[ClearSearch], RelativeSource={RelativeSource AncestorType=Window}}"
+                                        ToolTip="{Binding DataContext[ClearSearch], RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="10"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                            <Trigger Property="Text" Value="{x:Null}">
+                                <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="ClearButton" Property="Visibility" Value="Collapsed"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsKeyboardFocusWithin" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Field" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Field" Property="BorderBrush" Value="{DynamicResource AccentTextBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="TextBox">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
             <Setter Property="Background" Value="{DynamicResource InputBrush}"/>
@@ -796,18 +851,20 @@
                     </Border>
                 </Grid>
 
-                <StackPanel Grid.Row="4">
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Command="{Binding SelectCategoryCommand}" CommandParameter="Todos"><TextBlock><Run Text="▦    "/><Run Text="{Binding [AllProfiles]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Favoritos"><TextBlock><Run Text="★    "/><Run Text="{Binding [Favorites]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color fiel"><TextBlock><Run Text="◉    "/><Run Text="{Binding [FaithfulColor]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="ASUS GameVisual"><TextBlock Text="◆    ASUS GameVisual"/></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="HDR"><TextBlock Text="◐    HDR"/></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color creativo"><TextBlock><Run Text="✦    "/><Run Text="{Binding [CreativeColor]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Entretenimiento"><TextBlock><Run Text="▶    "/><Run Text="{Binding [Entertainment]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Rendimiento"><TextBlock><Run Text="ϟ    "/><Run Text="{Binding [Performance]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Gamer"><TextBlock><Run Text="🎮    "/><Run Text="{Binding [Gamer]}"/></TextBlock></RadioButton>
-                    <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Cuidado visual"><TextBlock><Run Text="◒    "/><Run Text="{Binding [EyeCare]}"/></TextBlock></RadioButton>
-                </StackPanel>
+                <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Command="{Binding SelectCategoryCommand}" CommandParameter="Todos"><TextBlock><Run Text="▦    "/><Run Text="{Binding [AllProfiles]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Favoritos"><TextBlock><Run Text="★    "/><Run Text="{Binding [Favorites]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color fiel"><TextBlock><Run Text="◉    "/><Run Text="{Binding [FaithfulColor]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="ASUS GameVisual"><TextBlock Text="◆    ASUS GameVisual"/></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="HDR"><TextBlock Text="◐    HDR"/></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color creativo"><TextBlock><Run Text="✦    "/><Run Text="{Binding [CreativeColor]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Entretenimiento"><TextBlock><Run Text="▶    "/><Run Text="{Binding [Entertainment]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Rendimiento"><TextBlock><Run Text="ϟ    "/><Run Text="{Binding [Performance]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Gamer"><TextBlock><Run Text="🎮    "/><Run Text="{Binding [Gamer]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Cuidado visual"><TextBlock><Run Text="◒    "/><Run Text="{Binding [EyeCare]}"/></TextBlock></RadioButton>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <StackPanel Grid.Row="5">
                     <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="12" Padding="5" Margin="0,0,0,10">
@@ -866,7 +923,7 @@
                 </StackPanel>
                 <StackPanel Width="210" Margin="0,0,14,12">
                     <TextBlock Text="{Binding [SearchProfiles]}" Foreground="{DynamicResource MutedBrush}" Margin="2,0,0,5"/>
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
+                    <TextBox Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
                 </StackPanel>
                 <StackPanel Width="205" Margin="0,0,0,12">
                     <TextBlock Text="{Binding [ColorTarget]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" FontWeight="SemiBold" Margin="3,0,0,6"/>

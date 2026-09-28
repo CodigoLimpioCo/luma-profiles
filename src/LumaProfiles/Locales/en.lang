@@ -253,3 +253,4 @@ ui.ProfilesExported=Profiles exported to {0}.
 ui.ProfilesImported=Adjustments for {0} profiles were imported.
 ui.ProfilesTransferFailed=The operation could not be completed: {0}
 ui.StorageWarning=A data file was damaged and has been set aside ({0}). Defaults were restored.
+ui.ClearSearch=Clear search

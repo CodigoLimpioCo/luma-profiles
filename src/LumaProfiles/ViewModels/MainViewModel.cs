@@ -103,6 +103,7 @@ public sealed class MainViewModel : ObservableObject
         OpenAboutCommand = new RelayCommand(() => IsAboutOpen = true);
         CloseAboutCommand = new RelayCommand(() => IsAboutOpen = false);
         CloseOverlaysCommand = new RelayCommand(() => { IsAboutOpen = false; IsSettingsOpen = false; });
+        ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
         OpenUrlCommand = new RelayCommand<string>(url => _shell.OpenUrl(url));
         OpenHdrSettingsCommand = new RelayCommand(() => _shell.OpenUrl("ms-settings:display"));
         ExportProfilesCommand = new RelayCommand(ExportProfiles);
@@ -139,6 +140,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand OpenAboutCommand { get; }
     public ICommand CloseAboutCommand { get; }
     public ICommand CloseOverlaysCommand { get; }
+    public ICommand ClearSearchCommand { get; }
     public ICommand OpenUrlCommand { get; }
     public ICommand OpenHdrSettingsCommand { get; }
     public ICommand ExportProfilesCommand { get; }
