@@ -40,6 +40,8 @@ También puedes consultar la vista previa en tiempo real y el tema claro:
 - Copia de seguridad automática por monitor del brillo, contraste, color y gamma existentes antes del primer cambio, con opción para restaurarlos desde Configuración.
 - Botón para recuperar una señal RGB neutra cuando aparece una dominante de color.
 - Cambio opcional al plan de energía Alto rendimiento.
+- Icono en la bandeja del sistema, atajos globales (Ctrl+Alt+→/←/0), horario día/noche y perfiles por aplicación.
+- Exportación e importación de tus perfiles y favoritos.
 
 ## Requisitos
 
@@ -55,6 +57,12 @@ El control de matiz depende del modo GameVisual y del soporte DDC/CI del monitor
 
 ```powershell
 dotnet run --project .\src\LumaProfiles\LumaProfiles.csproj
+```
+
+## Pruebas
+
+```powershell
+dotnet test .\LumaProfiles.sln
 ```
 
 ## Compilar

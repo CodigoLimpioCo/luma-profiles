@@ -130,3 +130,20 @@ public class ProfileStoreTests
         Assert.NotEqual(1, store.GetDefault("natural").Brightness);
     }
 }
+
+public class LegacyDataTests
+{
+    [Fact]
+    public void Load_NullColorTemperatureKeepsDefault()
+    {
+        using var dir = new TempDirectory();
+        var store = new ProfileStore(dir.Path);
+        File.WriteAllText(Path.Combine(dir.Path, "profiles.json"),
+            """[{"Id":"natural","Name":"Natural","Category":"Color fiel","Description":"d","PreviewStart":"#000","PreviewEnd":"#000","Brightness":60,"Contrast":80,"Saturation":50,"Hue":0,"Gamma":1.0,"Red":1.0,"Green":1.0,"Blue":1.0,"ColorTemperature":null}]""");
+
+        var natural = store.Load().First(p => p.Id == "natural");
+
+        Assert.Equal(60, natural.Brightness);
+        Assert.Equal("Neutro 6500 K", natural.ColorTemperature);
+    }
+}

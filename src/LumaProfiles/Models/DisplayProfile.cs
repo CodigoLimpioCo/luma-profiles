@@ -92,7 +92,8 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         Red = source.Red;
         Green = source.Green;
         Blue = source.Blue;
-        ColorTemperature = source.ColorTemperature;
+        // Older files stored null here; keep the current value instead of blanking the selector.
+        if (!string.IsNullOrWhiteSpace(source.ColorTemperature)) ColorTemperature = source.ColorTemperature;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
