@@ -129,6 +129,8 @@ public class MainViewModelTests
     {
         public List<string> Applied { get; } = [];
         public int NeutralCalls { get; private set; }
+        public int OriginalCalls { get; private set; }
+        public bool HasOriginal { get; set; } = true;
 
         public ApplyResult Apply(DisplayProfile profile, string target)
         {
@@ -139,7 +141,11 @@ public class MainViewModelTests
         public ApplyResult Preview(DisplayProfile profile, string target) => Result();
         public IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds) => [];
         public string? GetActivePowerPlan() => null;
-        public ApplyResult RestoreOriginal(IEnumerable<OriginalMonitorState> s, string t, string? p) => Result();
+        public ApplyResult RestoreOriginal(IEnumerable<OriginalMonitorState> s, string t, string? p)
+        {
+            OriginalCalls++;
+            return HasOriginal ? Result() : new ApplyResult(0, ["none"], []);
+        }
         public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections) => Result();
 
         public ApplyResult RestoreNeutral(string target)
@@ -215,7 +221,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public void RepairCommand_NeutralizesAndClearsActiveProfile()
+    public void RepairCommand_RestoresOriginalStateAndClearsActiveProfile()
     {
         var (vm, monitor, _, dir) = Create();
         using var _ = dir;
@@ -223,8 +229,21 @@ public class MainViewModelTests
 
         vm.RepairCommand.Execute(null);
 
-        Assert.Equal(1, monitor.NeutralCalls);
+        Assert.Equal(1, monitor.OriginalCalls);
+        Assert.Equal(0, monitor.NeutralCalls);
         Assert.DoesNotContain(vm.Profiles, p => p.IsActive);
+    }
+
+    [Fact]
+    public void RepairCommand_WithoutCapturedOriginalFallsBackToNeutral()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.HasOriginal = false;
+
+        vm.RepairCommand.Execute(null);
+
+        Assert.Equal(1, monitor.NeutralCalls);
     }
 
     [Fact]
@@ -258,7 +277,7 @@ public class MainViewModelTests
         vm.OnForegroundProcessChanged("game");
         vm.OnForegroundProcessChanged("explorer");
 
-        Assert.Equal(1, monitor.NeutralCalls);
+        Assert.Equal(1, monitor.OriginalCalls);
     }
 
     [Fact]
@@ -318,6 +337,64 @@ public class MainViewModelTests
         vm.ScheduleNightStart = "99:99";
 
         Assert.Equal("20:00", vm.ScheduleNightStart);
+    }
+
+    [Fact]
+    public void ViewMode_DefaultsToCardsAndPersistsValidChoices()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.Equal("Cards", vm.ViewMode);
+        Assert.True(vm.IsViewCards);
+
+        vm.IsViewDetails = true;
+
+        Assert.Equal("Details", vm.ViewMode);
+        Assert.False(vm.IsViewCards);
+        var reloaded = new ApplicationSettingsStore(dir.Path, manageStartup: false).Load();
+        Assert.Equal("Details", reloaded.ProfilesViewMode);
+    }
+
+    [Fact]
+    public void ViewMode_IgnoresUnknownValues()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.ViewMode = "Hologram";
+        vm.IsViewList = false;
+
+        Assert.Equal("Cards", vm.ViewMode);
+        Assert.Equal(5, MainViewModel.ViewModes.Count);
+    }
+
+    [Fact]
+    public void Sidebar_ToggleCollapsesAndPersists()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.True(vm.IsSidebarExpanded);
+
+        vm.ToggleSidebarCollapseCommand.Execute(null);
+
+        Assert.True(vm.IsSidebarCollapsed);
+        Assert.True(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().IsLeftPanelCollapsed);
+    }
+
+    [Fact]
+    public void Sidebar_ForcedCompactOverridesWithoutSavingAndHidesToggle()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.SetSidebarForcedCompact(true);
+
+        Assert.True(vm.IsSidebarCollapsed);
+        Assert.False(vm.IsSidebarToggleAvailable);
+        Assert.False(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().IsLeftPanelCollapsed);
+
+        vm.SetSidebarForcedCompact(false);
+        Assert.True(vm.IsSidebarExpanded);
     }
 
     [Fact]

@@ -42,6 +42,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _startWithWindows;
     private bool _isReapplyingCorrections;
     private bool _reapplyRequested;
+    private bool _sidebarForcedCompact;
     private bool _isMaximized;
     private bool _isLeftPanelVisible;
     private bool _isRightPanelVisible;
@@ -103,6 +104,12 @@ public sealed class MainViewModel : ObservableObject
         OpenAboutCommand = new RelayCommand(() => IsAboutOpen = true);
         CloseAboutCommand = new RelayCommand(() => IsAboutOpen = false);
         CloseOverlaysCommand = new RelayCommand(() => { IsAboutOpen = false; IsSettingsOpen = false; });
+        ToggleSidebarCollapseCommand = new RelayCommand(() =>
+        {
+            _settings.IsLeftPanelCollapsed = !_settings.IsLeftPanelCollapsed;
+            SaveSettings();
+            RaiseSidebar();
+        });
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
         OpenUrlCommand = new RelayCommand<string>(url => _shell.OpenUrl(url));
         OpenHdrSettingsCommand = new RelayCommand(() => _shell.OpenUrl("ms-settings:display"));
@@ -141,6 +148,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand CloseAboutCommand { get; }
     public ICommand CloseOverlaysCommand { get; }
     public ICommand ClearSearchCommand { get; }
+    public ICommand ToggleSidebarCollapseCommand { get; }
     public ICommand OpenUrlCommand { get; }
     public ICommand OpenHdrSettingsCommand { get; }
     public ICommand ExportProfilesCommand { get; }
@@ -344,6 +352,56 @@ public sealed class MainViewModel : ObservableObject
         set => _settings.IsRightPanelOpen = value;
     }
 
+    public static IReadOnlyList<string> ViewModes { get; } = ["Cards", "Large", "Compact", "List", "Details"];
+
+    /// <summary>How the profile library is laid out: Cards, Large, Compact, List or Details.</summary>
+    public string ViewMode
+    {
+        get => ViewModes.Contains(_settings.ProfilesViewMode) ? _settings.ProfilesViewMode : ViewModes[0];
+        set
+        {
+            if (!ViewModes.Contains(value) || _settings.ProfilesViewMode == value) return;
+            _settings.ProfilesViewMode = value;
+            SaveSettings();
+            Raise();
+            foreach (var name in new[] { nameof(IsViewCards), nameof(IsViewLarge), nameof(IsViewCompact), nameof(IsViewList), nameof(IsViewDetails) })
+            {
+                Raise(name);
+            }
+            ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    // Two-way bool views of ViewMode so RadioButtons work with the mouse, keyboard arrows and UI Automation.
+    public bool IsViewCards { get => ViewMode == "Cards"; set { if (value) ViewMode = "Cards"; } }
+    public bool IsViewLarge { get => ViewMode == "Large"; set { if (value) ViewMode = "Large"; } }
+    public bool IsViewCompact { get => ViewMode == "Compact"; set { if (value) ViewMode = "Compact"; } }
+    public bool IsViewList { get => ViewMode == "List"; set { if (value) ViewMode = "List"; } }
+    public bool IsViewDetails { get => ViewMode == "Details"; set { if (value) ViewMode = "Details"; } }
+
+    public bool IsSidebarCollapsed => _settings.IsLeftPanelCollapsed || _sidebarForcedCompact;
+    public bool IsSidebarExpanded => !IsSidebarCollapsed;
+    public bool IsSidebarToggleAvailable => !_sidebarForcedCompact;
+    public string SidebarToggleGlyph => IsSidebarCollapsed ? "" : "";
+    public string SidebarToggleLabel => T(IsSidebarCollapsed ? "ExpandSidebar" : "CollapseSidebar");
+
+    /// <summary>Narrow windows force the icon-only sidebar without touching the saved preference.</summary>
+    public void SetSidebarForcedCompact(bool forced)
+    {
+        if (_sidebarForcedCompact == forced) return;
+        _sidebarForcedCompact = forced;
+        RaiseSidebar();
+    }
+
+    private void RaiseSidebar()
+    {
+        Raise(nameof(IsSidebarCollapsed));
+        Raise(nameof(IsSidebarExpanded));
+        Raise(nameof(IsSidebarToggleAvailable));
+        Raise(nameof(SidebarToggleGlyph));
+        Raise(nameof(SidebarToggleLabel));
+    }
+
     public string MaximizeGlyph => _isMaximized ? "" : "";
     public string MaximizeTooltip => T(_isMaximized ? "Restore" : "Maximize");
     public string LeftPanelTooltip => T(_isLeftPanelVisible ? "HideNavigationPanel" : "ShowNavigationPanel");
@@ -498,13 +556,38 @@ public sealed class MainViewModel : ObservableObject
         StatusMessage = L("Restored", SelectedProfile.DisplayName);
     }
 
+    /// <summary>
+    /// Returns the displays to their natural Windows/monitor state: the settings captured before this app
+    /// changed anything. Falls back to a neutral RGB profile when no original state was captured.
+    /// </summary>
     private void Neutralize()
     {
         StatusMessage = T("Neutralizing");
-        var result = _monitor.RestoreNeutral(SelectedMonitorTarget);
-        SaveMonitorCorrections(MonitorService.NeutralProfile(), result, applyImageControls: false);
+        var result = _monitor.RestoreOriginal(_settings.OriginalMonitorStates, SelectedMonitorTarget, originalPowerPlan: null);
+        if (result.DisplayCount > 0)
+        {
+            RemoveCorrectionsFor(result);
+        }
+        else
+        {
+            result = _monitor.RestoreNeutral(SelectedMonitorTarget);
+            SaveMonitorCorrections(MonitorService.NeutralProfile(), result, applyImageControls: false);
+        }
+
         foreach (var profile in Profiles) profile.IsActive = false;
+        SaveProfiles();
+        SaveSettings();
         StatusMessage = FormatResult(T("Neutralized"), result);
+    }
+
+    private void RemoveCorrectionsFor(ApplyResult result)
+    {
+        foreach (var monitor in result.AppliedMonitors)
+        {
+            _settings.MonitorCorrections.RemoveAll(item =>
+                item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase) ||
+                item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
+        }
     }
 
     private void RestoreOriginalDisplayState()
@@ -513,12 +596,7 @@ public sealed class MainViewModel : ObservableObject
         var result = _monitor.RestoreOriginal(
             _settings.OriginalMonitorStates, SelectedMonitorTarget, _settings.OriginalPowerPlan);
 
-        foreach (var monitor in result.AppliedMonitors)
-        {
-            _settings.MonitorCorrections.RemoveAll(item =>
-                item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase) ||
-                item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
-        }
+        RemoveCorrectionsFor(result);
         if (result.DisplayCount > 0)
         {
             foreach (var profile in Profiles) profile.IsActive = false;
@@ -808,6 +886,7 @@ public sealed class MainViewModel : ObservableObject
         StatusMessage = T("Ready");
         RaiseUiProperties();
         Raise(nameof(LanguageCode));
+        Raise(nameof(SidebarToggleLabel));
         Raise("Item[]");
         Raise(nameof(LeftPanelTooltip));
         Raise(nameof(RightPanelTooltip));

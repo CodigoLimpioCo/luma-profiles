@@ -135,6 +135,8 @@
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="Padding" Value="13,0,10,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
@@ -142,7 +144,7 @@
                             <Border x:Name="Selection" Background="Transparent" CornerRadius="10"/>
                             <Border x:Name="Indicator" Width="3" Height="22" CornerRadius="2"
                                     Background="#55D6F5" HorizontalAlignment="Left" Visibility="Collapsed"/>
-                            <ContentPresenter Margin="13,0,10,0" VerticalAlignment="Center"/>
+                            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -159,6 +161,12 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsSidebarCollapsed, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="Padding" Value="0"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="Button" x:Key="PrimaryButton">
@@ -626,8 +634,29 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
+        <Style x:Key="ThinScrollThumb" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="Bar" Background="{DynamicResource BorderStrongBrush}" CornerRadius="2" Margin="3,1"/>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Orientation, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="Horizontal">
+                                <Setter TargetName="Bar" Property="Margin" Value="1,3"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource MutedBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="8"/>
+            <Setter Property="Width" Value="10"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -638,22 +667,488 @@
                                     <RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0"/>
                                 </Track.DecreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb MinHeight="36">
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="Thumb">
-                                                <Border Background="#3A4C59" CornerRadius="4" Margin="1"/>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
+                                    <Thumb MinHeight="36" MinWidth="36" Style="{StaticResource ThinScrollThumb}"/>
                                 </Track.Thumb>
                                 <Track.IncreaseRepeatButton>
                                     <RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0"/>
                                 </Track.IncreaseRepeatButton>
                             </Track>
                         </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="Height" Value="10"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="ColumnHeader">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <Style TargetType="Button" x:Key="SidebarFlatButton" BasedOn="{StaticResource FlatButton}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="Padding" Value="0,11"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="RadioButton" x:Key="ViewModeButton">
+            <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,2,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Root" Width="32" Height="30" CornerRadius="15" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Border" x:Key="HoverCardBorder">
+            <Setter Property="Background" Value="{DynamicResource CardBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderThemeBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#55D6F5"/>
+                    <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="Button" x:Key="StarButton">
+            <Setter Property="Content" Value="☆"/>
+            <Setter Property="Foreground" Value="#F4D67A"/>
+            <Setter Property="Background" Value="#B00A1118"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="9">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                    <Setter Property="Content" Value="★"/>
+                    <Setter Property="Background" Value="#C43B3020"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#DF3B3020"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="ProfileNameText">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <ItemsPanelTemplate x:Key="WrapPanelTemplate">
+            <WrapPanel IsItemsHost="True"/>
+        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="StackPanelTemplate">
+            <StackPanel IsItemsHost="True"/>
+        </ItemsPanelTemplate>
+
+<DataTemplate x:Key="CardTemplate">
+        <Border Width="248" Height="330" Margin="0,0,12,14" Padding="11"
+                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
+                CornerRadius="13" ToolTip="{Binding DisplayDescription}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="BorderBrush" Value="#55D6F5"/>
+                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="120"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border CornerRadius="9" ClipToBounds="True" BorderBrush="#385064" BorderThickness="1">
+                    <Grid>
+                        <Rectangle>
+                            <Rectangle.Fill>
+                                <ImageBrush ImageSource="/Assets/color-reference.png" Stretch="UniformToFill"
+                                            Viewbox="0.333,0.08,0.333,0.72" ViewboxUnits="RelativeToBoundingBox"/>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle Opacity="0.18">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                    <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
+                            <Grid>
+                                <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="#DCEAF3"/>
+                                <TextBlock Text="{Binding DataContext[Preview], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="9" Foreground="#91A8B8" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                                Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}"/>
+                        </Border>
+                        <Button Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"
+                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}" AutomationProperties.Name="{Binding DisplayName}"
+                                Cursor="Hand" BorderThickness="0" FontSize="20">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Content" Value="☆"/>
+                                    <Setter Property="Foreground" Value="#F4D67A"/>
+                                    <Setter Property="Background" Value="#B00A1118"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                            <Setter Property="Content" Value="★"/>
+                                            <Setter Property="Background" Value="#C43B3020"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#DF3B3020"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="2,10,2,8">
+                    <TextBlock Text="{Binding DisplayName}" FontSize="19" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayDescription}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Height="45" Margin="0,4,0,8" FontSize="12"/>
+                    <WrapPanel>
+                        <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="{Binding DataContext[BrightnessShort], RelativeSource={RelativeSource AncestorType=Window}}"/><Run Text=" "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
+                        </Border>
+                        <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="Sat. "/><Run Text="{Binding Saturation}" FontWeight="SemiBold"/></TextBlock>
+                        </Border>
+                        <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="γ "/><Run Text="{Binding Gamma, StringFormat={}{0:F2}}" FontWeight="SemiBold"/></TextBlock>
+                        </Border>
+                    </WrapPanel>
+                </StackPanel>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Style="{StaticResource SecondaryButton}" AutomationProperties.HelpText="{Binding DisplayName}" Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                    <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" AutomationProperties.HelpText="{Binding DisplayName}" Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                </Grid>
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+<DataTemplate x:Key="LargeTemplate">
+        <Border Width="322" Height="384" Margin="0,0,12,14" Padding="11"
+                Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
+                CornerRadius="13" ToolTip="{Binding DisplayDescription}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="BorderBrush" Value="#55D6F5"/>
+                            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="160"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Border CornerRadius="9" ClipToBounds="True" BorderBrush="#385064" BorderThickness="1">
+                    <Grid>
+                        <Rectangle>
+                            <Rectangle.Fill>
+                                <ImageBrush ImageSource="/Assets/color-reference.png" Stretch="UniformToFill"
+                                            Viewbox="0.333,0.08,0.333,0.72" ViewboxUnits="RelativeToBoundingBox"/>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Rectangle Opacity="0.18">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                    <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
+                            <Grid>
+                                <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="#DCEAF3"/>
+                                <TextBlock Text="{Binding DataContext[Preview], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="9" Foreground="#91A8B8" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </Border>
+                        <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
+                                Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}"/>
+                        </Border>
+                        <Button Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"
+                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}" AutomationProperties.Name="{Binding DisplayName}"
+                                Cursor="Hand" BorderThickness="0" FontSize="20">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Content" Value="☆"/>
+                                    <Setter Property="Foreground" Value="#F4D67A"/>
+                                    <Setter Property="Background" Value="#B00A1118"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                            <Setter Property="Content" Value="★"/>
+                                            <Setter Property="Background" Value="#C43B3020"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#DF3B3020"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1" Margin="2,10,2,8">
+                    <TextBlock Text="{Binding DisplayName}" FontSize="19" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding DisplayDescription}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Height="45" Margin="0,4,0,8" FontSize="12"/>
+                    <WrapPanel>
+                        <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="{Binding DataContext[BrightnessShort], RelativeSource={RelativeSource AncestorType=Window}}"/><Run Text=" "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
+                        </Border>
+                        <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="Sat. "/><Run Text="{Binding Saturation}" FontWeight="SemiBold"/></TextBlock>
+                        </Border>
+                        <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="γ "/><Run Text="{Binding Gamma, StringFormat={}{0:F2}}" FontWeight="SemiBold"/></TextBlock>
+                        </Border>
+                    </WrapPanel>
+                </StackPanel>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Style="{StaticResource SecondaryButton}" AutomationProperties.HelpText="{Binding DisplayName}" Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                    <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" AutomationProperties.HelpText="{Binding DisplayName}" Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                </Grid>
+            </Grid>
+        </Border>
+    </DataTemplate>
+
+        <DataTemplate x:Key="CompactTemplate">
+            <Border Width="184" Margin="0,0,10,10" Padding="10" BorderThickness="1" CornerRadius="12"
+                    Style="{StaticResource HoverCardBorder}" ToolTip="{Binding DisplayDescription}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Border Height="46" CornerRadius="8">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Grid>
+                            <Button Style="{StaticResource StarButton}" Width="28" Height="28" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6"
+                                    Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                                    ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}"
+                                    AutomationProperties.Name="{Binding DisplayName}"/>
+                            <Border Background="#AA081018" CornerRadius="8" Padding="7,3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
+                                    Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                    <StackPanel Grid.Row="1" Margin="2,9,2,9">
+                        <TextBlock Text="{Binding DisplayName}" FontSize="14" Style="{StaticResource ProfileNameText}"/>
+                        <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="6"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource SecondaryButton}" Padding="4,6" FontSize="11" Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}"
+                                AutomationProperties.HelpText="{Binding DisplayName}"
+                                Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Padding="4,6" FontSize="11" Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}"
+                                AutomationProperties.HelpText="{Binding DisplayName}"
+                                Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ListTemplate">
+            <Border Margin="0,0,0,8" Padding="12,9" BorderThickness="1" CornerRadius="12"
+                    Style="{StaticResource HoverCardBorder}" ToolTip="{Binding DisplayDescription}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Width="40" Height="40" CornerRadius="10" Margin="0,0,14,0">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayName}" FontSize="15" Style="{StaticResource ProfileNameText}"/>
+                        <TextBlock FontSize="11" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0">
+                            <Run Text="{Binding DisplayCategory, Mode=OneWay}"/><Run Text="  ·  "/><Run Text="{Binding DisplayDescription, Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
+                    <Border Grid.Column="2" Background="{DynamicResource ChipBrush}" CornerRadius="8" Padding="8,3" Margin="10,0,10,0" VerticalAlignment="Center"
+                            Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}"/>
+                    </Border>
+                    <Button Grid.Column="3" Style="{StaticResource StarButton}" Width="34" Height="34" Margin="0,0,8,0" FontSize="18"
+                            Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                            ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}"
+                            AutomationProperties.Name="{Binding DisplayName}"/>
+                    <Button Grid.Column="4" Style="{StaticResource SecondaryButton}" Width="88" Margin="0,0,8,0" Padding="4,8"
+                            Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}"
+                            AutomationProperties.HelpText="{Binding DisplayName}"
+                            Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                    <Button Grid.Column="5" Style="{StaticResource PrimaryButton}" Width="88" Padding="4,8"
+                            Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}"
+                            AutomationProperties.HelpText="{Binding DisplayName}"
+                            Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="DetailsTemplate">
+            <Border Margin="0,0,0,4" Padding="8,0" Height="46" BorderThickness="1" CornerRadius="9"
+                    Style="{StaticResource HoverCardBorder}" ToolTip="{Binding DisplayDescription}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="34"/><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="96"/><ColumnDefinition Width="54"/><ColumnDefinition Width="68"/>
+                        <ColumnDefinition Width="60"/><ColumnDefinition Width="46"/><ColumnDefinition Width="156"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Style="{StaticResource StarButton}" Width="28" Height="28" HorizontalAlignment="Left"
+                            Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
+                            ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}"
+                            AutomationProperties.Name="{Binding DisplayName}"/>
+                    <Border Grid.Column="1" Width="24" Height="24" CornerRadius="7" HorizontalAlignment="Left">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <TextBlock Grid.Column="2" Text="{Binding DisplayName}" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0" Style="{StaticResource ProfileNameText}"/>
+                    <TextBlock Grid.Column="3" Text="{Binding DisplayCategory}" FontSize="11" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="4" Text="{Binding Brightness}" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <TextBlock Grid.Column="5" Text="{Binding Contrast}" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <TextBlock Grid.Column="6" Text="{Binding Saturation}" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <TextBlock Grid.Column="7" Text="{Binding Gamma, StringFormat={}{0:F2}}" TextAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}"/>
+                    <StackPanel Grid.Column="8" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Button Style="{StaticResource SecondaryButton}" Width="74" Padding="4,6" FontSize="12" Margin="0,0,6,0"
+                                Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}"
+                                AutomationProperties.HelpText="{Binding DisplayName}"
+                                Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                        <Button Style="{StaticResource PrimaryButton}" Width="74" Padding="4,6" FontSize="12"
+                                Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}"
+                                AutomationProperties.HelpText="{Binding DisplayName}"
+                                Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <Style TargetType="ItemsControl" x:Key="ProfilesItemsStyle">
+            <Setter Property="ItemsPanel" Value="{StaticResource WrapPanelTemplate}"/>
+            <Setter Property="ItemTemplate" Value="{StaticResource CardTemplate}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ViewMode}" Value="Large">
+                    <Setter Property="ItemTemplate" Value="{StaticResource LargeTemplate}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ViewMode}" Value="Compact">
+                    <Setter Property="ItemTemplate" Value="{StaticResource CompactTemplate}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ViewMode}" Value="List">
+                    <Setter Property="ItemsPanel" Value="{StaticResource StackPanelTemplate}"/>
+                    <Setter Property="ItemTemplate" Value="{StaticResource ListTemplate}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ViewMode}" Value="Details">
+                    <Setter Property="ItemsPanel" Value="{StaticResource StackPanelTemplate}"/>
+                    <Setter Property="ItemTemplate" Value="{StaticResource DetailsTemplate}"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
       </ResourceDictionary>
     </Window.Resources>
@@ -814,7 +1309,17 @@
         </Border>
 
         <Border x:Name="LeftSidebar" Grid.Row="1" Grid.Column="0" Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="0,0,1,0">
-            <Grid Margin="18,22,18,18">
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Margin" Value="18,22,18,18"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                <Setter Property="Margin" Value="12,22,12,18"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="26"/>
@@ -837,13 +1342,13 @@
                             <Ellipse Width="10" Height="10" Fill="#DDF9FF" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"/>
                         </Grid>
                     </Border>
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="Luma Profiles" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}"/>
                         <TextBlock Text="Monitor Studio" FontSize="11" Foreground="{DynamicResource MutedBrush}"/>
                     </StackPanel>
                 </StackPanel>
 
-                <Grid Grid.Row="2" Margin="4,0">
+                <Grid Grid.Row="2" Margin="4,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
                     <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                     <TextBlock Text="{Binding [Library]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     <Border Grid.Column="1" Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="8,3">
@@ -853,24 +1358,42 @@
 
                 <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Command="{Binding SelectCategoryCommand}" CommandParameter="Todos"><TextBlock><Run Text="▦    "/><Run Text="{Binding [AllProfiles]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Favoritos"><TextBlock><Run Text="★    "/><Run Text="{Binding [Favorites]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color fiel"><TextBlock><Run Text="◉    "/><Run Text="{Binding [FaithfulColor]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="ASUS GameVisual"><TextBlock Text="◆    ASUS GameVisual"/></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="HDR"><TextBlock Text="◐    HDR"/></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color creativo"><TextBlock><Run Text="✦    "/><Run Text="{Binding [CreativeColor]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Entretenimiento"><TextBlock><Run Text="▶    "/><Run Text="{Binding [Entertainment]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Rendimiento"><TextBlock><Run Text="ϟ    "/><Run Text="{Binding [Performance]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Gamer"><TextBlock><Run Text="🎮    "/><Run Text="{Binding [Gamer]}"/></TextBlock></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Cuidado visual"><TextBlock><Run Text="◒    "/><Run Text="{Binding [EyeCare]}"/></TextBlock></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Command="{Binding SelectCategoryCommand}" CommandParameter="Todos" ToolTip="{Binding [AllProfiles]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [AllProfiles]}"><StackPanel Orientation="Horizontal"><TextBlock Text="▦" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [AllProfiles]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Favoritos" ToolTip="{Binding [Favorites]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Favorites]}"><StackPanel Orientation="Horizontal"><TextBlock Text="★" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Favorites]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color fiel" ToolTip="{Binding [FaithfulColor]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [FaithfulColor]}"><StackPanel Orientation="Horizontal"><TextBlock Text="◉" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [FaithfulColor]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="ASUS GameVisual" ToolTip="ASUS GameVisual" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="ASUS GameVisual"><StackPanel Orientation="Horizontal"><TextBlock Text="◆" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="ASUS GameVisual" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="HDR" ToolTip="HDR" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="HDR"><StackPanel Orientation="Horizontal"><TextBlock Text="◐" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="HDR" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color creativo" ToolTip="{Binding [CreativeColor]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [CreativeColor]}"><StackPanel Orientation="Horizontal"><TextBlock Text="✦" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [CreativeColor]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Entretenimiento" ToolTip="{Binding [Entertainment]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Entertainment]}"><StackPanel Orientation="Horizontal"><TextBlock Text="▶" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Entertainment]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Rendimiento" ToolTip="{Binding [Performance]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Performance]}"><StackPanel Orientation="Horizontal"><TextBlock Text="ϟ" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Performance]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Gamer" ToolTip="{Binding [Gamer]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Gamer]}"><StackPanel Orientation="Horizontal"><TextBlock Text="🎮" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Gamer]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Cuidado visual" ToolTip="{Binding [EyeCare]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [EyeCare]}"><StackPanel Orientation="Horizontal"><TextBlock Text="◒" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [EyeCare]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
                     </StackPanel>
                 </ScrollViewer>
 
                 <StackPanel Grid.Row="5">
+                    <Button Style="{StaticResource SidebarFlatButton}" Command="{Binding ToggleSidebarCollapseCommand}" Margin="0,0,0,10"
+                            Visibility="{Binding IsSidebarToggleAvailable, Converter={StaticResource BoolToVisibility}}"
+                            ToolTip="{Binding SidebarToggleLabel}" AutomationProperties.Name="{Binding SidebarToggleLabel}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding SidebarToggleGlyph}" FontFamily="Segoe Fluent Icons" FontSize="13" Width="24" TextAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SidebarToggleLabel}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/>
+                        </StackPanel>
+                    </Button>
                     <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="12" Padding="5" Margin="0,0,0,10">
-                        <Button Style="{StaticResource FlatButton}" Command="{Binding RepairCommand}" ToolTip="{Binding [RepairTooltip]}"><TextBlock><Run Text="↺    "/><Run Text="{Binding [Neutralize]}"/></TextBlock></Button>
+                        <Button Style="{StaticResource SidebarFlatButton}" Command="{Binding RepairCommand}" ToolTip="{Binding [RepairTooltip]}" AutomationProperties.Name="{Binding [Neutralize]}"><StackPanel Orientation="Horizontal"><TextBlock Text="↺" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Neutralize]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></Button>
                     </Border>
-                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="12" Padding="12,10">
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" CornerRadius="12">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Padding" Value="12,10"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                        <Setter Property="Padding" Value="8,10"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -887,7 +1410,7 @@
                                        RenderOptions.BitmapScalingMode="HighQuality"
                                        ToolTip="Código Limpio"/>
                             </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
                                 <Grid>
                                     <TextBlock Text="{Binding [CreatedBy]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="9" VerticalAlignment="Center"/>
                                     <Border HorizontalAlignment="Right" Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="6,2">
@@ -897,7 +1420,7 @@
                                 <TextBlock Text="Código Limpio" Foreground="{DynamicResource PrimaryTextBrush}" FontWeight="SemiBold" Margin="0,3,0,0"/>
                                 <TextBlock Text="{Binding [Intent]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,2,0,0"/>
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,9,0,0">
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,9,0,0" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}">
                                 <Button Style="{StaticResource FlatButton}" Command="{Binding OpenUrlCommand}" CommandParameter="https://codigolimpio.com.co/" Content="{Binding [Website]}" Foreground="{DynamicResource AccentTextBrush}" Padding="0,4" Margin="0,0,13,0"/>
                                 <Button Style="{StaticResource FlatButton}" Command="{Binding OpenUrlCommand}" CommandParameter="https://github.com/CodigoLimpioCo/luma-profiles" Content="GitHub ↗" Padding="0,4" Margin="0,0,13,0"/>
                                 <Button Style="{StaticResource FlatButton}" Command="{Binding OpenAboutCommand}" Content="{Binding [About]}" Padding="0,4"/>
@@ -934,127 +1457,48 @@
                     <ComboBox Style="{StaticResource DestinationComboBox}" ItemsSource="{Binding MonitorTargets}"
                               DisplayMemberPath="DisplayName" SelectedValuePath="Value" AutomationProperties.Name="{Binding [ColorTarget]}" SelectedValue="{Binding SelectedMonitorTarget}"/>
                 </StackPanel>
-                <TextBox Grid.ColumnSpan="2" Grid.Row="1" Margin="0,14,0,12" Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
+                <TextBox Grid.Row="1" Margin="0,14,0,12" Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
+                <Border Grid.Row="1" Grid.Column="1" Margin="10,14,0,12" Height="38" Padding="3" HorizontalAlignment="Right"
+                        Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="19">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Style="{StaticResource ViewModeButton}" GroupName="ViewMode" IsChecked="{Binding IsViewCards, Mode=TwoWay}" ToolTip="{Binding [ViewCards]}" AutomationProperties.Name="{Binding [ViewCards]}"><Viewbox Width="15" Height="15"><Path Data="M1,1H7V7H1Z M9,1H15V7H9Z M1,9H7V15H1Z M9,9H15V15H9Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></Viewbox></RadioButton>
+                        <RadioButton Style="{StaticResource ViewModeButton}" GroupName="ViewMode" IsChecked="{Binding IsViewLarge, Mode=TwoWay}" ToolTip="{Binding [ViewLarge]}" AutomationProperties.Name="{Binding [ViewLarge]}"><Viewbox Width="15" Height="15"><Path Data="M1,1H7V15H1Z M9,1H15V15H9Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></Viewbox></RadioButton>
+                        <RadioButton Style="{StaticResource ViewModeButton}" GroupName="ViewMode" IsChecked="{Binding IsViewCompact, Mode=TwoWay}" ToolTip="{Binding [ViewCompact]}" AutomationProperties.Name="{Binding [ViewCompact]}"><Viewbox Width="15" Height="15"><Path Data="M1,1H5V5H1Z M6,1H10V5H6Z M11,1H15V5H11Z M1,6H5V10H1Z M6,6H10V10H6Z M11,6H15V10H11Z M1,11H5V15H1Z M6,11H10V15H6Z M11,11H15V15H11Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></Viewbox></RadioButton>
+                        <RadioButton Style="{StaticResource ViewModeButton}" GroupName="ViewMode" IsChecked="{Binding IsViewList, Mode=TwoWay}" ToolTip="{Binding [ViewList]}" AutomationProperties.Name="{Binding [ViewList]}"><Viewbox Width="15" Height="15"><Path Data="M1,2.5H3.5V5H1Z M5.5,2.5H15V5H5.5Z M1,7H3.5V9.5H1Z M5.5,7H15V9.5H5.5Z M1,11.5H3.5V14H1Z M5.5,11.5H15V14H5.5Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></Viewbox></RadioButton>
+                        <RadioButton Style="{StaticResource ViewModeButton}" GroupName="ViewMode" IsChecked="{Binding IsViewDetails, Mode=TwoWay}" ToolTip="{Binding [ViewDetails]}" AutomationProperties.Name="{Binding [ViewDetails]}"><Viewbox Width="15" Height="15"><Path Data="M1,1H15V3.5H1Z M1,5.5H15V8H1Z M1,9.5H15V12H1Z M1,13H15V15H1Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></Viewbox></RadioButton>
+                    </StackPanel>
+                </Border>
             </Grid>
 
             <ScrollViewer x:Name="ProfilesScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding VisibleProfiles}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel IsItemsHost="True"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Width="248" Height="330" Margin="0,0,12,14" Padding="11"
-                                    Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
-                                    CornerRadius="13" ToolTip="{Binding DisplayDescription}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Style.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="BorderBrush" Value="#55D6F5"/>
-                                                <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="120"/>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-
-                                    <Border CornerRadius="9" ClipToBounds="True" BorderBrush="#385064" BorderThickness="1">
-                                        <Grid>
-                                            <Rectangle>
-                                                <Rectangle.Fill>
-                                                    <ImageBrush ImageSource="/Assets/color-reference.png" Stretch="UniformToFill"
-                                                                Viewbox="0.333,0.08,0.333,0.72" ViewboxUnits="RelativeToBoundingBox"/>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
-                                            <Rectangle Opacity="0.18">
-                                                <Rectangle.Fill>
-                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                        <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
-                                                        <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
-                                                    </LinearGradientBrush>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
-                                            <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
-                                                <Grid>
-                                                    <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="#DCEAF3"/>
-                                                    <TextBlock Text="{Binding DataContext[Preview], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="9" Foreground="#91A8B8" HorizontalAlignment="Right"/>
-                                                </Grid>
-                                            </Border>
-                                            <Border Background="#AA081018" CornerRadius="10" Padding="9,5" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8"
-                                                    Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}">
-                                                <TextBlock Text="{Binding DataContext[Active], RelativeSource={RelativeSource AncestorType=Window}}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentTextBrush}"/>
-                                            </Border>
-                                            <Button Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"
-                                                    Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"
-                                                    ToolTip="{Binding DataContext[FavoriteTooltip], RelativeSource={RelativeSource AncestorType=Window}}" AutomationProperties.Name="{Binding DisplayName}"
-                                                    Cursor="Hand" BorderThickness="0" FontSize="20">
-                                                <Button.Style>
-                                                    <Style TargetType="Button">
-                                                        <Setter Property="Content" Value="☆"/>
-                                                        <Setter Property="Foreground" Value="#F4D67A"/>
-                                                        <Setter Property="Background" Value="#B00A1118"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsFavorite}" Value="True">
-                                                                <Setter Property="Content" Value="★"/>
-                                                                <Setter Property="Background" Value="#C43B3020"/>
-                                                            </DataTrigger>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#DF3B3020"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Button.Style>
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-
-                                    <StackPanel Grid.Row="1" Margin="2,10,2,8">
-                                        <TextBlock Text="{Binding DisplayName}" FontSize="19" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding DisplayDescription}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Height="45" Margin="0,4,0,8" FontSize="12"/>
-                                        <WrapPanel>
-                                            <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
-                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="{Binding DataContext[BrightnessShort], RelativeSource={RelativeSource AncestorType=Window}}"/><Run Text=" "/><Run Text="{Binding Brightness}" FontWeight="SemiBold"/></TextBlock>
-                                            </Border>
-                                            <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
-                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="Sat. "/><Run Text="{Binding Saturation}" FontWeight="SemiBold"/></TextBlock>
-                                            </Border>
-                                            <Border Background="{DynamicResource ChipBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,6,5">
-                                                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"><Run Text="γ "/><Run Text="{Binding Gamma, StringFormat={}{0:F2}}" FontWeight="SemiBold"/></TextBlock>
-                                            </Border>
-                                        </WrapPanel>
-                                    </StackPanel>
-
-                                    <Grid Grid.Row="2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="8"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Button Grid.Column="0" Style="{StaticResource SecondaryButton}" AutomationProperties.HelpText="{Binding DisplayName}" Content="{Binding DataContext[Adjust], RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.EditProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
-                                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" AutomationProperties.HelpText="{Binding DisplayName}" Content="{Binding DataContext[Apply], RelativeSource={RelativeSource AncestorType=Window}}" Command="{Binding DataContext.ApplyProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
-                                    </Grid>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <StackPanel>
+                    <Border Padding="8,0" Margin="0,0,0,6" Height="30">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ViewMode}" Value="Details">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="34"/><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="96"/><ColumnDefinition Width="54"/><ColumnDefinition Width="68"/>
+                                <ColumnDefinition Width="60"/><ColumnDefinition Width="46"/><ColumnDefinition Width="156"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="2" Text="{Binding [ColumnProfile]}" Style="{StaticResource ColumnHeader}"/>
+                            <TextBlock Grid.Column="3" Text="{Binding [ColumnCategory]}" Style="{StaticResource ColumnHeader}"/>
+                            <TextBlock Grid.Column="4" Text="{Binding [Brightness]}" Style="{StaticResource ColumnHeader}" TextAlignment="Center"/>
+                            <TextBlock Grid.Column="5" Text="{Binding [Contrast]}" Style="{StaticResource ColumnHeader}" TextAlignment="Center"/>
+                            <TextBlock Grid.Column="6" Text="{Binding [Saturation]}" Style="{StaticResource ColumnHeader}" TextAlignment="Center"/>
+                            <TextBlock Grid.Column="7" Text="{Binding [Gamma]}" Style="{StaticResource ColumnHeader}" TextAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding VisibleProfiles}" Style="{StaticResource ProfilesItemsStyle}"/>
+                </StackPanel>
             </ScrollViewer>
 
             <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" CornerRadius="9" Padding="12,9" Margin="0,6,16,0">
@@ -1172,13 +1616,13 @@
 
         <Grid x:Name="SettingsOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="110"
               Background="#B8090E14" Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVisibility}}">
-            <Border Width="520" HorizontalAlignment="Center" VerticalAlignment="Center"
+            <Border MaxWidth="520" Margin="16" HorizontalAlignment="Stretch" VerticalAlignment="Center"
                     Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
                     BorderThickness="1" CornerRadius="20" Padding="28,25">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="36" ShadowDepth="12" Opacity="0.55" Color="#000000"/>
                 </Border.Effect>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="620">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -1398,7 +1842,7 @@
 
         <Grid x:Name="AboutOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="100"
               Background="#B8090E14" Visibility="{Binding IsAboutOpen, Converter={StaticResource BoolToVisibility}}">
-            <Border Width="520" HorizontalAlignment="Center" VerticalAlignment="Center"
+            <Border MaxWidth="520" Margin="16" HorizontalAlignment="Stretch" VerticalAlignment="Center"
                     Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
                     BorderThickness="1" CornerRadius="20" Padding="0" ClipToBounds="True">
                 <Border.Effect>

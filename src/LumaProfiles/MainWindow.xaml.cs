@@ -23,6 +23,12 @@ public partial class MainWindow : Window
     private bool _isRightPanelVisible;
     private bool _isExiting;
 
+    private const double ExpandedSidebarPixels = 220;
+    private const double CollapsedSidebarPixels = 80;
+    private const double CompactSidebarWidth = 1100;
+    private const double InspectorMinWidth = 1040;
+    private const double BothPanelsHiddenWidth = 760;
+
     public MainWindow()
     {
         _viewModel = new MainViewModel(new MonitorService(), new ProfileStore(), new ApplicationSettingsStore(), new ShellService());
@@ -100,6 +106,9 @@ public partial class MainWindow : Window
             case nameof(MainViewModel.GlobalHotkeysEnabled):
                 UpdateHotkeys();
                 break;
+            case nameof(MainViewModel.IsSidebarCollapsed):
+                ApplyResponsiveLayout(enforceCompactMode: false);
+                break;
         }
     }
 
@@ -152,7 +161,7 @@ public partial class MainWindow : Window
     private void ToggleLeftPanel_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.LeftPanelRequested = !_isLeftPanelVisible;
-        if (_viewModel.LeftPanelRequested && ActualWidth < 1120)
+        if (_viewModel.LeftPanelRequested && ActualWidth < InspectorMinWidth)
         {
             _viewModel.RightPanelRequested = false;
         }
@@ -163,7 +172,7 @@ public partial class MainWindow : Window
     private void ToggleRightPanel_Click(object sender, RoutedEventArgs e)
     {
         _viewModel.RightPanelRequested = !_isRightPanelVisible;
-        if (_viewModel.RightPanelRequested && ActualWidth < 1120)
+        if (_viewModel.RightPanelRequested && ActualWidth < InspectorMinWidth)
         {
             _viewModel.LeftPanelRequested = false;
         }
@@ -193,18 +202,22 @@ public partial class MainWindow : Window
 
         if (enforceCompactMode)
         {
-            if (ActualWidth < 850)
+            if (ActualWidth < BothPanelsHiddenWidth)
             {
                 showLeft = false;
                 showRight = false;
             }
-            else if (ActualWidth < 1120)
+            else if (ActualWidth < InspectorMinWidth)
             {
                 showRight = false;
             }
         }
 
-        LeftSidebarColumn.Width = showLeft ? new GridLength(220) : new GridLength(0);
+        // Narrow windows switch the sidebar to icons only; the saved preference is left untouched.
+        _viewModel.SetSidebarForcedCompact(showLeft && ActualWidth < CompactSidebarWidth);
+        LeftSidebarColumn.Width = showLeft
+            ? new GridLength(_viewModel.IsSidebarCollapsed ? CollapsedSidebarPixels : ExpandedSidebarPixels)
+            : new GridLength(0);
         RightInspectorColumn.Width = showRight ? new GridLength(320) : new GridLength(0);
         LeftSidebar.Visibility = showLeft ? Visibility.Visible : Visibility.Collapsed;
         RightInspector.Visibility = showRight ? Visibility.Visible : Visibility.Collapsed;
