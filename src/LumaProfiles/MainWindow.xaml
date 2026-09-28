@@ -638,16 +638,42 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
-                        <Border x:Name="Bar" Background="{DynamicResource BorderStrongBrush}" CornerRadius="2" Margin="3,1"/>
+                        <!-- 7px bar squeezed to ~3px; hovering the scrollbar eases it to full width. -->
+                        <Border x:Name="Bar" Width="7" HorizontalAlignment="Right" Margin="0,1,2,1" CornerRadius="4"
+                                Background="{DynamicResource AccentBrush}" Opacity="0.45" RenderTransformOrigin="1,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="BarScale" ScaleX="0.43"/>
+                            </Border.RenderTransform>
+                        </Border>
                         <ControlTemplate.Triggers>
                             <DataTrigger Binding="{Binding Orientation, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="Horizontal">
-                                <Setter TargetName="Bar" Property="Margin" Value="1,3"/>
+                                <Setter TargetName="Bar" Property="Width" Value="Auto"/>
+                                <Setter TargetName="Bar" Property="Height" Value="4"/>
+                                <Setter TargetName="Bar" Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter TargetName="Bar" Property="VerticalAlignment" Value="Bottom"/>
+                                <Setter TargetName="Bar" Property="Margin" Value="1,0,1,2"/>
+                                <Setter TargetName="Bar" Property="RenderTransform" Value="{x:Null}"/>
                             </DataTrigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource MutedBrush}"/>
-                            </Trigger>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollBar}}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="BarScale" Storyboard.TargetProperty="ScaleX" To="1" Duration="0:0:0.12"/>
+                                            <DoubleAnimation Storyboard.TargetName="Bar" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.12"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="BarScale" Storyboard.TargetProperty="ScaleX" To="0.43" Duration="0:0:0.18"/>
+                                            <DoubleAnimation Storyboard.TargetName="Bar" Storyboard.TargetProperty="Opacity" To="0.45" Duration="0:0:0.18"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
                             <Trigger Property="IsDragging" Value="True">
-                                <Setter TargetName="Bar" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Bar" Property="Opacity" Value="1"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -656,7 +682,7 @@
         </Style>
 
         <Style TargetType="ScrollBar">
-            <Setter Property="Width" Value="10"/>
+            <Setter Property="Width" Value="12"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -685,7 +711,7 @@
             <Style.Triggers>
                 <Trigger Property="Orientation" Value="Horizontal">
                     <Setter Property="Width" Value="Auto"/>
-                    <Setter Property="Height" Value="10"/>
+                    <Setter Property="Height" Value="12"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -1432,6 +1458,15 @@
         </Border>
 
         <Grid Grid.Row="1" Grid.Column="1" Margin="18,20,14,16">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="18"/>
@@ -1507,6 +1542,15 @@
         </Grid>
 
         <Border x:Name="RightInspector" Grid.Row="1" Grid.Column="2" Background="{DynamicResource InspectorBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1,0,0,0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsSettingsOpen}" Value="True">
+                            <Setter Property="IsEnabled" Value="False"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="20,24">
                     <TextBlock Text="{Binding [AdjustProfile]}" FontSize="23" FontWeight="SemiBold"/>
@@ -1614,229 +1658,210 @@
             </ScrollViewer>
         </Border>
 
-        <Grid x:Name="SettingsOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="110"
-              Background="#B8090E14" Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVisibility}}">
-            <Border MaxWidth="520" Margin="16" HorizontalAlignment="Stretch" VerticalAlignment="Center"
-                    Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
-                    BorderThickness="1" CornerRadius="20" Padding="28,25">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="36" ShadowDepth="12" Opacity="0.55" Color="#000000"/>
-                </Border.Effect>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+        <Grid x:Name="SettingsPage" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Panel.ZIndex="50"
+              Background="{DynamicResource WindowBrush}" Visibility="{Binding IsSettingsOpen, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel MaxWidth="800" Margin="28,24,28,20" HorizontalAlignment="Stretch">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Text="{Binding [Settings]}" FontSize="22" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding [SettingsDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                       FontSize="11" Margin="0,5,0,0"/>
-                        </StackPanel>
-                        <Button Grid.Column="1" Style="{StaticResource FlatButton}" Command="{Binding CloseSettingsCommand}"
-                                Width="34" Height="34" Padding="0" HorizontalContentAlignment="Center"
-                                ToolTip="{Binding [Close]}" AutomationProperties.Name="{Binding [Close]}">
-                            <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="13"/>
+                        <Button Style="{StaticResource FlatButton}" Command="{Binding CloseSettingsCommand}"
+                                Width="40" Height="40" Padding="0" HorizontalContentAlignment="Center" Margin="0,0,14,0"
+                                ToolTip="{Binding [BackToLibrary]}" AutomationProperties.Name="{Binding [BackToLibrary]}">
+                            <TextBlock Text="&#xE72B;" FontFamily="Segoe Fluent Icons" FontSize="15"/>
                         </Button>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding [Settings]}" FontSize="28" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding [SettingsDescription]}" Foreground="{DynamicResource MutedBrush}" FontSize="13" Margin="0,3,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
                     </Grid>
 
-                    <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,22,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding [StartWithWindows]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [StartWithWindowsDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
-                                      IsChecked="{Binding StartWithWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding [Language]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [LanguageDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0"/>
-                            </StackPanel>
-                            <ComboBox Grid.Column="1" Style="{StaticResource LanguageComboBox}" Width="165"
-                                      ItemsSource="{Binding Languages}" AutomationProperties.Name="{Binding [Language]}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding [DarkMode]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [DarkModeDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
-                                      IsChecked="{Binding IsDarkTheme, Mode=TwoWay}" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="4" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding [OriginalDisplayState]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [OriginalDisplayStateDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
-                                    Content="{Binding [RestoreOriginalDisplayState]}"
-                                    Command="{Binding RestoreOriginalCommand}" Padding="14,8" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="5" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding [MinimizeToTray]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [MinimizeToTrayDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
-                                      AutomationProperties.Name="{Binding [MinimizeToTray]}"
-                                      IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="6" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding [GlobalHotkeys]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [GlobalHotkeysDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
-                                      AutomationProperties.Name="{Binding [GlobalHotkeys]}"
-                                      IsChecked="{Binding GlobalHotkeysEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="7" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <StackPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding [Schedule]}" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding [ScheduleDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                               FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
-                                          AutomationProperties.Name="{Binding [Schedule]}"
-                                          IsChecked="{Binding ScheduleEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Grid Margin="0,12,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="64"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                                <TextBlock Text="{Binding [ScheduleDay]}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="11"/>
-                                <ComboBox Grid.Column="1" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
-                                          AutomationProperties.Name="{Binding [ScheduleDay]}"
-                                          SelectedValue="{Binding ScheduleDayProfileId, Mode=TwoWay}"/>
-                                <TextBox Grid.Column="3" Text="{Binding ScheduleDayStart, UpdateSourceTrigger=LostFocus}" MaxLength="5"
-                                         AutomationProperties.Name="{Binding [ScheduleDay]}" HorizontalContentAlignment="Center"/>
-                                <TextBlock Grid.Row="1" Text="{Binding [ScheduleNight]}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,8,0,0"/>
-                                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
-                                          AutomationProperties.Name="{Binding [ScheduleNight]}"
-                                          SelectedValue="{Binding ScheduleNightProfileId, Mode=TwoWay}"/>
-                                <TextBox Grid.Row="1" Grid.Column="3" Margin="0,8,0,0" Text="{Binding ScheduleNightStart, UpdateSourceTrigger=LostFocus}" MaxLength="5"
-                                         AutomationProperties.Name="{Binding [ScheduleNight]}" HorizontalContentAlignment="Center"/>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="8" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <StackPanel>
-                            <TextBlock Text="{Binding [AppRules]}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding [AppRulesDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                       FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
-                            <ItemsControl ItemsSource="{Binding AppRules}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,0,0,6">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                                <Run Text="{Binding ProcessName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
-                                            </TextBlock>
-                                            <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
-                                                    HorizontalContentAlignment="Center"
-                                                    Command="{Binding DataContext.RemoveAppRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    AutomationProperties.Name="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    AutomationProperties.HelpText="{Binding ProcessName}">
-                                                <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
-                                            </Button>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Grid Margin="0,4,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBox Text="{Binding NewRuleProcess, UpdateSourceTrigger=PropertyChanged}"
-                                         ToolTip="{Binding [AppRuleProcess]}" AutomationProperties.Name="{Binding [AppRuleProcess]}"/>
-                                <ComboBox Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
-                                          AutomationProperties.Name="{Binding [Profiles]}" SelectedValue="{Binding NewRuleProfileId, Mode=TwoWay}"/>
-                                <Button Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [AppRuleAdd]}"
-                                        Command="{Binding AddAppRuleCommand}" Padding="14,8"/>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="9" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
-                            BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,10,0,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding [ProfilesData]}" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding [ProfilesDataDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                           FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
-                            </StackPanel>
-                            <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="{Binding [ExportProfiles]}"
-                                    Command="{Binding ExportProfilesCommand}" Padding="14,8" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="{Binding [ImportProfiles]}"
-                                    Command="{Binding ImportProfilesCommand}" Padding="14,8" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <Button Grid.Row="10" Style="{StaticResource PrimaryButton}" Content="{Binding [Done]}"
-                            Command="{Binding CloseSettingsCommand}" Padding="24,10" Margin="0,22,0,0" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding [SettingsGeneral]}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11" FontWeight="SemiBold"
+                               Margin="4,18,0,8"/>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [StartWithWindows]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [StartWithWindowsDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                              IsChecked="{Binding StartWithWindows, Mode=TwoWay}" VerticalAlignment="Center"/>
                 </Grid>
-                </ScrollViewer>
+            </Border>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding [Language]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [LanguageDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1" Style="{StaticResource LanguageComboBox}" Width="165"
+                              ItemsSource="{Binding Languages}" AutomationProperties.Name="{Binding [Language]}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                </Grid>
+            </Border>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [DarkMode]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [DarkModeDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0"/>
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                              IsChecked="{Binding IsDarkTheme, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [MinimizeToTray]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [MinimizeToTrayDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                              AutomationProperties.Name="{Binding [MinimizeToTray]}"
+                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+                    <TextBlock Text="{Binding [SettingsAutomation]}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11" FontWeight="SemiBold"
+                               Margin="4,18,0,8"/>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [GlobalHotkeys]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [GlobalHotkeysDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                              AutomationProperties.Name="{Binding [GlobalHotkeys]}"
+                              IsChecked="{Binding GlobalHotkeysEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding [Schedule]}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding [ScheduleDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                       FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}"
+                                  AutomationProperties.Name="{Binding [Schedule]}"
+                                  IsChecked="{Binding ScheduleEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="64"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <TextBlock Text="{Binding [ScheduleDay]}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="11"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                  AutomationProperties.Name="{Binding [ScheduleDay]}"
+                                  SelectedValue="{Binding ScheduleDayProfileId, Mode=TwoWay}"/>
+                        <TextBox Grid.Column="3" Text="{Binding ScheduleDayStart, UpdateSourceTrigger=LostFocus}" MaxLength="5"
+                                 AutomationProperties.Name="{Binding [ScheduleDay]}" HorizontalContentAlignment="Center"/>
+                        <TextBlock Grid.Row="1" Text="{Binding [ScheduleNight]}" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,8,0,0"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                  AutomationProperties.Name="{Binding [ScheduleNight]}"
+                                  SelectedValue="{Binding ScheduleNightProfileId, Mode=TwoWay}"/>
+                        <TextBox Grid.Row="1" Grid.Column="3" Margin="0,8,0,0" Text="{Binding ScheduleNightStart, UpdateSourceTrigger=LostFocus}" MaxLength="5"
+                                 AutomationProperties.Name="{Binding [ScheduleNight]}" HorizontalContentAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="{Binding [AppRules]}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding [AppRulesDescription]}" Foreground="{DynamicResource MutedBrush}"
+                               FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding AppRules}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding ProcessName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                    </TextBlock>
+                                    <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
+                                            HorizontalContentAlignment="Center"
+                                            Command="{Binding DataContext.RemoveAppRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                            AutomationProperties.Name="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                            AutomationProperties.HelpText="{Binding ProcessName}">
+                                        <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding NewRuleProcess, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="{Binding [AppRuleProcess]}" AutomationProperties.Name="{Binding [AppRuleProcess]}"/>
+                        <ComboBox Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                  AutomationProperties.Name="{Binding [Profiles]}" SelectedValue="{Binding NewRuleProfileId, Mode=TwoWay}"/>
+                        <Button Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [AppRuleAdd]}"
+                                Command="{Binding AddAppRuleCommand}" Padding="14,8"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+                    <TextBlock Text="{Binding [SettingsData]}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11" FontWeight="SemiBold"
+                               Margin="4,18,0,8"/>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [OriginalDisplayState]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [OriginalDisplayStateDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}"
+                            Content="{Binding [RestoreOriginalDisplayState]}"
+                            Command="{Binding RestoreOriginalCommand}" Padding="14,8" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="15,13" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [ProfilesData]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [ProfilesDataDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,16,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="{Binding [ExportProfiles]}"
+                            Command="{Binding ExportProfilesCommand}" Padding="14,8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="{Binding [ImportProfiles]}"
+                            Command="{Binding ImportProfilesCommand}" Padding="14,8" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+                </StackPanel>
+            </ScrollViewer>
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" CornerRadius="9" Padding="12,9" Margin="18,0,18,16">
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>
             </Border>
         </Grid>
 

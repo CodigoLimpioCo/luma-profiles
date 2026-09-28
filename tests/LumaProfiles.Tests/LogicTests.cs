@@ -398,6 +398,37 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void EditProfileCommand_SelectsProfileAndRequestsInspector()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        var requested = 0;
+        vm.InspectorRequested += (_, _) => requested++;
+        var target = vm.Profiles[5];
+
+        vm.EditProfileCommand.Execute(target);
+
+        Assert.Same(target, vm.SelectedProfile);
+        Assert.Equal(1, requested);
+    }
+
+    [Fact]
+    public void OpenSettingsCommand_TogglesAndCategoryClosesIt()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.OpenSettingsCommand.Execute(null);
+        Assert.True(vm.IsSettingsOpen);
+        vm.OpenSettingsCommand.Execute(null);
+        Assert.False(vm.IsSettingsOpen);
+
+        vm.OpenSettingsCommand.Execute(null);
+        vm.SelectCategoryCommand.Execute("Favoritos");
+        Assert.False(vm.IsSettingsOpen);
+    }
+
+    [Fact]
     public void OpenUrlCommand_DelegatesToShell()
     {
         var (vm, _, shell, dir) = Create();

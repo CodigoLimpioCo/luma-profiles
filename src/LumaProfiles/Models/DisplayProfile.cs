@@ -50,6 +50,9 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     public bool IsActive { get => _isActive; set => Set(ref _isActive, value); }
     public bool IsFavorite { get => _isFavorite; set => Set(ref _isFavorite, value); }
 
+    // ComboBox templates without a display member fall back to ToString().
+    public override string ToString() => DisplayName;
+
     public void SetLocalizedText(string name, string category, string description)
     {
         _localizedName = name;

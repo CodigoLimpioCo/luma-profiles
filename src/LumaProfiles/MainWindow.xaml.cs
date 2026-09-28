@@ -22,6 +22,9 @@ public partial class MainWindow : Window
     private bool _isLeftPanelVisible;
     private bool _isRightPanelVisible;
     private bool _isExiting;
+    private PinnedPanel _pinnedPanel;
+
+    private enum PinnedPanel { None, Left, Right }
 
     private const double ExpandedSidebarPixels = 220;
     private const double CollapsedSidebarPixels = 80;
@@ -38,13 +41,17 @@ public partial class MainWindow : Window
         ApplyTheme();
 
         _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        _viewModel.InspectorRequested += (_, _) =>
+        {
+            if (!_isRightPanelVisible) SetInspectorOpen(true);
+        };
         _viewModel.ScrollToTopRequested += (_, _) => ProfilesScrollViewer?.ScrollToTop();
         _foregroundWatcher.ForegroundProcessChanged += _viewModel.OnForegroundProcessChanged;
         StateChanged += (_, _) => PushWindowState();
         Loaded += (_, _) =>
         {
             ProfilesScrollViewer.ScrollToTop();
-            ApplyResponsiveLayout(enforceCompactMode: true);
+            ApplyResponsiveLayout();
             _viewModel.Initialize();
         };
     }
@@ -107,7 +114,7 @@ public partial class MainWindow : Window
                 UpdateHotkeys();
                 break;
             case nameof(MainViewModel.IsSidebarCollapsed):
-                ApplyResponsiveLayout(enforceCompactMode: false);
+                ApplyResponsiveLayout();
                 break;
         }
     }
@@ -160,30 +167,28 @@ public partial class MainWindow : Window
 
     private void ToggleLeftPanel_Click(object sender, RoutedEventArgs e)
     {
-        _viewModel.LeftPanelRequested = !_isLeftPanelVisible;
-        if (_viewModel.LeftPanelRequested && ActualWidth < InspectorMinWidth)
-        {
-            _viewModel.RightPanelRequested = false;
-        }
+        var open = !_isLeftPanelVisible;
+        _viewModel.LeftPanelRequested = open;
+        _pinnedPanel = open && IsNarrowForInspector ? PinnedPanel.Left : PinnedPanel.None;
         _viewModel.SavePanelPreferences();
-        ApplyResponsiveLayout(enforceCompactMode: false);
+        ApplyResponsiveLayout();
     }
 
-    private void ToggleRightPanel_Click(object sender, RoutedEventArgs e)
+    private void ToggleRightPanel_Click(object sender, RoutedEventArgs e) => SetInspectorOpen(!_isRightPanelVisible);
+
+    /// <summary>Opens the adjustment panel, e.g. when the user clicks "Ajustar" while it is hidden.</summary>
+    private void SetInspectorOpen(bool open)
     {
-        _viewModel.RightPanelRequested = !_isRightPanelVisible;
-        if (_viewModel.RightPanelRequested && ActualWidth < InspectorMinWidth)
-        {
-            _viewModel.LeftPanelRequested = false;
-        }
+        _viewModel.RightPanelRequested = open;
+        _pinnedPanel = open && IsNarrowForInspector ? PinnedPanel.Right : PinnedPanel.None;
         _viewModel.SavePanelPreferences();
-        ApplyResponsiveLayout(enforceCompactMode: false);
+        ApplyResponsiveLayout();
     }
 
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (!IsLoaded) return;
-        ApplyResponsiveLayout(enforceCompactMode: true);
+        ApplyResponsiveLayout();
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -195,23 +200,29 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ApplyResponsiveLayout(bool enforceCompactMode)
+    private bool IsNarrowForInspector => ActualWidth < InspectorMinWidth;
+
+    private void ApplyResponsiveLayout()
     {
+        var narrow = IsNarrowForInspector;
+        if (!narrow) _pinnedPanel = PinnedPanel.None;
+
         var showLeft = _viewModel.LeftPanelRequested;
         var showRight = _viewModel.RightPanelRequested;
 
-        if (enforceCompactMode)
+        // Small windows drop panels unless the user opened one explicitly ("pinned"); the saved preference is untouched.
+        if (ActualWidth < BothPanelsHiddenWidth)
         {
-            if (ActualWidth < BothPanelsHiddenWidth)
-            {
-                showLeft = false;
-                showRight = false;
-            }
-            else if (ActualWidth < InspectorMinWidth)
-            {
-                showRight = false;
-            }
+            showLeft = _pinnedPanel == PinnedPanel.Left;
+            showRight = _pinnedPanel == PinnedPanel.Right;
         }
+        else if (narrow)
+        {
+            showRight = _pinnedPanel == PinnedPanel.Right;
+        }
+
+        if (narrow && _pinnedPanel == PinnedPanel.Right) showLeft = false;
+        if (narrow && _pinnedPanel == PinnedPanel.Left) showRight = false;
 
         // Narrow windows switch the sidebar to icons only; the saved preference is left untouched.
         _viewModel.SetSidebarForcedCompact(showLeft && ActualWidth < CompactSidebarWidth);

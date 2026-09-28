@@ -87,6 +87,7 @@ public sealed class MainViewModel : ObservableObject
         {
             SelectedProfile = profile;
             StatusMessage = L("Editing", profile.DisplayName);
+            InspectorRequested?.Invoke(this, EventArgs.Empty);
         });
         ToggleFavoriteCommand = new RelayCommand<DisplayProfile>(ToggleFavorite);
         SaveAndApplyCommand = new RelayCommand(() =>
@@ -99,7 +100,7 @@ public sealed class MainViewModel : ObservableObject
         RestoreOriginalCommand = new RelayCommand(RestoreOriginalDisplayState);
         SelectCategoryCommand = new RelayCommand<string>(SelectCategory);
         ToggleThemeCommand = new RelayCommand(() => IsDarkTheme = !IsDarkTheme);
-        OpenSettingsCommand = new RelayCommand(() => IsSettingsOpen = true);
+        OpenSettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
         CloseSettingsCommand = new RelayCommand(() => IsSettingsOpen = false);
         OpenAboutCommand = new RelayCommand(() => IsAboutOpen = true);
         CloseAboutCommand = new RelayCommand(() => IsAboutOpen = false);
@@ -125,6 +126,9 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public event EventHandler? ScrollToTopRequested;
+
+    /// <summary>Raised when the user asks to adjust a profile so the view can reveal the adjustment panel.</summary>
+    public event EventHandler? InspectorRequested;
 
     public ObservableCollection<DisplayProfile> Profiles { get; }
     public ObservableCollection<DisplayProfile> VisibleProfiles { get; } = [];
@@ -189,6 +193,7 @@ public sealed class MainViewModel : ObservableObject
         {
             var trimmed = value?.Trim() ?? string.Empty;
             if (!Set(ref _searchText, trimmed)) return;
+            if (trimmed.Length > 0) IsSettingsOpen = false;
             RefreshVisibleProfiles();
             ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
             StatusMessage = string.IsNullOrWhiteSpace(_searchText)
@@ -512,6 +517,7 @@ public sealed class MainViewModel : ObservableObject
 
     private void SelectCategory(string category)
     {
+        IsSettingsOpen = false;
         _selectedCategory = category;
         RefreshVisibleProfiles();
         ScrollToTopRequested?.Invoke(this, EventArgs.Empty);

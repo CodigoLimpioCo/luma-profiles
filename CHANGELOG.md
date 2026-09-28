@@ -15,6 +15,9 @@
 - Nombres de accesibilidad (`AutomationProperties`) en controles principales.
 
 ### Cambiado
+- Configuración es una página dentro de la app (con secciones General, Automatización y Datos) en lugar de un modal.
+- Pulsar "Ajustar" abre el panel de ajustes si está oculto, también en ventanas estrechas.
+- Barras de desplazamiento muy finas que se engrosan al pasar el ratón.
 - Neutralizar color ahora devuelve la configuración natural de Windows y del monitor (estado original capturado); si no existe, usa el perfil neutro anterior.
 - Cabecera de la biblioteca rediseñada: el buscador ocupa todo el ancho y es redondeado; barras de desplazamiento más finas.
 - Diseño adaptable revisado: paneles y modales se ajustan a ventanas pequeñas.

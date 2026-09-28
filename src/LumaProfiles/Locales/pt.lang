@@ -264,3 +264,7 @@ ui.ViewList=Lista
 ui.ViewDetails=Detalhes
 ui.ColumnProfile=Perfil
 ui.ColumnCategory=Categoria
+ui.BackToLibrary=Voltar à biblioteca
+ui.SettingsGeneral=GERAL
+ui.SettingsAutomation=AUTOMAÇÃO
+ui.SettingsData=DADOS E RESTAURAÇÃO
