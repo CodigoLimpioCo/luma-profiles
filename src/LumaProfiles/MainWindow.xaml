@@ -916,21 +916,26 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <WrapPanel Orientation="Horizontal">
-                <StackPanel Width="250" Margin="0,0,14,12">
-                    <TextBlock Text="{Binding [ProfileLibrary]}" FontSize="31" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding ProfileCountSubtitle}" FontSize="16" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding [ProfileLibrary]}" FontSize="31" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding ProfileCountSubtitle}" FontSize="16" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
-                <StackPanel Width="210" Margin="0,0,14,12">
-                    <TextBlock Text="{Binding [SearchProfiles]}" Foreground="{DynamicResource MutedBrush}" Margin="2,0,0,5"/>
-                    <TextBox Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
-                </StackPanel>
-                <StackPanel Width="205" Margin="0,0,0,12">
+                <StackPanel Grid.Column="1" Width="205" VerticalAlignment="Center">
                     <TextBlock Text="{Binding [ColorTarget]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" FontWeight="SemiBold" Margin="3,0,0,6"/>
                     <ComboBox Style="{StaticResource DestinationComboBox}" ItemsSource="{Binding MonitorTargets}"
                               DisplayMemberPath="DisplayName" SelectedValuePath="Value" AutomationProperties.Name="{Binding [ColorTarget]}" SelectedValue="{Binding SelectedMonitorTarget}"/>
                 </StackPanel>
-            </WrapPanel>
+                <TextBox Grid.ColumnSpan="2" Grid.Row="1" Margin="0,14,0,12" Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
+            </Grid>
 
             <ScrollViewer x:Name="ProfilesScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding VisibleProfiles}">
