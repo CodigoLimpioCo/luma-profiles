@@ -229,6 +229,22 @@ public sealed partial class MainViewModel
 
     public void CommitUiScale() => UiScalePercent = (int)UiScalePreview;
 
+    // ---- monitor controls ---------------------------------------------------------------------
+
+    /// <summary>Off = "software only": profiles change the gamma but never write to the monitor itself.</summary>
+    public bool UseMonitorControls
+    {
+        get => _settings.UseMonitorControls;
+        set
+        {
+            if (_settings.UseMonitorControls == value) return;
+            _settings.UseMonitorControls = value;
+            _monitor.UseMonitorControls = value;
+            SaveSettings();
+            Raise();
+        }
+    }
+
     // ---- scrollbar -------------------------------------------------------------------------
 
     public double ScrollBarThickness
@@ -310,6 +326,7 @@ public sealed partial class MainViewModel
                 StartWithWindows = true;
                 MinimizeToTray = false;
                 ConfirmChanges = true;
+                UseMonitorControls = true;
                 break;
             case "Language":
                 if (Languages.FirstOrDefault(language => language.Code == "es") is { } spanish) SelectedLanguage = spanish;

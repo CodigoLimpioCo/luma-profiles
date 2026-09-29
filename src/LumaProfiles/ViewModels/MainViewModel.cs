@@ -125,6 +125,8 @@ public sealed partial class MainViewModel : ObservableObject
         AddAppRuleCommand = new RelayCommand(AddAppRule);
         RemoveAppRuleCommand = new RelayCommand<AppRuleItem>(RemoveAppRule);
 
+        _monitor.UseMonitorControls = _settings.UseMonitorControls;
+        _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
         InitializeConfirmation();
         InitializeSettingsPage();
         InitializeDisplays();

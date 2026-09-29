@@ -156,6 +156,13 @@ public class MainViewModelTests
         public bool FailApply { get; set; }
         public bool ThrowOnApply { get; set; }
         public List<DisplayInfo> Displays { get; set; } = [];
+        public bool UseMonitorControls { get; set; } = true;
+        public List<OriginalMonitorState> KnownOriginals { get; } = [];
+        public void UseOriginalStates(IEnumerable<OriginalMonitorState> states)
+        {
+            KnownOriginals.Clear();
+            KnownOriginals.AddRange(states);
+        }
         public IReadOnlyList<DisplayInfo> GetDisplays() => Displays;
         public IReadOnlyList<OriginalMonitorState>? LastRestoredStates { get; private set; }
         public string? LastRestoredPlan { get; private set; }
@@ -168,7 +175,13 @@ public class MainViewModelTests
         }
 
         public ApplyResult Preview(DisplayProfile profile, string target) => Result();
-        public IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds) => [];
+        public List<OriginalMonitorState> Capturable { get; } = [];
+
+        public IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds)
+        {
+            var known = knownMonitorIds.ToHashSet();
+            return Capturable.Where(state => !known.Contains(state.MonitorId)).ToList();
+        }
         public string? GetActivePowerPlan() => null;
         public ApplyResult RestoreOriginal(IEnumerable<OriginalMonitorState> s, string t, string? p)
         {
@@ -1220,6 +1233,56 @@ public class MainViewModelTests
         Assert.Equal("Segoe UI Variable Text", vm.FontFamilyName);
         Assert.Equal(100, vm.UiScalePercent);
         Assert.Equal(100, vm.UiScalePreview);
+    }
+
+    [Fact]
+    public void MonitorControls_SwitchPersistsAndReachesTheService()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        Assert.True(vm.UseMonitorControls);
+        Assert.True(monitor.UseMonitorControls);
+
+        vm.UseMonitorControls = false;
+
+        Assert.False(monitor.UseMonitorControls);
+        Assert.False(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().UseMonitorControls);
+
+        vm.SettingsSection = "General";
+        vm.ResetSectionCommand.Execute(null);
+        Assert.True(vm.UseMonitorControls);
+        Assert.True(monitor.UseMonitorControls);
+    }
+
+    [Fact]
+    public void SavedMonitorControlsSetting_IsAppliedWhenTheAppStarts()
+    {
+        using var dir = new TempDirectory();
+        var store = new ApplicationSettingsStore(dir.Path, manageStartup: false);
+        var settings = store.Load();
+        settings.UseMonitorControls = false;
+        store.Save(settings);
+        var monitor = new FakeMonitorService { Displays = [Display(1)] };
+
+        _ = new MainViewModel(monitor, new ProfileStore(dir.Path), store, new FakeShell(), workRunner: new InlineWorkRunner());
+
+        Assert.False(monitor.UseMonitorControls);
+    }
+
+    [Fact]
+    public void ServiceReceivesTheOriginalStatesAsTheyAreCaptured()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(new OriginalMonitorState { MonitorId = "MONITOR\\TEST\\1" });
+        Assert.Empty(monitor.KnownOriginals);
+
+        vm.ApplyProfileById("natural");
+
+        Assert.Equal(["MONITOR\\TEST\\1"], monitor.KnownOriginals.Select(state => state.MonitorId));
+        // captured once: applying again must not duplicate it
+        vm.ApplyProfileById("eyes-night");
+        Assert.Single(monitor.KnownOriginals);
     }
 
     [Fact]

@@ -2254,6 +2254,17 @@
                                       AutomationProperties.Name="{Binding [ConfirmChangesTitle]}"
                                       IsChecked="{Binding ConfirmChanges, Mode=TwoWay}"/>
                         </Grid>
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="{Binding [MonitorControlsTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding [MonitorControlsDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{Binding [MonitorControlsTitle]}"
+                                      IsChecked="{Binding UseMonitorControls, Mode=TwoWay}"/>
+                        </Grid>
                         </StackPanel>
                         <StackPanel Visibility="{Binding IsSectionLanguage, Converter={StaticResource BoolToVisibility}}">
                 <Grid>

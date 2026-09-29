@@ -6,6 +6,8 @@ public sealed partial class ApplicationSettings
     public bool IsRightPanelOpen { get; set; } = true;
     public bool IsLeftPanelCollapsed { get; set; }
     public bool ConfirmChanges { get; set; } = true;
+    /// <summary>When false only the software gamma is changed and the monitor (DDC/CI) is never written to.</summary>
+    public bool UseMonitorControls { get; set; } = true;
     /// <summary>"Light", "Dark" or "System". Null in files written before theme modes existed.</summary>
     public string? ThemeMode { get; set; }
     public string AccentColor { get; set; } = "Cyan";

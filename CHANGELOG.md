@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Añadido
+- Interruptor "Controlar el monitor (DDC/CI)" en Configuración > General: apagado, los perfiles solo usan la corrección por software y no se escribe nada en el monitor.
 - Tipo de letra (12 fuentes, las instaladas en el equipo) y tamaño de la interfaz (80 %–150 %) configurables en Apariencia, con vista previa; la escala se aplica al soltar el control y el diseño adaptable la tiene en cuenta.
 - Buscador avanzado: la búsqueda ignora mayúsculas y acentos y exige todas las palabras (en cualquier orden). El botón "Filtros" abre un panel con categorías combinables, estado (favoritos, HDR, alto rendimiento, modificados), temperatura de color, rangos de brillo/contraste/saturación y orden; muestra cuántos filtros hay activos, "N de M perfiles" y un botón para limpiar todo.
 - Selector de pantallas con botones toggle: "Todas" y uno por cada monitor conectado (multiselección: por ejemplo 1 y 3 sin la 2). Se recuerda la elección, se actualiza al conectar o desconectar monitores y nunca deja todas desactivadas.
@@ -36,6 +37,7 @@
 - Al cargar, los textos de los perfiles predeterminados se actualizan sin perder tus ajustes ni favoritos.
 
 ### Corregido
+- Tinte amarillo/azul/verde en otros monitores: la app forzaba ganancias RGB a 100, el preajuste de color, la nitidez a 0 y asumía rangos 0–100, lo que solo es neutro en monitores con ese balance de fábrica. Ahora nunca escribe ganancias ni nitidez, solo envía el preajuste de color si eliges Cálido/Frío, escala brillo/contraste/saturación/matiz al rango real que informa el monitor, omite lo que el monitor no expone y devuelve al valor original lo que un perfil deja en neutro. En monitores con ganancias de fábrica a 100 y rango 100 el resultado es idéntico al anterior.
 - Al pulsar Aplicar varias veces seguidas, Revertir (o el tiempo agotado) vuelve al estado anterior al primer cambio sin confirmar, no solo al anterior.
 - Las categorías del menú lateral ya responden también al teclado (flechas) y reflejan los filtros activos.
 - Restaurar el estado original verifica cada valor DDC/CI leyéndolo de vuelta, reintenta los que el monitor descarta y avisa de los que no acepta.

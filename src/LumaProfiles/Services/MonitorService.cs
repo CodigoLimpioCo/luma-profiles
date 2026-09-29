@@ -19,11 +19,36 @@ public interface IMonitorService
 
     /// <summary>The currently connected displays, ordered by their Windows display number.</summary>
     IReadOnlyList<DisplayInfo> GetDisplays();
+
+    /// <summary>The first-ever state of each display; used as the neutral value for settings a profile leaves alone.</summary>
+    void UseOriginalStates(IEnumerable<OriginalMonitorState> states);
+
+    /// <summary>When false only the software gamma is changed and the monitor itself is never written to.</summary>
+    bool UseMonitorControls { get; set; }
 }
 
 public sealed class MonitorService : IMonitorService
 {
-    private static readonly byte[] ManagedVcpCodes = [0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x87, 0x8A, 0x89];
+    /// <summary>The only VCP codes this app ever writes; everything else is left exactly as the monitor has it.</summary>
+    private static readonly byte[] ManagedVcpCodes = [0x10, 0x12, 0x14, 0x8A, 0x89];
+    private const byte VcpBrightness = 0x10;
+    private const byte VcpContrast = 0x12;
+    private const byte VcpColorPreset = 0x14;
+    private const byte VcpSaturation = 0x8A;
+    private const byte VcpHue = 0x89;
+    private const int NeutralSaturation = 50;
+    private const int NeutralHue = 0;
+
+    private IReadOnlyDictionary<string, OriginalMonitorState> _originals =
+        new Dictionary<string, OriginalMonitorState>(StringComparer.OrdinalIgnoreCase);
+
+    public bool UseMonitorControls { get; set; } = true;
+
+    public void UseOriginalStates(IEnumerable<OriginalMonitorState> states) =>
+        _originals = states
+            .Where(state => !string.IsNullOrWhiteSpace(state.MonitorId))
+            .GroupBy(state => state.MonitorId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
     private const string BalancedPlan = "381b4222-f694-41f0-9685-ff5bb260df2e";
     private const string HighPerformancePlan = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
     public const string AllDisplaysTarget = "Ambas pantallas";
@@ -173,7 +198,7 @@ public sealed class MonitorService : IMonitorService
             if (correction is null) continue;
 
             var profile = correction.ToProfile();
-            ApplyDdc(monitor.Handle, profile, failures, correction.ApplyImageControls);
+            ApplyDdc(monitor.Handle, monitor.MonitorId, profile, failures, correction.ApplyImageControls);
             if (!ApplyGamma(monitor.DeviceName, profile.Gamma, profile.Red, profile.Green, profile.Blue))
             {
                 failures.Add($"No fue posible aplicar gamma en {monitor.DeviceName}.");
@@ -201,7 +226,7 @@ public sealed class MonitorService : IMonitorService
 
             appliedDisplays.Add(info.szDevice);
             monitors.Add(new AppliedMonitor(GetMonitorId(info.szDevice), info.szDevice));
-            ApplyDdc(monitor, profile, failures, applyImageControls: true);
+            ApplyDdc(monitor, GetMonitorId(info.szDevice), profile, failures, applyImageControls: true);
             return true;
         };
 
@@ -235,7 +260,7 @@ public sealed class MonitorService : IMonitorService
         var applied = new List<AppliedMonitor>();
         foreach (var monitor in EnumerateMonitors().Where(item => MatchesTarget(item.DeviceName, target)))
         {
-            ApplyDdc(monitor.Handle, neutral, failures, applyImageControls: false);
+            ApplyDdc(monitor.Handle, monitor.MonitorId, neutral, failures, applyImageControls: false);
             if (!ApplyGamma(monitor.DeviceName, 1.0, 1.0, 1.0, 1.0))
             {
                 failures.Add($"No fue posible aplicar gamma en {monitor.DeviceName}.");
@@ -316,8 +341,10 @@ public sealed class MonitorService : IMonitorService
         return index >= 0 && int.TryParse(deviceName[(index + "DISPLAY".Length)..], out var number) ? number : 0;
     }
 
-    private static void ApplyDdc(IntPtr monitor, DisplayProfile profile, List<string> failures, bool applyImageControls)
+    private void ApplyDdc(IntPtr monitor, string monitorId, DisplayProfile profile, List<string> failures, bool applyImageControls)
     {
+        if (!UseMonitorControls) return;
+
         if (!NativeMethods.GetNumberOfPhysicalMonitorsFromHMONITOR(monitor, out var count) || count == 0)
         {
             failures.Add("La pantalla no expone controles DDC/CI.");
@@ -333,20 +360,14 @@ public sealed class MonitorService : IMonitorService
 
         try
         {
-            foreach (var physical in physicalMonitors)
+            for (var index = 0; index < physicalMonitors.Length; index++)
             {
-                if (applyImageControls)
+                var handle = physicalMonitors[index].hPhysicalMonitor;
+                var plan = PlanDdcWrites(profile, applyImageControls, ReadFeatures(handle), OriginalValues(monitorId, index));
+                foreach (var write in plan)
                 {
-                    SetVcp(physical.hPhysicalMonitor, 0x10, (uint)profile.Brightness, "brillo", failures);
-                    SetVcp(physical.hPhysicalMonitor, 0x12, (uint)profile.Contrast, "contraste", failures);
+                    SetVcp(handle, write.Code, write.Value, write.Label, failures);
                 }
-                SetVcp(physical.hPhysicalMonitor, 0x14, ColorPreset(profile.ColorTemperature), "temperatura de color", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x16, 100, "ganancia roja", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x18, 100, "ganancia verde", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x1A, 100, "ganancia azul", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x87, 0, "nitidez artificial", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x8A, (uint)profile.Saturation, "saturación", failures);
-                SetVcp(physical.hPhysicalMonitor, 0x89, (uint)(profile.Hue + 50), "matiz", failures);
             }
         }
         finally
@@ -354,6 +375,98 @@ public sealed class MonitorService : IMonitorService
             NativeMethods.DestroyPhysicalMonitors(count, physicalMonitors);
         }
     }
+
+    private IReadOnlyDictionary<byte, uint>? OriginalValues(string monitorId, int physicalIndex) =>
+        _originals.TryGetValue(monitorId, out var state)
+            ? state.PhysicalMonitors.FirstOrDefault(item => item.Index == physicalIndex)?.Values
+                .GroupBy(value => value.Code).ToDictionary(group => group.Key, group => group.First().Value)
+            : null;
+
+    /// <summary>Reads the current value and range of every code we might write; unsupported codes are absent.</summary>
+    private static Dictionary<byte, VcpFeature> ReadFeatures(IntPtr physical)
+    {
+        var features = new Dictionary<byte, VcpFeature>();
+        foreach (var code in ManagedVcpCodes)
+        {
+            if (NativeMethods.GetVCPFeatureAndVCPFeatureReply(physical, code, out _, out var current, out var maximum))
+            {
+                features[code] = new VcpFeature(current, maximum);
+            }
+        }
+
+        return features;
+    }
+
+    /// <summary>
+    /// Decides what to send to the monitor. It never guesses: values are scaled to the range the monitor reports,
+    /// codes the monitor does not expose are skipped, and anything the profile leaves neutral is put back to what
+    /// the monitor had before this app touched it. RGB gains, sharpness and forced color presets are never written,
+    /// because factory white balance differs per monitor and forcing "100" tints the whole image.
+    /// </summary>
+    internal static IReadOnlyList<VcpWrite> PlanDdcWrites(
+        DisplayProfile profile,
+        bool applyImageControls,
+        IReadOnlyDictionary<byte, VcpFeature> supported,
+        IReadOnlyDictionary<byte, uint>? originals)
+    {
+        var plan = new List<VcpWrite>();
+
+        void Add(byte code, uint value, string label)
+        {
+            if (supported.TryGetValue(code, out var feature) && feature.Current == value) return;
+            plan.Add(new VcpWrite(code, value, label));
+        }
+
+        // Neutral value = what the monitor had originally; only written when it differs from the current one.
+        void Restore(byte code, string label)
+        {
+            if (originals is not null && originals.TryGetValue(code, out var original)) Add(code, original, label);
+        }
+
+        if (applyImageControls)
+        {
+            // Brightness and contrast are near-universal, so they are attempted even when they cannot be read.
+            Add(VcpBrightness, ScaleToRange(profile.Brightness, supported.GetValueOrDefault(VcpBrightness)), "brillo");
+            Add(VcpContrast, ScaleToRange(profile.Contrast, supported.GetValueOrDefault(VcpContrast)), "contraste");
+        }
+
+        if (supported.ContainsKey(VcpColorPreset))
+        {
+            if (ExplicitColorPreset(profile.ColorTemperature) is { } preset) Add(VcpColorPreset, preset, "temperatura de color");
+            else Restore(VcpColorPreset, "temperatura de color");
+        }
+
+        if (supported.TryGetValue(VcpSaturation, out var saturation))
+        {
+            if (profile.Saturation != NeutralSaturation) Add(VcpSaturation, ScaleToRange(profile.Saturation, saturation), "saturación");
+            else Restore(VcpSaturation, "saturación");
+        }
+
+        if (supported.TryGetValue(VcpHue, out var hue))
+        {
+            if (profile.Hue != NeutralHue) Add(VcpHue, ScaleToRange(profile.Hue + 50, hue), "matiz");
+            else Restore(VcpHue, "matiz");
+        }
+
+        return plan;
+    }
+
+    /// <summary>Maps a 0–100 value onto the monitor's own range (0–max); without a reported range it is used as is.</summary>
+    internal static uint ScaleToRange(int percent, VcpFeature? feature)
+    {
+        var clamped = Math.Clamp(percent, 0, 100);
+        return feature is { Maximum: > 0 } range
+            ? (uint)Math.Round(clamped / 100.0 * range.Maximum)
+            : (uint)clamped;
+    }
+
+    /// <summary>Only warm and cool are sent to the monitor; neutral/user leave its own preset alone.</summary>
+    internal static uint? ExplicitColorPreset(string colorTemperature) => colorTemperature switch
+    {
+        "Cálido 5000 K" => 4,
+        "Frío 7500 K" => 6,
+        _ => null
+    };
 
     private static void RestoreDdc(IntPtr monitor, OriginalMonitorState state, List<string> failures)
     {
@@ -384,7 +497,8 @@ public sealed class MonitorService : IMonitorService
     {
         // Restore a named color preset last; writing RGB gains can make some monitors
         // switch back to their user-defined preset.
-        var pending = state.Values.OrderBy(item => item.Code == 0x14 ? 1 : 0).ToList();
+        // Everything that was captured is restored, including RGB gains saved by older versions that used to force them.
+        var pending = state.Values.OrderBy(item => item.Code == VcpColorPreset ? 1 : 0).ToList();
         for (var attempt = 0; attempt < RestoreAttempts && pending.Count > 0; attempt++)
         {
             if (attempt > 0) Thread.Sleep(RestoreSettleMilliseconds);
@@ -439,13 +553,6 @@ public sealed class MonitorService : IMonitorService
             : deviceName;
     }
 
-    internal static uint ColorPreset(string colorTemperature) => colorTemperature switch
-    {
-        "Cálido 5000 K" => 4,
-        "Neutro 6500 K" => 5,
-        "Frío 7500 K" => 6,
-        _ => 11
-    };
 
     private static void SetVcp(IntPtr monitor, byte code, uint value, string label, List<string> failures)
     {
@@ -658,6 +765,12 @@ public sealed class MonitorService : IMonitorService
         internal static extern IntPtr LocalFree(IntPtr memory);
     }
 }
+
+/// <summary>Current value and maximum reported by a monitor for one VCP code.</summary>
+public sealed record VcpFeature(uint Current, uint Maximum);
+
+/// <summary>One DDC/CI write decided by <see cref="MonitorService.PlanDdcWrites"/>.</summary>
+public sealed record VcpWrite(byte Code, uint Value, string Label);
 
 internal sealed record ConnectedMonitor(
     IntPtr Handle, string MonitorId, string DeviceName, int Left, int Top, int Width, int Height, bool IsPrimary);

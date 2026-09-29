@@ -215,7 +215,11 @@ public sealed partial class MainViewModel
             changed = true;
         }
 
-        if (changed) SaveSettings();
+        if (changed)
+        {
+            _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
+            SaveSettings();
+        }
     }
 
     private void LivePreviewTick()
