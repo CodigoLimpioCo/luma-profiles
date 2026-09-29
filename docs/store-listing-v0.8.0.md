@@ -78,3 +78,38 @@ O Luma Profiles é o seu estúdio de cor para monitores Windows. Escolha entre 6
 ## Notas de certificación (todos los idiomas)
 
 Luma Profiles usa la capacidad `runFullTrust` para controlar el brillo y el contraste de los monitores por DDC/CI y ajustar la rampa de gamma de Windows. No recopila datos ni requiere cuenta; los perfiles se guardan en `%LOCALAPPDATA%\LumaProfiles`. Para los controles físicos, el monitor debe tener DDC/CI habilitado.
+
+## Español: descripción y características propuestas para Partner Center
+
+Sustituyen a las de la versión anterior (que decían "más de 50 perfiles" y no mencionaban los modos VA, la confirmación ni el punto de restauración).
+
+**Descripción**
+
+Luma Profiles es una aplicación de escritorio para Windows que permite guardar, personalizar y aplicar perfiles de color a uno o varios monitores compatibles con DDC/CI.
+
+Ajusta brillo, contraste, gamma, temperatura de color, saturación, matiz y balance RGB desde una interfaz clara, con vista previa antes/después y en tiempo real, y temas claro y oscuro.
+
+Incluye 60 perfiles listos para usar organizados por categoría: color fiel y referencia, entretenimiento y cine, rendimiento y gaming (Competitivo, Inmersivo, Sombras, Arcade vibrante y siete estilos inspirados en GameVisual), HDR, fotografía y diseño, cuidado visual (filtro azul, lectura, blanco y negro) y diez modos pensados para paneles VA económicos.
+
+Si un cambio no te convence, no tienes que deshacerlo a mano: Luma Profiles pregunta si quieres conservarlo y, pasados 30 segundos sin respuesta, vuelve a como estaba. Además guarda un punto de restauración la primera vez que se abre, para regresar siempre a tu configuración original.
+
+Luma Profiles no instala controladores ni requiere privilegios de administrador. Todas las personalizaciones se guardan localmente en tu equipo. Disponible en español, inglés y portugués.
+
+Una aplicación de Código Limpio (codigolimpio.com.co).
+
+**Características del producto (una por línea, máx. 200 caracteres)**
+
+1. 60 perfiles de color listos para usar, organizados por categoría y con buscador y filtros avanzados
+2. Vista previa antes/después al pasar el ratón sobre cada perfil y en tiempo real, antes de aplicar los cambios
+3. Ajuste manual de brillo, contraste, gamma, temperatura de color, saturación, matiz y balance RGB
+4. Diez modos para paneles VA económicos: sombras abiertas, corrección del tono azulado, gaming a 120 Hz, lectura y nocturno
+5. Modos Gamer: Competitivo, Inmersivo, Sombras, Arcade vibrante y siete estilos inspirados en GameVisual
+6. Modos HDR, fotografía y diseño para un trabajo de color más preciso
+7. Cuidado visual: filtro de luz azul, lectura, blanco y negro y baja intensidad nocturna
+8. Confirmación tipo Windows: si no conservas los cambios en 30 segundos, todo vuelve a como estaba
+9. Punto de restauración guardado al primer arranque para volver siempre a tu configuración original
+10. Compatible con uno o varios monitores DDC/CI: elige todas las pantallas o solo las que quieras, con botón para identificarlas
+11. Reglas por aplicación, horario día/noche, atajos globales y bandeja del sistema para cambiar de perfil sin abrir la ventana
+12. Cinco vistas de la biblioteca, menú lateral ajustable, tipo de letra y tamaño configurables
+13. Interfaz en español, inglés y portugués, con tema claro, oscuro o el de Windows
+14. No instala controladores ni requiere permisos de administrador; todo se guarda localmente en tu equipo
