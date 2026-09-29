@@ -11,7 +11,10 @@ public interface IMonitorService
     IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds);
     string? GetActivePowerPlan();
     ApplyResult RestoreOriginal(IEnumerable<OriginalMonitorState> originalStates, string target, string? originalPowerPlan);
-    ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections);
+    ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections, CancellationToken cancellationToken = default);
+
+    /// <summary>Reads the live DDC/CI values and gamma ramp of every display (used to undo an unconfirmed change).</summary>
+    IReadOnlyList<OriginalMonitorState> CaptureCurrentStates();
     ApplyResult RestoreNeutral(string target);
 }
 
@@ -20,6 +23,8 @@ public sealed class MonitorService : IMonitorService
     private static readonly byte[] ManagedVcpCodes = [0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x87, 0x8A, 0x89];
     private const string BalancedPlan = "381b4222-f694-41f0-9685-ff5bb260df2e";
     private const string HighPerformancePlan = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
+    private const int RestoreAttempts = 3;
+    private const int RestoreSettleMilliseconds = 90;
 
     public ApplyResult Apply(DisplayProfile profile, string target)
         => ApplyCore(profile, target, updatePowerPlan: true);
@@ -136,7 +141,9 @@ public sealed class MonitorService : IMonitorService
         return new ApplyResult(applied.Count, failures, applied);
     }
 
-    public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections)
+    public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() => CaptureOriginalStates([]);
+
+    public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections, CancellationToken cancellationToken = default)
     {
         var saved = corrections.ToList();
         var failures = new List<string>();
@@ -144,6 +151,7 @@ public sealed class MonitorService : IMonitorService
 
         foreach (var monitor in EnumerateMonitors())
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var correction = saved.FirstOrDefault(item =>
                     !string.IsNullOrWhiteSpace(item.MonitorId) &&
                     item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase))
@@ -324,16 +332,7 @@ public sealed class MonitorService : IMonitorService
             foreach (var physicalState in state.PhysicalMonitors)
             {
                 if (physicalState.Index < 0 || physicalState.Index >= physicalMonitors.Length) continue;
-                var physical = physicalMonitors[physicalState.Index];
-                // Restore a named color preset last; writing RGB gains can make some monitors
-                // switch back to their user-defined preset.
-                foreach (var value in physicalState.Values.OrderBy(item => item.Code == 0x14 ? 1 : 0))
-                {
-                    if (!NativeMethods.SetVCPFeature(physical.hPhysicalMonitor, value.Code, value.Value))
-                    {
-                        failures.Add($"La pantalla rechazó restaurar el control 0x{value.Code:X2}.");
-                    }
-                }
+                RestorePhysicalMonitor(physicalMonitors[physicalState.Index].hPhysicalMonitor, physicalState, failures);
             }
         }
         finally
@@ -341,6 +340,41 @@ public sealed class MonitorService : IMonitorService
             NativeMethods.DestroyPhysicalMonitors(count, physicalMonitors);
         }
     }
+
+    /// <summary>
+    /// Writes the saved values, then reads them back. DDC/CI writes can be silently dropped while a monitor is
+    /// busy, so anything that did not stick is written again before reporting a failure.
+    /// </summary>
+    private static void RestorePhysicalMonitor(IntPtr physical, OriginalPhysicalMonitorState state, List<string> failures)
+    {
+        // Restore a named color preset last; writing RGB gains can make some monitors
+        // switch back to their user-defined preset.
+        var pending = state.Values.OrderBy(item => item.Code == 0x14 ? 1 : 0).ToList();
+        for (var attempt = 0; attempt < RestoreAttempts && pending.Count > 0; attempt++)
+        {
+            if (attempt > 0) Thread.Sleep(RestoreSettleMilliseconds);
+            foreach (var value in pending)
+            {
+                if (!NativeMethods.SetVCPFeature(physical, value.Code, value.Value) && attempt == RestoreAttempts - 1)
+                {
+                    failures.Add($"La pantalla rechazó restaurar el control 0x{value.Code:X2}.");
+                }
+            }
+
+            Thread.Sleep(RestoreSettleMilliseconds);
+            pending = pending.Where(value => !HasValue(physical, value)).ToList();
+        }
+
+        foreach (var value in pending)
+        {
+            AppLog.Warn($"Monitor did not keep VCP 0x{value.Code:X2}={value.Value} after restore.");
+            failures.Add($"El monitor no confirmó el control 0x{value.Code:X2} tras restaurar.");
+        }
+    }
+
+    private static bool HasValue(IntPtr physical, OriginalVcpValue expected) =>
+        NativeMethods.GetVCPFeatureAndVCPFeatureReply(physical, expected.Code, out _, out var current, out _) &&
+        current == expected.Value;
 
     private static IReadOnlyList<ConnectedMonitor> EnumerateMonitors()
     {

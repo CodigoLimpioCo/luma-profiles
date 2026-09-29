@@ -1,0 +1,161 @@
+using System.Windows.Input;
+using System.Windows.Threading;
+using LumaProfiles.Models;
+using LumaProfiles.Services;
+
+namespace LumaProfiles.ViewModels;
+
+/// <summary>
+/// "Keep changes?" flow modelled on Windows display settings: a change made from the UI is undone
+/// automatically unless the user confirms it within <see cref="ConfirmSeconds"/> seconds.
+/// </summary>
+public sealed partial class MainViewModel
+{
+    public const int ConfirmSeconds = 30;
+
+    private readonly DispatcherTimer _confirmTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private ChangeSnapshot? _pending;
+    private int _confirmRemaining;
+    private string _confirmDetail = string.Empty;
+    private bool _lastChangeApplied;
+    private CancellationTokenSource? _reapplyCts;
+
+    private sealed record ChangeSnapshot(
+        IReadOnlyList<OriginalMonitorState> States,
+        string? PowerPlan,
+        List<MonitorColorCorrection> Corrections,
+        string? ActiveProfileId);
+
+    public ICommand KeepChangesCommand { get; private set; } = null!;
+    public ICommand RevertChangesCommand { get; private set; } = null!;
+
+    public bool IsConfirmationPending => _pending is not null;
+    public int ConfirmRemainingSeconds => _confirmRemaining;
+    public int ConfirmTotalSeconds => ConfirmSeconds;
+    public string ConfirmDetail => _confirmDetail;
+    public string ConfirmCountdownText => L("ConfirmCountdown", _confirmRemaining);
+
+    public bool ConfirmChanges
+    {
+        get => _settings.ConfirmChanges;
+        set
+        {
+            if (_settings.ConfirmChanges == value) return;
+            _settings.ConfirmChanges = value;
+            if (!value) CommitPending();
+            SaveSettings();
+            Raise();
+        }
+    }
+
+    private void InitializeConfirmation()
+    {
+        KeepChangesCommand = new RelayCommand(Keep);
+        RevertChangesCommand = new RelayCommand(() => Revert(timedOut: false));
+        _confirmTimer.Tick += (_, _) => ConfirmTick();
+    }
+
+    /// <summary>Runs a user-initiated display change and, when it took effect, asks the user to keep it.</summary>
+    private void RunWithConfirmation(Action change, string detail)
+    {
+        if (!ConfirmChanges)
+        {
+            change();
+            return;
+        }
+
+        CommitPending();
+        var snapshot = TakeSnapshot();
+        _lastChangeApplied = false;
+        change();
+        if (_lastChangeApplied) BeginConfirmation(snapshot, detail);
+    }
+
+    private ChangeSnapshot TakeSnapshot() => new(
+        _monitor.CaptureCurrentStates(),
+        _monitor.GetActivePowerPlan(),
+        [.. _settings.MonitorCorrections],
+        Profiles.FirstOrDefault(profile => profile.IsActive)?.Id);
+
+    private void BeginConfirmation(ChangeSnapshot snapshot, string detail)
+    {
+        _pending = snapshot;
+        _confirmDetail = detail;
+        _confirmRemaining = ConfirmSeconds;
+        _confirmTimer.Stop();
+        _confirmTimer.Start();
+        RaiseConfirmation();
+    }
+
+    /// <summary>Accepts an outstanding change without asking (a newer change supersedes it).</summary>
+    private void CommitPending()
+    {
+        if (_pending is null) return;
+        StopConfirmation();
+    }
+
+    private void Keep()
+    {
+        if (_pending is null) return;
+        StopConfirmation();
+        StatusMessage = T("ChangesKept");
+    }
+
+    internal void ConfirmTick()
+    {
+        if (_pending is null)
+        {
+            _confirmTimer.Stop();
+            return;
+        }
+
+        _confirmRemaining--;
+        if (_confirmRemaining <= 0)
+        {
+            Revert(timedOut: true);
+            return;
+        }
+
+        Raise(nameof(ConfirmRemainingSeconds));
+        Raise(nameof(ConfirmCountdownText));
+    }
+
+    private void Revert(bool timedOut)
+    {
+        var snapshot = _pending;
+        StopConfirmation();
+        if (snapshot is null) return;
+
+        CancelPendingReapply();
+        var result = _monitor.RestoreOriginal(snapshot.States, BothDisplays, snapshot.PowerPlan);
+        _settings.MonitorCorrections.Clear();
+        _settings.MonitorCorrections.AddRange(snapshot.Corrections);
+        foreach (var profile in Profiles) profile.IsActive = profile.Id == snapshot.ActiveProfileId;
+        SaveProfiles();
+        SaveSettings();
+        StatusMessage = FormatResult(T(timedOut ? "ChangesRevertedTimeout" : "ChangesReverted"), result);
+    }
+
+    private void StopConfirmation()
+    {
+        _confirmTimer.Stop();
+        _pending = null;
+        _confirmRemaining = 0;
+        RaiseConfirmation();
+    }
+
+    private void RaiseConfirmation()
+    {
+        Raise(nameof(IsConfirmationPending));
+        Raise(nameof(ConfirmRemainingSeconds));
+        Raise(nameof(ConfirmCountdownText));
+        Raise(nameof(ConfirmDetail));
+    }
+
+    private void CancelPendingReapply()
+    {
+        _reapplyTimer.Stop();
+        _reapplyRequested = false;
+        _reapplyCts?.Cancel();
+    }
+}

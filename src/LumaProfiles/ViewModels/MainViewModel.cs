@@ -13,7 +13,7 @@ public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName)
     public string ProcessName => Rule.ProcessName;
 }
 
-public sealed class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject
 {
     private const string BothDisplays = "Ambas pantallas";
     private const string AllCategory = "Todos";
@@ -82,7 +82,11 @@ public sealed class MainViewModel : ObservableObject
         RefreshVisibleProfiles();
         RefreshAppRules();
 
-        ApplyProfileCommand = new RelayCommand<DisplayProfile>(profile => { SelectedProfile = profile; Apply(profile); });
+        ApplyProfileCommand = new RelayCommand<DisplayProfile>(profile =>
+        {
+            SelectedProfile = profile;
+            RunWithConfirmation(() => Apply(profile), L("ConfirmDetailApply", profile.DisplayName));
+        });
         EditProfileCommand = new RelayCommand<DisplayProfile>(profile =>
         {
             SelectedProfile = profile;
@@ -93,11 +97,12 @@ public sealed class MainViewModel : ObservableObject
         SaveAndApplyCommand = new RelayCommand(() =>
         {
             SaveProfiles();
-            Apply(SelectedProfile);
+            var profile = SelectedProfile;
+            RunWithConfirmation(() => Apply(profile), L("ConfirmDetailApply", profile.DisplayName));
         });
         RestoreDefaultsCommand = new RelayCommand(RestoreDefaults);
-        RepairCommand = new RelayCommand(Neutralize);
-        RestoreOriginalCommand = new RelayCommand(RestoreOriginalDisplayState);
+        RepairCommand = new RelayCommand(() => RunWithConfirmation(Neutralize, T("ConfirmDetailNeutralize")));
+        RestoreOriginalCommand = new RelayCommand(() => RunWithConfirmation(RestoreOriginalDisplayState, T("ConfirmDetailRestore")));
         SelectCategoryCommand = new RelayCommand<string>(SelectCategory);
         ToggleThemeCommand = new RelayCommand(() => IsDarkTheme = !IsDarkTheme);
         OpenSettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
@@ -119,6 +124,7 @@ public sealed class MainViewModel : ObservableObject
         AddAppRuleCommand = new RelayCommand(AddAppRule);
         RemoveAppRuleCommand = new RelayCommand<AppRuleItem>(RemoveAppRule);
 
+        InitializeConfirmation();
         StatusMessage = T("Ready");
         _livePreviewTimer.Tick += (_, _) => LivePreviewTick();
         _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); _ = ReapplyPersistentCorrectionsAsync(); };
@@ -454,6 +460,8 @@ public sealed class MainViewModel : ObservableObject
 
     public void Shutdown()
     {
+        if (_pending is not null) Revert(timedOut: false);
+        _confirmTimer.Stop();
         _reapplyTimer.Stop();
         _livePreviewTimer.Stop();
         _scheduleTimer.Stop();
@@ -568,6 +576,8 @@ public sealed class MainViewModel : ObservableObject
     /// </summary>
     private void Neutralize()
     {
+        CommitPending();
+        CancelPendingReapply();
         StatusMessage = T("Neutralizing");
         var result = _monitor.RestoreOriginal(_settings.OriginalMonitorStates, SelectedMonitorTarget, originalPowerPlan: null);
         if (result.DisplayCount > 0)
@@ -583,6 +593,7 @@ public sealed class MainViewModel : ObservableObject
         foreach (var profile in Profiles) profile.IsActive = false;
         SaveProfiles();
         SaveSettings();
+        _lastChangeApplied = result.DisplayCount > 0;
         StatusMessage = FormatResult(T("Neutralized"), result);
     }
 
@@ -598,6 +609,8 @@ public sealed class MainViewModel : ObservableObject
 
     private void RestoreOriginalDisplayState()
     {
+        CommitPending();
+        CancelPendingReapply();
         StatusMessage = T("RestoringOriginalState");
         var result = _monitor.RestoreOriginal(
             _settings.OriginalMonitorStates, SelectedMonitorTarget, _settings.OriginalPowerPlan);
@@ -609,11 +622,14 @@ public sealed class MainViewModel : ObservableObject
             SaveProfiles();
         }
         SaveSettings();
+        _lastChangeApplied = result.DisplayCount > 0;
         StatusMessage = FormatResult(T("OriginalStateRestored"), result);
     }
 
     private void Apply(DisplayProfile profile, string? statusOverride = null)
     {
+        CommitPending();
+        CancelPendingReapply();
         CaptureOriginalDisplayState();
         StatusMessage = L("Applying", profile.DisplayName);
         var result = _monitor.Apply(profile, SelectedMonitorTarget);
@@ -621,6 +637,7 @@ public sealed class MainViewModel : ObservableObject
         profile.IsActive = result.DisplayCount > 0;
         SaveProfiles();
         SaveMonitorCorrections(profile, result, applyImageControls: true);
+        _lastChangeApplied = result.DisplayCount > 0;
         StatusMessage = FormatResult(statusOverride ?? L("Applied", profile.DisplayName), result);
         if (profile.IsHdr) StatusMessage += T("HdrReminder");
     }
@@ -719,13 +736,19 @@ public sealed class MainViewModel : ObservableObject
 
         _isReapplyingCorrections = true;
         var corrections = _settings.MonitorCorrections.ToArray();
+        var cts = new CancellationTokenSource();
+        _reapplyCts = cts;
         try
         {
-            var result = await Task.Run(() => _monitor.Reapply(corrections));
+            var result = await Task.Run(() => _monitor.Reapply(corrections, cts.Token), cts.Token);
             if (result.DisplayCount > 0)
             {
                 StatusMessage = FormatResult(T("PersistentCorrectionRestored"), result);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer user action superseded this re-application.
         }
         catch (Exception exception)
         {
@@ -734,6 +757,8 @@ public sealed class MainViewModel : ObservableObject
         }
         finally
         {
+            if (ReferenceEquals(_reapplyCts, cts)) _reapplyCts = null;
+            cts.Dispose();
             _isReapplyingCorrections = false;
             if (_reapplyRequested)
             {

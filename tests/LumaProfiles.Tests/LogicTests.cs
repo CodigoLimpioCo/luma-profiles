@@ -131,11 +131,14 @@ public class MainViewModelTests
         public int NeutralCalls { get; private set; }
         public int OriginalCalls { get; private set; }
         public bool HasOriginal { get; set; } = true;
+        public bool FailApply { get; set; }
+        public IReadOnlyList<OriginalMonitorState>? LastRestoredStates { get; private set; }
+        public string? LastRestoredPlan { get; private set; }
 
         public ApplyResult Apply(DisplayProfile profile, string target)
         {
             Applied.Add(profile.Id);
-            return Result();
+            return FailApply ? new ApplyResult(0, ["no display"], []) : Result();
         }
 
         public ApplyResult Preview(DisplayProfile profile, string target) => Result();
@@ -144,9 +147,12 @@ public class MainViewModelTests
         public ApplyResult RestoreOriginal(IEnumerable<OriginalMonitorState> s, string t, string? p)
         {
             OriginalCalls++;
+            LastRestoredStates = s.ToList();
+            LastRestoredPlan = p;
             return HasOriginal ? Result() : new ApplyResult(0, ["none"], []);
         }
-        public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections) => Result();
+        public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections, CancellationToken cancellationToken = default) => Result();
+        public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() => [new OriginalMonitorState { MonitorId = "snapshot" }];
 
         public ApplyResult RestoreNeutral(string target)
         {
@@ -426,6 +432,136 @@ public class MainViewModelTests
         vm.OpenSettingsCommand.Execute(null);
         vm.SelectCategoryCommand.Execute("Favoritos");
         Assert.False(vm.IsSettingsOpen);
+    }
+
+    [Fact]
+    public void ApplyFromUi_AsksForConfirmationAndKeepClearsIt()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        Assert.True(vm.IsConfirmationPending);
+        Assert.Equal(30, vm.ConfirmRemainingSeconds);
+        vm.KeepChangesCommand.Execute(null);
+        Assert.False(vm.IsConfirmationPending);
+        Assert.Equal(0, monitor.OriginalCalls);
+        Assert.True(vm.Profiles[0].IsActive);
+    }
+
+    [Fact]
+    public void RevertCommand_RestoresSnapshotAndPreviousProfile()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(vm.Profiles.First(p => p.Id == "natural"));
+        vm.KeepChangesCommand.Execute(null);
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles.First(p => p.Id == "eyes-night"));
+        vm.RevertChangesCommand.Execute(null);
+
+        Assert.False(vm.IsConfirmationPending);
+        Assert.Equal("snapshot", Assert.Single(monitor.LastRestoredStates!).MonitorId);
+        Assert.True(vm.Profiles.First(p => p.Id == "natural").IsActive);
+        Assert.False(vm.Profiles.First(p => p.Id == "eyes-night").IsActive);
+    }
+
+    [Fact]
+    public void Confirmation_TimeoutRevertsAfterThirtyTicks()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        for (var i = 0; i < 29; i++) vm.ConfirmTick();
+        Assert.True(vm.IsConfirmationPending);
+        Assert.Equal(0, monitor.OriginalCalls);
+
+        vm.ConfirmTick();
+
+        Assert.False(vm.IsConfirmationPending);
+        Assert.Equal(1, monitor.OriginalCalls);
+        Assert.DoesNotContain(vm.Profiles, p => p.IsActive);
+    }
+
+    [Fact]
+    public void Confirmation_CanBeDisabledInSettings()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.ConfirmChanges = false;
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        Assert.False(vm.IsConfirmationPending);
+        Assert.False(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().ConfirmChanges);
+    }
+
+    [Fact]
+    public void Confirmation_NotRequestedWhenNothingChanged()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.FailApply = true;
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        Assert.False(vm.IsConfirmationPending);
+    }
+
+    [Fact]
+    public void NewChangeAcceptsThePreviousPendingOne()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles[1]);
+
+        Assert.True(vm.IsConfirmationPending);
+        Assert.Equal(0, monitor.OriginalCalls);
+        Assert.Equal(vm.Profiles[1].Id, vm.Profiles.Single(p => p.IsActive).Id);
+    }
+
+    [Fact]
+    public void NeutralizeAndRestoreFromUi_AlsoAskForConfirmation()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.RepairCommand.Execute(null);
+        Assert.True(vm.IsConfirmationPending);
+        vm.KeepChangesCommand.Execute(null);
+
+        vm.RestoreOriginalCommand.Execute(null);
+        Assert.True(vm.IsConfirmationPending);
+    }
+
+    [Fact]
+    public void AutomationAndHotkeys_DoNotAskForConfirmation()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.CycleProfile(+1);
+        vm.ApplyProfileById("natural");
+        vm.ApplyNeutral();
+
+        Assert.False(vm.IsConfirmationPending);
+    }
+
+    [Fact]
+    public void Shutdown_RevertsAnUnconfirmedChange()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        vm.Shutdown();
+
+        Assert.Equal(1, monitor.OriginalCalls);
+        Assert.False(vm.IsConfirmationPending);
     }
 
     [Fact]

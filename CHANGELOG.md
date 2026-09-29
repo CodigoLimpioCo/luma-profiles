@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Añadido
+- Confirmación al estilo Windows: tras Aplicar, Guardar y aplicar, Neutralizar o Restaurar aparece "¿Conservar los cambios?" y, si no confirmas en 30 s (o cierras la app), se revierte todo: valores DDC/CI, gamma, plan de energía, correcciones guardadas y perfil activo. Se puede desactivar en Configuración.
 - Cinco vistas de la biblioteca: tarjetas, tarjetas grandes, mosaico compacto, lista y detalles (se recuerda la elegida).
 - Menú lateral contraíble: por defecto muestra iconos y texto; contraído, solo iconos. En ventanas estrechas pasa a iconos automáticamente.
 - Icono en la bandeja del sistema con favoritos, neutralizar y salir; opción de minimizar a la bandeja.
@@ -28,5 +29,7 @@
 - Al cargar, los textos de los perfiles predeterminados se actualizan sin perder tus ajustes ni favoritos.
 
 ### Corregido
+- Restaurar el estado original verifica cada valor DDC/CI leyéndolo de vuelta, reintenta los que el monitor descarta y avisa de los que no acepta.
+- Una reaplicación de correcciones en curso ya no puede pisar un Aplicar, Neutralizar o Restaurar posterior (se cancela).
 - Un `profiles.json` o `settings.json` dañado ya no se descarta en silencio: se aparta como `.corrupt-*.bak` y se avisa.
 - Una temperatura de color `null` heredada de versiones anteriores ya no deja vacío el selector.
