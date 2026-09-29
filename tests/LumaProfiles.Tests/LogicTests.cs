@@ -825,6 +825,184 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void Search_IgnoresAccentsCaseAndWordOrder()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.SearchText = "DIURNA fotografia";
+
+        var match = Assert.Single(vm.VisibleProfiles);
+        Assert.Equal("faithful-photo", match.Id);
+        Assert.Equal("fotografia", MainViewModel.Normalize("Fotografía"));
+    }
+
+    [Fact]
+    public void Search_NoMatchShowsEmptyStateAndClearRestores()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.SearchText = "zzzz-nothing";
+
+        Assert.True(vm.HasNoResults);
+        Assert.Equal("0 de 50 perfiles", vm.ProfileCountSubtitle);
+        vm.ClearFiltersCommand.Execute(null);
+        Assert.False(vm.HasNoResults);
+        Assert.Equal(vm.Profiles.Count, vm.VisibleProfiles.Count);
+        Assert.Equal(string.Empty, vm.SearchText);
+    }
+
+    [Fact]
+    public void CategoryChips_CombineSeveralCategories()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        int Count(string category) => vm.Profiles.Count(profile => profile.Category == category);
+
+        vm.CategoryChips.First(chip => chip.Value == "Gamer").IsSelected = true;
+        vm.CategoryChips.First(chip => chip.Value == "HDR").IsSelected = true;
+
+        Assert.Equal(Count("Gamer") + Count("HDR"), vm.VisibleProfiles.Count);
+        Assert.Equal(string.Empty, vm.SidebarCategory);
+        Assert.Equal(1, vm.ActiveFilterCount);
+    }
+
+    [Fact]
+    public void SidebarCategory_ReplacesTheMixAndHighlightsOneEntry()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.Equal("Todos", vm.SidebarCategory);
+        vm.CategoryChips[0].IsSelected = true;
+        vm.CategoryChips[1].IsSelected = true;
+
+        vm.SelectCategoryCommand.Execute("Gamer");
+
+        Assert.Equal("Gamer", vm.SidebarCategory);
+        Assert.All(vm.VisibleProfiles, profile => Assert.Equal("Gamer", profile.Category));
+        Assert.Single(vm.CategoryChips, chip => chip.IsSelected);
+
+        vm.SelectCategoryCommand.Execute("Todos");
+        Assert.Equal(vm.Profiles.Count, vm.VisibleProfiles.Count);
+        Assert.DoesNotContain(vm.CategoryChips, chip => chip.IsSelected);
+    }
+
+    [Fact]
+    public void StateFilters_HdrHighPerformanceFavoritesAndModified()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.HdrOnly = true;
+        Assert.NotEmpty(vm.VisibleProfiles);
+        Assert.All(vm.VisibleProfiles, profile => Assert.True(profile.IsHdr));
+
+        vm.HdrOnly = false;
+        vm.HighPerformanceOnly = true;
+        Assert.All(vm.VisibleProfiles, profile => Assert.Equal("HighPerformance", profile.PowerPlan));
+
+        vm.HighPerformanceOnly = false;
+        vm.ModifiedOnly = true;
+        Assert.Empty(vm.VisibleProfiles);
+        vm.Profiles[4].Brightness = 3;
+        vm.ModifiedOnly = false;
+        vm.ModifiedOnly = true;
+        Assert.Equal([vm.Profiles[4].Id], vm.VisibleProfiles.Select(profile => profile.Id));
+
+        vm.ModifiedOnly = false;
+        vm.ToggleFavoriteCommand.Execute(vm.Profiles[7]);
+        vm.FavoritesOnly = true;
+        Assert.Equal([vm.Profiles[7].Id], vm.VisibleProfiles.Select(profile => profile.Id));
+        Assert.Equal("Favoritos", vm.SidebarCategory);
+    }
+
+    [Fact]
+    public void TemperatureChips_FilterByColorTemperature()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.TemperatureChips.First(chip => chip.Value == "Neutro 6500 K").IsSelected = true;
+
+        Assert.NotEmpty(vm.VisibleProfiles);
+        Assert.All(vm.VisibleProfiles, profile => Assert.Equal("Neutro 6500 K", profile.ColorTemperature));
+    }
+
+    [Fact]
+    public void Ranges_FilterAndNeverCross()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.BrightnessRange.Min = 85;
+        Assert.All(vm.VisibleProfiles, profile => Assert.InRange(profile.Brightness, 85, 100));
+        Assert.True(vm.BrightnessRange.IsActive);
+
+        vm.BrightnessRange.Max = 10;
+        Assert.Equal(85, vm.BrightnessRange.Max);
+        vm.BrightnessRange.Min = 500;
+        Assert.Equal(85, vm.BrightnessRange.Min);
+        Assert.Equal("85–85", vm.BrightnessRange.Label);
+        Assert.Equal(1, vm.ActiveFilterCount);
+    }
+
+    [Theory]
+    [InlineData("NameAsc")]
+    [InlineData("NameDesc")]
+    [InlineData("BrightnessDesc")]
+    [InlineData("BrightnessAsc")]
+    [InlineData("ContrastDesc")]
+    [InlineData("SaturationDesc")]
+    [InlineData("Category")]
+    public void Sorting_OrdersTheVisibleProfiles(string mode)
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.SortMode = mode;
+
+        var items = vm.VisibleProfiles.ToList();
+        Assert.Equal(vm.Profiles.Count, items.Count);
+        var ordered = mode switch
+        {
+            "NameAsc" => items.OrderBy(profile => profile.DisplayName, StringComparer.CurrentCultureIgnoreCase),
+            "NameDesc" => items.OrderByDescending(profile => profile.DisplayName, StringComparer.CurrentCultureIgnoreCase),
+            "BrightnessDesc" => items.OrderByDescending(profile => profile.Brightness),
+            "BrightnessAsc" => items.OrderBy(profile => profile.Brightness),
+            "ContrastDesc" => items.OrderByDescending(profile => profile.Contrast),
+            "SaturationDesc" => items.OrderByDescending(profile => profile.Saturation),
+            _ => items.OrderBy(profile => profile.DisplayCategory, StringComparer.CurrentCultureIgnoreCase)
+        };
+        Assert.Equal(ordered.Select(profile => profile.Id), items.Select(profile => profile.Id));
+        vm.SortMode = "Bogus";
+        Assert.Equal(mode, vm.SortMode);
+    }
+
+    [Fact]
+    public void ClearFilters_ResetsEveryFilterAndSort()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.SearchText = "gamer";
+        vm.HdrOnly = true;
+        vm.SortMode = "NameDesc";
+        vm.ContrastRange.Min = 50;
+        vm.TemperatureChips[0].IsSelected = true;
+        vm.CategoryChips[0].IsSelected = true;
+        Assert.True(vm.HasActiveFilters);
+
+        vm.ClearFiltersCommand.Execute(null);
+
+        Assert.Equal(0, vm.ActiveFilterCount);
+        Assert.False(vm.IsFiltering);
+        Assert.Equal("Default", vm.SortMode);
+        Assert.False(vm.ContrastRange.IsActive);
+        Assert.DoesNotContain(vm.CategoryChips.Concat(vm.TemperatureChips), chip => chip.IsSelected);
+        Assert.Equal(vm.Profiles.Count, vm.VisibleProfiles.Count);
+    }
+
+    [Fact]
     public void OpenUrlCommand_DelegatesToShell()
     {
         var (vm, _, shell, dir) = Create();

@@ -1303,6 +1303,63 @@
             </Setter>
         </Style>
 
+        <Style x:Key="FilterChip" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Root" Height="30" CornerRadius="15" Padding="13,0" BorderThickness="1"
+                                Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderThemeBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentTextBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FilterToggle" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Root" Height="38" CornerRadius="19" Padding="16,0" BorderThickness="1"
+                                Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderStrongBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentTextBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="ItemsControl" x:Key="ProfilesItemsStyle">
             <Setter Property="ItemsPanel" Value="{StaticResource WrapPanelTemplate}"/>
             <Setter Property="ItemTemplate" Value="{StaticResource CardTemplate}"/>
@@ -1531,16 +1588,16 @@
 
                 <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="True" Command="{Binding SelectCategoryCommand}" CommandParameter="Todos" ToolTip="{Binding [AllProfiles]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [AllProfiles]}"><StackPanel Orientation="Horizontal"><TextBlock Text="▦" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [AllProfiles]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Favoritos" ToolTip="{Binding [Favorites]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Favorites]}"><StackPanel Orientation="Horizontal"><TextBlock Text="★" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Favorites]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color fiel" ToolTip="{Binding [FaithfulColor]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [FaithfulColor]}"><StackPanel Orientation="Horizontal"><TextBlock Text="◉" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [FaithfulColor]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="ASUS GameVisual" ToolTip="ASUS GameVisual" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="ASUS GameVisual"><StackPanel Orientation="Horizontal"><TextBlock Text="◆" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="ASUS GameVisual" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="HDR" ToolTip="HDR" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="HDR"><StackPanel Orientation="Horizontal"><TextBlock Text="◐" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="HDR" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Color creativo" ToolTip="{Binding [CreativeColor]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [CreativeColor]}"><StackPanel Orientation="Horizontal"><TextBlock Text="✦" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [CreativeColor]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Entretenimiento" ToolTip="{Binding [Entertainment]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Entertainment]}"><StackPanel Orientation="Horizontal"><TextBlock Text="▶" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Entertainment]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Rendimiento" ToolTip="{Binding [Performance]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Performance]}"><StackPanel Orientation="Horizontal"><TextBlock Text="ϟ" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Performance]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Gamer" ToolTip="{Binding [Gamer]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Gamer]}"><StackPanel Orientation="Horizontal"><TextBlock Text="🎮" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Gamer]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
-                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" Command="{Binding SelectCategoryCommand}" CommandParameter="Cuidado visual" ToolTip="{Binding [EyeCare]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [EyeCare]}"><StackPanel Orientation="Horizontal"><TextBlock Text="◒" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [EyeCare]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Todos}" Tag="Todos" Checked="Category_Checked" ToolTip="{Binding [AllProfiles]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [AllProfiles]}"><StackPanel Orientation="Horizontal"><TextBlock Text="▦" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [AllProfiles]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Favoritos}" Tag="Favoritos" Checked="Category_Checked" ToolTip="{Binding [Favorites]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Favorites]}"><StackPanel Orientation="Horizontal"><TextBlock Text="★" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Favorites]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Color fiel}" Tag="Color fiel" Checked="Category_Checked" ToolTip="{Binding [FaithfulColor]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [FaithfulColor]}"><StackPanel Orientation="Horizontal"><TextBlock Text="◉" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [FaithfulColor]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=ASUS GameVisual}" Tag="ASUS GameVisual" Checked="Category_Checked" ToolTip="ASUS GameVisual" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="ASUS GameVisual"><StackPanel Orientation="Horizontal"><TextBlock Text="◆" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="ASUS GameVisual" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=HDR}" Tag="HDR" Checked="Category_Checked" ToolTip="HDR" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="HDR"><StackPanel Orientation="Horizontal"><TextBlock Text="◐" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="HDR" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Color creativo}" Tag="Color creativo" Checked="Category_Checked" ToolTip="{Binding [CreativeColor]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [CreativeColor]}"><StackPanel Orientation="Horizontal"><TextBlock Text="✦" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [CreativeColor]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Entretenimiento}" Tag="Entretenimiento" Checked="Category_Checked" ToolTip="{Binding [Entertainment]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Entertainment]}"><StackPanel Orientation="Horizontal"><TextBlock Text="▶" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Entertainment]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Rendimiento}" Tag="Rendimiento" Checked="Category_Checked" ToolTip="{Binding [Performance]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Performance]}"><StackPanel Orientation="Horizontal"><TextBlock Text="ϟ" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Performance]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Gamer}" Tag="Gamer" Checked="Category_Checked" ToolTip="{Binding [Gamer]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [Gamer]}"><StackPanel Orientation="Horizontal"><TextBlock Text="🎮" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [Gamer]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
+                        <RadioButton Style="{StaticResource NavButton}" GroupName="Categories" IsChecked="{Binding SidebarCategory, Mode=OneWay, Converter={StaticResource EqualsConverter}, ConverterParameter=Cuidado visual}" Tag="Cuidado visual" Checked="Category_Checked" ToolTip="{Binding [EyeCare]}" ToolTipService.IsEnabled="{Binding IsSidebarCollapsed}" AutomationProperties.Name="{Binding [EyeCare]}"><StackPanel Orientation="Horizontal"><TextBlock Text="◒" Width="24" TextAlignment="Center" VerticalAlignment="Center"/><TextBlock Text="{Binding [EyeCare]}" Margin="12,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}"/></StackPanel></RadioButton>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -1629,6 +1686,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding [ProfileLibrary]}" FontSize="31" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -1667,7 +1725,26 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
-                <TextBox Grid.Row="1" Margin="0,14,0,12" Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
+                <Grid Grid.Row="1" Margin="0,14,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Style="{StaticResource SearchTextBox}" Tag="{Binding [SearchProfiles]}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="{Binding [SearchProfiles]}" ToolTip="{Binding [SearchTooltip]}"/>
+                    <ToggleButton Grid.Column="1" Style="{StaticResource FilterToggle}" Margin="10,0,0,0"
+                                  IsChecked="{Binding IsFilterPanelOpen, Mode=TwoWay}"
+                                  ToolTip="{Binding [FilterTitle]}" AutomationProperties.Name="{Binding [FilterTitle]}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71C;" FontFamily="Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding [FilterButton]}" Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <Border Background="{DynamicResource AccentBrush}" CornerRadius="9" MinWidth="18" Height="18" Margin="8,0,0,0" Padding="5,0"
+                                    Visibility="{Binding HasActiveFilters, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Text="{Binding ActiveFilterCount}" FontSize="10" FontWeight="Bold" Foreground="#051016"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </ToggleButton>
+                </Grid>
                 <Border Grid.Row="1" Grid.Column="1" Margin="10,14,0,12" Height="38" Padding="3" HorizontalAlignment="Right"
                         Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="19">
                     <StackPanel Orientation="Horizontal">
@@ -1678,6 +1755,107 @@
                         <RadioButton Style="{StaticResource ViewModeButton}" GroupName="ViewMode" IsChecked="{Binding IsViewDetails, Mode=TwoWay}" ToolTip="{Binding [ViewDetails]}" AutomationProperties.Name="{Binding [ViewDetails]}"><Viewbox Width="15" Height="15"><Path Data="M1,1H15V3.5H1Z M1,5.5H15V8H1Z M1,9.5H15V12H1Z M1,13H15V15H1Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"/></Viewbox></RadioButton>
                     </StackPanel>
                 </Border>
+            <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0,0,12" Padding="20,16,20,14" CornerRadius="16"
+                    Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
+                    Visibility="{Binding IsFilterPanelOpen, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ScrollViewer MaxHeight="330" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <Grid Margin="0,0,10,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="28"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding [FilterCategories]}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8"/>
+                                <ItemsControl ItemsSource="{Binding CategoryChips}" IsTabStop="False">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding Caption}" IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Border Height="16"/>
+                                <TextBlock Text="{Binding [FilterStatus]}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8"/>
+                                <WrapPanel>
+                                    <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding [Favorites]}" IsChecked="{Binding FavoritesOnly, Mode=TwoWay}"/>
+                                    <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding [FilterHdr]}" IsChecked="{Binding HdrOnly, Mode=TwoWay}"/>
+                                    <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding [FilterHighPerformance]}" IsChecked="{Binding HighPerformanceOnly, Mode=TwoWay}"/>
+                                    <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding [FilterModified]}" IsChecked="{Binding ModifiedOnly, Mode=TwoWay}"/>
+                                </WrapPanel>
+                                <Border Height="16"/>
+                                <TextBlock Text="{Binding [ColorTemperature]}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8"/>
+                                <ItemsControl ItemsSource="{Binding TemperatureChips}" IsTabStop="False">
+                                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <ToggleButton Style="{StaticResource FilterChip}" Content="{Binding Caption}" IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{Binding [FilterRanges]}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8"/>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding [Brightness]}" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding BrightnessRange.Label}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AccentTextBrush}"/>
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding BrightnessRange.Min, Mode=TwoWay}"
+                                                AutomationProperties.Name="{Binding [Brightness]}" AutomationProperties.HelpText="min"/>
+                                        <Slider Grid.Column="2" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding BrightnessRange.Max, Mode=TwoWay}"
+                                                AutomationProperties.Name="{Binding [Brightness]}" AutomationProperties.HelpText="max"/>
+                                    </Grid>
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding [Contrast]}" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding ContrastRange.Label}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AccentTextBrush}"/>
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ContrastRange.Min, Mode=TwoWay}"
+                                                AutomationProperties.Name="{Binding [Contrast]}" AutomationProperties.HelpText="min"/>
+                                        <Slider Grid.Column="2" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding ContrastRange.Max, Mode=TwoWay}"
+                                                AutomationProperties.Name="{Binding [Contrast]}" AutomationProperties.HelpText="max"/>
+                                    </Grid>
+                                </Grid>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding [Saturation]}" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SaturationRange.Label}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AccentTextBrush}"/>
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                        <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SaturationRange.Min, Mode=TwoWay}"
+                                                AutomationProperties.Name="{Binding [Saturation]}" AutomationProperties.HelpText="min"/>
+                                        <Slider Grid.Column="2" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding SaturationRange.Max, Mode=TwoWay}"
+                                                AutomationProperties.Name="{Binding [Saturation]}" AutomationProperties.HelpText="max"/>
+                                    </Grid>
+                                </Grid>
+                                <Border Height="4"/>
+                                <TextBlock Text="{Binding [FilterSort]}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,8"/>
+                                <ComboBox ItemsSource="{Binding SortOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                          AutomationProperties.Name="{Binding [FilterSort]}"
+                                          SelectedValue="{Binding SortMode, Mode=TwoWay}"/>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                    <Grid Grid.Row="1" Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding ProfileCountSubtitle}" Foreground="{DynamicResource MutedBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="{Binding [FilterClear]}"
+                                Command="{Binding ClearFiltersCommand}" Padding="16,8"/>
+                    </Grid>
+                </Grid>
+            </Border>
             </Grid>
 
             <ScrollViewer x:Name="ProfilesScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -1710,6 +1888,14 @@
                     <ItemsControl ItemsSource="{Binding VisibleProfiles}" Style="{StaticResource ProfilesItemsStyle}"/>
                 </StackPanel>
             </ScrollViewer>
+
+            <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,20,0,0"
+                        Visibility="{Binding HasNoResults, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Text="{Binding [FilterNoResults]}" Foreground="{DynamicResource MutedBrush}" FontSize="14"
+                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="380"/>
+                <Button Style="{StaticResource SecondaryButton}" Content="{Binding [FilterClear]}" Command="{Binding ClearFiltersCommand}"
+                        Padding="20,9" Margin="0,14,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
 
             <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" CornerRadius="9" Padding="12,9" Margin="0,6,16,0">
                 <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>

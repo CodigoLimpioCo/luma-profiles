@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Añadido
+- Buscador avanzado: la búsqueda ignora mayúsculas y acentos y exige todas las palabras (en cualquier orden). El botón "Filtros" abre un panel con categorías combinables, estado (favoritos, HDR, alto rendimiento, modificados), temperatura de color, rangos de brillo/contraste/saturación y orden; muestra cuántos filtros hay activos, "N de M perfiles" y un botón para limpiar todo.
 - Selector de pantallas con botones toggle: "Todas" y uno por cada monitor conectado (multiselección: por ejemplo 1 y 3 sin la 2). Se recuerda la elección, se actualiza al conectar o desconectar monitores y nunca deja todas desactivadas.
 - Botón "Identificar" que muestra el número de cada pantalla sobre ella durante unos segundos.
 - Configuración por categorías (Apariencia, Diseño, General, Idioma, Automatización, Datos y restauración) con "Restablecer sección" en cada una.
@@ -33,6 +34,7 @@
 - Al cargar, los textos de los perfiles predeterminados se actualizan sin perder tus ajustes ni favoritos.
 
 ### Corregido
+- Las categorías del menú lateral ya responden también al teclado (flechas) y reflejan los filtros activos.
 - Restaurar el estado original verifica cada valor DDC/CI leyéndolo de vuelta, reintenta los que el monitor descarta y avisa de los que no acepta.
 - Una reaplicación de correcciones en curso ya no puede pisar un Aplicar, Neutralizar o Restaurar posterior (se cancela).
 - Un `profiles.json` o `settings.json` dañado ya no se descarta en silencio: se aparta como `.corrupt-*.bak` y se avisa.

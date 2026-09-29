@@ -16,8 +16,6 @@ public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName)
 public sealed partial class MainViewModel : ObservableObject
 {
     private const string BothDisplays = MonitorService.AllDisplaysTarget;
-    private const string AllCategory = "Todos";
-    private const string FavoritesCategory = "Favoritos";
 
     private readonly IMonitorService _monitor;
     private readonly ProfileStore _profileStore;
@@ -31,8 +29,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     private DisplayProfile _selectedProfile;
     private LanguageOption _selectedLanguage;
-    private string _selectedCategory = AllCategory;
-    private string _searchText = string.Empty;
     private string _selectedMonitorTarget;
     private string _statusMessage = string.Empty;
     private bool _isDarkTheme;
@@ -79,6 +75,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
         RefreshLocalizedOptions();
+        InitializeFilters();
         RefreshVisibleProfiles();
         RefreshAppRules();
 
@@ -176,22 +173,6 @@ public sealed partial class MainViewModel : ObservableObject
             _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
             Raise();
             ScheduleLivePreview();
-        }
-    }
-
-    public string SearchText
-    {
-        get => _searchText;
-        set
-        {
-            var trimmed = value?.Trim() ?? string.Empty;
-            if (!Set(ref _searchText, trimmed)) return;
-            if (trimmed.Length > 0) IsSettingsOpen = false;
-            RefreshVisibleProfiles();
-            ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
-            StatusMessage = string.IsNullOrWhiteSpace(_searchText)
-                ? L("CompleteLibrary", Profiles.Count)
-                : L("SearchResults", _searchText);
         }
     }
 
@@ -388,7 +369,6 @@ public sealed partial class MainViewModel : ObservableObject
     public string MaximizeTooltip => T(_isMaximized ? "Restore" : "Maximize");
     public string LeftPanelTooltip => T(_isLeftPanelVisible ? "HideNavigationPanel" : "ShowNavigationPanel");
     public string RightPanelTooltip => T(_isRightPanelVisible ? "HideColorPanel" : "ShowColorPanel");
-    public string ProfileCountSubtitle => L("ModesSubtitle", Profiles.Count);
     public string AppVersion => Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
     public string AboutDescription => L("AboutBody", AppVersion);
     public string ThemeLabel => T(_isDarkTheme ? "ThemeDark" : "ThemeLight");
@@ -494,43 +474,12 @@ public sealed partial class MainViewModel : ObservableObject
     private DisplayProfile? FindProfile(string id) =>
         Profiles.FirstOrDefault(item => item.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
 
-    private void SelectCategory(string category)
-    {
-        IsSettingsOpen = false;
-        _selectedCategory = category;
-        RefreshVisibleProfiles();
-        ScrollToTopRequested?.Invoke(this, EventArgs.Empty);
-        StatusMessage = category == AllCategory
-            ? L("ShowingProfiles", Profiles.Count)
-            : L("CategoryStatus", LocalizationService.Category(category, _selectedLanguage.Code));
-    }
-
-    private void RefreshVisibleProfiles()
-    {
-        VisibleProfiles.Clear();
-        foreach (var profile in Profiles.Where(MatchesCurrentFilter))
-        {
-            VisibleProfiles.Add(profile);
-        }
-    }
-
-    private bool MatchesCurrentFilter(DisplayProfile profile)
-    {
-        if (_selectedCategory == FavoritesCategory && !profile.IsFavorite) return false;
-        if (_selectedCategory != AllCategory && _selectedCategory != FavoritesCategory && profile.Category != _selectedCategory) return false;
-        if (string.IsNullOrWhiteSpace(_searchText)) return true;
-
-        return profile.DisplayName.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
-               profile.DisplayCategory.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase) ||
-               profile.DisplayDescription.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase);
-    }
-
     private void ToggleFavorite(DisplayProfile profile)
     {
         profile.IsFavorite = !profile.IsFavorite;
         SaveProfiles();
         StatusMessage = L(profile.IsFavorite ? "FavoriteAdded" : "FavoriteRemoved", profile.DisplayName);
-        if (_selectedCategory == FavoritesCategory) RefreshVisibleProfiles();
+        if (_favoritesOnly) OnFiltersChanged();
     }
 
     private void RestoreDefaults()
@@ -829,7 +778,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (path is null) return;
             var updated = _profileStore.Import(path, Profiles);
             SaveProfiles();
-            if (_selectedCategory == FavoritesCategory) RefreshVisibleProfiles();
+            if (_favoritesOnly) OnFiltersChanged();
             StatusMessage = L("ProfilesImported", updated);
         }
         catch (Exception exception)
@@ -880,6 +829,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
         RefreshLocalizedOptions();
+        RefreshFilterText();
         RefreshVisibleProfiles();
         RefreshAppRules();
         StatusMessage = T("Ready");

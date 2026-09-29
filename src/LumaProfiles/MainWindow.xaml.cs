@@ -194,6 +194,15 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Sidebar entries react to clicks, arrow keys and automation alike (not only to mouse clicks).</summary>
+    private void Category_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.RadioButton { Tag: string category } && _viewModel.SidebarCategory != category)
+        {
+            _viewModel.SelectCategoryCommand.Execute(category);
+        }
+    }
+
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void Maximize_Click(object sender, RoutedEventArgs e) => ToggleMaximized();

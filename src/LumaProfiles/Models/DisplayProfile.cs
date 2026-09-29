@@ -85,6 +85,13 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         IsFavorite = IsFavorite
     };
 
+    /// <summary>True when every user-adjustable value equals the other profile's.</summary>
+    public bool HasSameAdjustmentsAs(DisplayProfile other) =>
+        Brightness == other.Brightness && Contrast == other.Contrast && Saturation == other.Saturation &&
+        Hue == other.Hue && string.Equals(ColorTemperature, other.ColorTemperature, StringComparison.Ordinal) &&
+        Math.Abs(Gamma - other.Gamma) < 0.0001 && Math.Abs(Red - other.Red) < 0.0001 &&
+        Math.Abs(Green - other.Green) < 0.0001 && Math.Abs(Blue - other.Blue) < 0.0001;
+
     public void CopyAdjustmentsFrom(DisplayProfile source)
     {
         Brightness = source.Brightness;
