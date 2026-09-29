@@ -12,6 +12,28 @@ internal static class TestSetup
         AppLog.Configure(Path.Combine(Path.GetTempPath(), "luma-tests-logs"));
 }
 
+internal sealed class InlineWorkRunner : IWorkRunner
+{
+    public Task<T> RunAsync<T>(Func<T> work) => Task.FromResult(work());
+}
+
+/// <summary>Lets a test hold background work "in flight" and finish it on demand.</summary>
+internal sealed class ManualWorkRunner : IWorkRunner
+{
+    private readonly Queue<Action> _pending = new();
+
+    public int PendingCount => _pending.Count;
+
+    public Task<T> RunAsync<T>(Func<T> work)
+    {
+        var completion = new TaskCompletionSource<T>();
+        _pending.Enqueue(() => completion.SetResult(work()));
+        return completion.Task;
+    }
+
+    public void RunNext() => _pending.Dequeue()();
+}
+
 public class ScheduleResolverTests
 {
     private static readonly ScheduleSettings Default = new() { DayStart = "07:00", NightStart = "20:00" };
@@ -132,6 +154,7 @@ public class MainViewModelTests
         public int OriginalCalls { get; private set; }
         public bool HasOriginal { get; set; } = true;
         public bool FailApply { get; set; }
+        public bool ThrowOnApply { get; set; }
         public List<DisplayInfo> Displays { get; set; } = [];
         public IReadOnlyList<DisplayInfo> GetDisplays() => Displays;
         public IReadOnlyList<OriginalMonitorState>? LastRestoredStates { get; private set; }
@@ -139,6 +162,7 @@ public class MainViewModelTests
 
         public ApplyResult Apply(DisplayProfile profile, string target)
         {
+            if (ThrowOnApply) throw new InvalidOperationException("boom");
             Applied.Add(profile.Id);
             return FailApply ? new ApplyResult(0, ["no display"], []) : Result();
         }
@@ -154,7 +178,8 @@ public class MainViewModelTests
             return HasOriginal ? Result() : new ApplyResult(0, ["none"], []);
         }
         public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections, CancellationToken cancellationToken = default) => Result();
-        public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() => [new OriginalMonitorState { MonitorId = "snapshot" }];
+        private int _snapshots;
+        public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() => [new OriginalMonitorState { MonitorId = $"snapshot-{++_snapshots}" }];
 
         public ApplyResult RestoreNeutral(string target)
         {
@@ -186,7 +211,7 @@ public class MainViewModelTests
         var dir = new TempDirectory();
         var monitor = new FakeMonitorService { Displays = Enumerable.Range(1, displayCount).Select(Display).ToList() };
         var shell = new FakeShell();
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), shell);
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), shell, workRunner: new InlineWorkRunner());
         return (vm, monitor, shell, dir);
     }
 
@@ -469,7 +494,7 @@ public class MainViewModelTests
         vm.RevertChangesCommand.Execute(null);
 
         Assert.False(vm.IsConfirmationPending);
-        Assert.Equal("snapshot", Assert.Single(monitor.LastRestoredStates!).MonitorId);
+        Assert.Equal("snapshot-2", Assert.Single(monitor.LastRestoredStates!).MonitorId);
         Assert.True(vm.Profiles.First(p => p.Id == "natural").IsActive);
         Assert.False(vm.Profiles.First(p => p.Id == "eyes-night").IsActive);
     }
@@ -518,17 +543,122 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public void NewChangeAcceptsThePreviousPendingOne()
+    public void RepeatedApply_RevertGoesBackToTheStateBeforeTheFirstChange()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(vm.Profiles.First(p => p.Id == "natural"));
+        vm.KeepChangesCommand.Execute(null);
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles.First(p => p.Id == "eyes-night"));
+        vm.ApplyProfileCommand.Execute(vm.Profiles.First(p => p.Id == "gamer-competitive"));
+        vm.ApplyProfileCommand.Execute(vm.Profiles.First(p => p.Id == "hdr-gaming"));
+
+        Assert.True(vm.IsConfirmationPending);
+        Assert.Equal(30, vm.ConfirmRemainingSeconds);
+        Assert.Equal(0, monitor.OriginalCalls);
+
+        vm.RevertChangesCommand.Execute(null);
+
+        // snapshot-1 was taken before the very first unconfirmed change (the 2nd snapshot ever, natural came first)
+        Assert.Equal("snapshot-2", Assert.Single(monitor.LastRestoredStates!).MonitorId);
+        Assert.True(vm.Profiles.First(p => p.Id == "natural").IsActive);
+        Assert.Single(vm.Profiles, p => p.IsActive);
+    }
+
+    [Fact]
+    public void RepeatedApply_KeepAcceptsTheLatestAndStartsAFreshSnapshot()
     {
         var (vm, monitor, _, dir) = Create();
         using var _ = dir;
         vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
-
         vm.ApplyProfileCommand.Execute(vm.Profiles[1]);
+        vm.KeepChangesCommand.Execute(null);
 
-        Assert.True(vm.IsConfirmationPending);
-        Assert.Equal(0, monitor.OriginalCalls);
-        Assert.Equal(vm.Profiles[1].Id, vm.Profiles.Single(p => p.IsActive).Id);
+        vm.ApplyProfileCommand.Execute(vm.Profiles[2]);
+        vm.RevertChangesCommand.Execute(null);
+
+        Assert.Equal("snapshot-2", Assert.Single(monitor.LastRestoredStates!).MonitorId);
+        Assert.True(vm.Profiles[1].IsActive);
+    }
+
+    [Fact]
+    public void RepeatedApply_TimeoutAlsoRevertsToTheOriginalState()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+        for (var i = 0; i < 20; i++) vm.ConfirmTick();
+        vm.ApplyProfileCommand.Execute(vm.Profiles[1]);
+        Assert.Equal(30, vm.ConfirmRemainingSeconds);
+
+        for (var i = 0; i < 30; i++) vm.ConfirmTick();
+
+        Assert.Equal("snapshot-1", Assert.Single(monitor.LastRestoredStates!).MonitorId);
+        Assert.DoesNotContain(vm.Profiles, p => p.IsActive);
+    }
+
+    [Fact]
+    public void Busy_IsTrueWhileWorkRunsAndButtonsAreDisabled()
+    {
+        var dir = new TempDirectory();
+        using var _ = dir;
+        var runner = new ManualWorkRunner();
+        var monitor = new FakeMonitorService { Displays = [Display(1)] };
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner);
+        Assert.False(vm.IsBusy);
+        Assert.True(vm.ApplyProfileCommand.CanExecute(vm.Profiles[0]));
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        Assert.True(vm.IsBusy);
+        Assert.False(vm.ApplyProfileCommand.CanExecute(vm.Profiles[0]));
+        Assert.False(vm.RepairCommand.CanExecute(null));
+        Assert.False(vm.RestoreOriginalCommand.CanExecute(null));
+        Assert.Contains(vm.Profiles[0].DisplayName, vm.StatusMessage);
+        Assert.Empty(monitor.Applied);
+
+        while (runner.PendingCount > 0) runner.RunNext();
+
+        Assert.False(vm.IsBusy);
+        Assert.True(vm.ApplyProfileCommand.CanExecute(vm.Profiles[0]));
+        Assert.Equal([vm.Profiles[0].Id], monitor.Applied);
+        Assert.True(vm.Profiles[0].IsActive);
+    }
+
+    [Fact]
+    public void Operations_RunOneAtATimeInOrder()
+    {
+        var dir = new TempDirectory();
+        using var _ = dir;
+        var runner = new ManualWorkRunner();
+        var monitor = new FakeMonitorService { Displays = [Display(1)] };
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner);
+
+        vm.ApplyProfileById("natural");
+        vm.ApplyProfileById("eyes-night");
+
+        Assert.Equal(1, runner.PendingCount);
+        runner.RunNext();
+        Assert.Equal(["natural"], monitor.Applied);
+        while (runner.PendingCount > 0) runner.RunNext();
+        Assert.Equal(["natural", "eyes-night"], monitor.Applied);
+        Assert.False(vm.IsBusy);
+    }
+
+    [Fact]
+    public void Busy_ClearsEvenWhenTheOperationFails()
+    {
+        var dir = new TempDirectory();
+        using var _ = dir;
+        var monitor = new FakeMonitorService { Displays = [Display(1)], ThrowOnApply = true };
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner());
+
+        vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
+
+        Assert.False(vm.IsBusy);
+        Assert.False(vm.IsConfirmationPending);
+        Assert.Contains("boom", vm.StatusMessage);
     }
 
     [Fact]
@@ -796,10 +926,10 @@ public class MainViewModelTests
         var dir = new TempDirectory();
         using var _ = dir;
         var monitor = new FakeMonitorService { Displays = Enumerable.Range(1, 3).Select(Display).ToList() };
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell());
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner());
         vm.DisplayButtons[1].IsSelected = false;
 
-        var restarted = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell());
+        var restarted = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner());
         Assert.Equal("Pantalla 1, Pantalla 3", restarted.SelectedMonitorTarget);
 
         monitor.Displays = [Display(1), Display(2)];

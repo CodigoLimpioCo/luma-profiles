@@ -21,6 +21,7 @@
 - Nombres de accesibilidad (`AutomationProperties`) en controles principales.
 
 ### Cambiado
+- Aplicar, Neutralizar, Restaurar y Revertir se ejecutan en segundo plano y en cola: la ventana ya no se congela. Mientras trabajan se muestra una barra de progreso superior, un indicador junto al mensaje de estado, el cursor de espera y los botones de acción quedan atenuados.
 - Configuración es una página dentro de la app (con secciones General, Automatización y Datos) en lugar de un modal.
 - Pulsar "Ajustar" abre el panel de ajustes si está oculto, también en ventanas estrechas.
 - Barras de desplazamiento muy finas que se engrosan al pasar el ratón.
@@ -34,6 +35,7 @@
 - Al cargar, los textos de los perfiles predeterminados se actualizan sin perder tus ajustes ni favoritos.
 
 ### Corregido
+- Al pulsar Aplicar varias veces seguidas, Revertir (o el tiempo agotado) vuelve al estado anterior al primer cambio sin confirmar, no solo al anterior.
 - Las categorías del menú lateral ya responden también al teclado (flechas) y reflejan los filtros activos.
 - Restaurar el estado original verifica cada valor DDC/CI leyéndolo de vuelta, reintenta los que el monitor descarta y avisa de los que no acepta.
 - Una reaplicación de correcciones en curso ya no puede pisar un Aplicar, Neutralizar o Restaurar posterior (se cancela).

@@ -46,6 +46,9 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Background" Value="#253746"/>
                             </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.45"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -193,6 +196,9 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="Root" Property="Opacity" Value="0.78"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.45"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -1898,7 +1904,12 @@
             </StackPanel>
 
             <Border Grid.Row="3" Background="{DynamicResource SurfaceBrush}" CornerRadius="9" Padding="12,9" Margin="0,6,16,0">
-                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>
+                <StackPanel Orientation="Horizontal">
+                    <ProgressBar Width="64" Height="3" Margin="0,0,12,0" VerticalAlignment="Center" IsIndeterminate="True"
+                                 BorderThickness="0" Background="{DynamicResource BorderThemeBrush}" Foreground="{DynamicResource AccentBrush}"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>
+                </StackPanel>
             </Border>
         </Grid>
 
@@ -2334,9 +2345,19 @@
                 </Border>
             </Grid>
             <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" CornerRadius="9" Padding="12,9" Margin="28,14,28,16">
-                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>
+                <StackPanel Orientation="Horizontal">
+                    <ProgressBar Width="64" Height="3" Margin="0,0,12,0" VerticalAlignment="Center" IsIndeterminate="True"
+                                 BorderThickness="0" Background="{DynamicResource BorderThemeBrush}" Foreground="{DynamicResource AccentBrush}"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource MutedBrush}"/>
+                </StackPanel>
             </Border>
         </Grid>
+
+        <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" Panel.ZIndex="190" VerticalAlignment="Top" Height="3"
+                     IsIndeterminate="True" BorderThickness="0" Background="Transparent"
+                     Foreground="{DynamicResource AccentBrush}"
+                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
 
         <Border x:Name="ConfirmBanner" Grid.Row="1" Grid.ColumnSpan="3" Panel.ZIndex="200" MaxWidth="600" Margin="16,14,16,0"
                 HorizontalAlignment="Center" VerticalAlignment="Top" Padding="18,14,18,12" CornerRadius="16"

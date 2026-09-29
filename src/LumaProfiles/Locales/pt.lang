@@ -345,3 +345,5 @@ ui.SortBrightnessAsc=Brilho (menor para maior)
 ui.SortContrastDesc=Contraste (maior para menor)
 ui.SortSaturationDesc=Saturação (maior para menor)
 ui.SortCategory=Categoria
+ui.Reverting=Revertendo as alterações…
+ui.OperationFailed=Não foi possível concluir a operação: {0}

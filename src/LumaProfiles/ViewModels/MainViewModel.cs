@@ -52,8 +52,10 @@ public sealed partial class MainViewModel : ObservableObject
         ProfileStore profileStore,
         ApplicationSettingsStore settingsStore,
         IShellService shell,
-        Func<bool>? systemPrefersDark = null)
+        Func<bool>? systemPrefersDark = null,
+        IWorkRunner? workRunner = null)
     {
+        if (workRunner is not null) _runner = workRunner;
         if (systemPrefersDark is not null) _systemPrefersDark = systemPrefersDark;
         _monitor = monitor;
         _profileStore = profileStore;
@@ -82,8 +84,9 @@ public sealed partial class MainViewModel : ObservableObject
         ApplyProfileCommand = new RelayCommand<DisplayProfile>(profile =>
         {
             SelectedProfile = profile;
-            RunWithConfirmation(() => Apply(profile), L("ConfirmDetailApply", profile.DisplayName));
-        });
+            var detail = L("ConfirmDetailApply", profile.DisplayName);
+            _ = Enqueue(() => RunWithConfirmationAsync(() => ApplyAsync(profile), detail, L("Applying", profile.DisplayName)));
+        }, () => !IsBusy);
         EditProfileCommand = new RelayCommand<DisplayProfile>(profile =>
         {
             SelectedProfile = profile;
@@ -95,11 +98,12 @@ public sealed partial class MainViewModel : ObservableObject
         {
             SaveProfiles();
             var profile = SelectedProfile;
-            RunWithConfirmation(() => Apply(profile), L("ConfirmDetailApply", profile.DisplayName));
-        });
+            var detail = L("ConfirmDetailApply", profile.DisplayName);
+            _ = Enqueue(() => RunWithConfirmationAsync(() => ApplyAsync(profile), detail, L("Applying", profile.DisplayName)));
+        }, () => !IsBusy);
         RestoreDefaultsCommand = new RelayCommand(RestoreDefaults);
-        RepairCommand = new RelayCommand(() => RunWithConfirmation(Neutralize, T("ConfirmDetailNeutralize")));
-        RestoreOriginalCommand = new RelayCommand(() => RunWithConfirmation(RestoreOriginalDisplayState, T("ConfirmDetailRestore")));
+        RepairCommand = new RelayCommand(() => _ = Enqueue(() => RunWithConfirmationAsync(NeutralizeAsync, T("ConfirmDetailNeutralize"), T("Neutralizing"))), () => !IsBusy);
+        RestoreOriginalCommand = new RelayCommand(() => _ = Enqueue(() => RunWithConfirmationAsync(RestoreOriginalAsync, T("ConfirmDetailRestore"), T("RestoringOriginalState"))), () => !IsBusy);
         SelectCategoryCommand = new RelayCommand<string>(SelectCategory);
         ToggleThemeCommand = new RelayCommand(() => IsDarkTheme = !IsDarkTheme);
         OpenSettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
@@ -124,7 +128,11 @@ public sealed partial class MainViewModel : ObservableObject
         InitializeDisplays();
         StatusMessage = T("Ready");
         _livePreviewTimer.Tick += (_, _) => LivePreviewTick();
-        _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); _ = ReapplyPersistentCorrectionsAsync(); };
+        _reapplyTimer.Tick += (_, _) =>
+        {
+            _reapplyTimer.Stop();
+            _ = Enqueue(ReapplyPersistentCorrectionsAsync, visible: false);
+        };
         _scheduleTimer.Tick += (_, _) => EvaluateSchedule();
     }
 
@@ -400,8 +408,12 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Runs the start-up work once the window is on screen.</summary>
     public void Initialize()
     {
-        CaptureOriginalDisplayState();
-        SchedulePersistentCorrectionReapply(immediate: true);
+        // The very first read of the displays must finish before any saved correction is re-applied.
+        _ = Enqueue(async () =>
+        {
+            await CaptureOriginalAsync();
+            if (_settings.MonitorCorrections.Count > 0) await ReapplyPersistentCorrectionsAsync();
+        }, visible: false);
         _scheduleTimer.Start();
         EvaluateSchedule();
 
@@ -411,7 +423,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public void Shutdown()
     {
-        if (_pending is not null) Revert(timedOut: false);
+        if (_pending is not null) RevertNow();
         _confirmTimer.Stop();
         _reapplyTimer.Stop();
         _livePreviewTimer.Stop();
@@ -430,18 +442,19 @@ public sealed partial class MainViewModel : ObservableObject
         {
             case RuleAction.Apply when FindProfile(decision.Rule!.ProfileId) is { } profile:
                 _profileBeforeRule ??= Profiles.FirstOrDefault(item => item.IsActive)?.Id;
-                Apply(profile, L("RuleApplied", decision.Rule.ProcessName, profile.DisplayName));
+                var ruleStatus = L("RuleApplied", decision.Rule.ProcessName, profile.DisplayName);
+                _ = EnqueueAutomation(() => ApplyAsync(profile, ruleStatus));
                 break;
             case RuleAction.Apply:
                 _ruleEngine.Reset();
                 break;
             case RuleAction.Restore:
-                RestoreAfterRule();
+                _ = EnqueueAutomation(RestoreAfterRuleAsync);
                 break;
         }
     }
 
-    public void ApplyNeutral() => Neutralize();
+    public void ApplyNeutral() => _ = EnqueueAutomation(NeutralizeAsync);
 
     /// <summary>Applies the next/previous profile, preferring favorites when there are any.</summary>
     public void CycleProfile(int direction)
@@ -451,7 +464,7 @@ public sealed partial class MainViewModel : ObservableObject
         var current = Profiles.FirstOrDefault(item => item.IsActive)?.Id ?? SelectedProfile.Id;
         if (Cycle(pool, current, direction) is not { } next) return;
         SelectedProfile = next;
-        Apply(next);
+        _ = EnqueueAutomation(() => ApplyAsync(next));
     }
 
     internal static DisplayProfile? Cycle(IReadOnlyList<DisplayProfile> pool, string? currentId, int direction)
@@ -468,7 +481,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (FindProfile(profileId) is not { } profile) return;
         SelectedProfile = profile;
-        Apply(profile);
+        _ = EnqueueAutomation(() => ApplyAsync(profile));
     }
 
     private DisplayProfile? FindProfile(string id) =>
@@ -490,33 +503,6 @@ public sealed partial class MainViewModel : ObservableObject
         StatusMessage = L("Restored", SelectedProfile.DisplayName);
     }
 
-    /// <summary>
-    /// Returns the displays to their natural Windows/monitor state: the settings captured before this app
-    /// changed anything. Falls back to a neutral RGB profile when no original state was captured.
-    /// </summary>
-    private void Neutralize()
-    {
-        CommitPending();
-        CancelPendingReapply();
-        StatusMessage = T("Neutralizing");
-        var result = _monitor.RestoreOriginal(_settings.OriginalMonitorStates, SelectedMonitorTarget, originalPowerPlan: null);
-        if (result.DisplayCount > 0)
-        {
-            RemoveCorrectionsFor(result);
-        }
-        else
-        {
-            result = _monitor.RestoreNeutral(SelectedMonitorTarget);
-            SaveMonitorCorrections(MonitorService.NeutralProfile(), result, applyImageControls: false);
-        }
-
-        foreach (var profile in Profiles) profile.IsActive = false;
-        SaveProfiles();
-        SaveSettings();
-        _lastChangeApplied = result.DisplayCount > 0;
-        StatusMessage = FormatResult(T("Neutralized"), result);
-    }
-
     private void RemoveCorrectionsFor(ApplyResult result)
     {
         foreach (var monitor in result.AppliedMonitors)
@@ -524,55 +510,6 @@ public sealed partial class MainViewModel : ObservableObject
             _settings.MonitorCorrections.RemoveAll(item =>
                 item.MonitorId.Equals(monitor.MonitorId, StringComparison.OrdinalIgnoreCase) ||
                 item.DeviceName.Equals(monitor.DeviceName, StringComparison.OrdinalIgnoreCase));
-        }
-    }
-
-    private void RestoreOriginalDisplayState()
-    {
-        CommitPending();
-        CancelPendingReapply();
-        StatusMessage = T("RestoringOriginalState");
-        var result = _monitor.RestoreOriginal(
-            _settings.OriginalMonitorStates, SelectedMonitorTarget, _settings.OriginalPowerPlan);
-
-        RemoveCorrectionsFor(result);
-        if (result.DisplayCount > 0)
-        {
-            foreach (var profile in Profiles) profile.IsActive = false;
-            SaveProfiles();
-        }
-        SaveSettings();
-        _lastChangeApplied = result.DisplayCount > 0;
-        StatusMessage = FormatResult(T("OriginalStateRestored"), result);
-    }
-
-    private void Apply(DisplayProfile profile, string? statusOverride = null)
-    {
-        CommitPending();
-        CancelPendingReapply();
-        CaptureOriginalDisplayState();
-        StatusMessage = L("Applying", profile.DisplayName);
-        var result = _monitor.Apply(profile, SelectedMonitorTarget);
-        foreach (var item in Profiles) item.IsActive = false;
-        profile.IsActive = result.DisplayCount > 0;
-        SaveProfiles();
-        SaveMonitorCorrections(profile, result, applyImageControls: true);
-        _lastChangeApplied = result.DisplayCount > 0;
-        StatusMessage = FormatResult(statusOverride ?? L("Applied", profile.DisplayName), result);
-        if (profile.IsHdr) StatusMessage += T("HdrReminder");
-    }
-
-    private void RestoreAfterRule()
-    {
-        var previous = _profileBeforeRule;
-        _profileBeforeRule = null;
-        if (previous is not null && FindProfile(previous) is { } profile)
-        {
-            Apply(profile, L("RuleRestored", profile.DisplayName));
-        }
-        else
-        {
-            Neutralize();
         }
     }
 
@@ -585,24 +522,6 @@ public sealed partial class MainViewModel : ObservableObject
             _settings.MonitorCorrections.Add(MonitorService.CreateCorrection(profile, monitor, applyImageControls));
         }
         SaveSettings();
-    }
-
-    private void CaptureOriginalDisplayState()
-    {
-        var captured = _monitor.CaptureOriginalStates(
-            _settings.OriginalMonitorStates.Select(item => item.MonitorId));
-        var changed = false;
-        foreach (var state in captured)
-        {
-            _settings.OriginalMonitorStates.Add(state);
-            changed = true;
-        }
-        if (string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan))
-        {
-            _settings.OriginalPowerPlan = _monitor.GetActivePowerPlan();
-            changed |= !string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan);
-        }
-        if (changed) SaveSettings();
     }
 
     private void SelectedProfile_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -624,21 +543,13 @@ public sealed partial class MainViewModel : ObservableObject
         _livePreviewTimer.Start();
     }
 
-    private void LivePreviewTick()
-    {
-        _livePreviewTimer.Stop();
-        CaptureOriginalDisplayState();
-        var result = _monitor.Preview(SelectedProfile, SelectedMonitorTarget);
-        StatusMessage = FormatResult(T("LivePreviewApplied"), result);
-    }
-
     private void SchedulePersistentCorrectionReapply(bool immediate = false)
     {
         if (_settings.MonitorCorrections.Count == 0) return;
         _reapplyTimer.Stop();
         if (immediate)
         {
-            _ = ReapplyPersistentCorrectionsAsync();
+            _ = Enqueue(ReapplyPersistentCorrectionsAsync, visible: false);
         }
         else
         {
@@ -719,7 +630,8 @@ public sealed partial class MainViewModel : ObservableObject
         _lastScheduleSlot = slot;
 
         if (FindProfile(ScheduleResolver.ProfileFor(_settings.Schedule, slot)) is not { } profile) return;
-        Apply(profile, L("ScheduleApplied", profile.DisplayName));
+        var scheduleStatus = L("ScheduleApplied", profile.DisplayName);
+        _ = EnqueueAutomation(() => ApplyAsync(profile, scheduleStatus));
     }
 
     private void AddAppRule()
@@ -739,7 +651,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _settings.AppRules.Remove(item.Rule);
         SaveSettings();
-        if (ReferenceEquals(_ruleEngine.ActiveRule, item.Rule)) RestoreAfterRule();
+        if (ReferenceEquals(_ruleEngine.ActiveRule, item.Rule)) _ = EnqueueAutomation(RestoreAfterRuleAsync);
         _ruleEngine.Reset();
         RefreshAppRules();
     }

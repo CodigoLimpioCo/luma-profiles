@@ -8,6 +8,8 @@ namespace LumaProfiles.ViewModels;
 /// <summary>
 /// "Keep changes?" flow modelled on Windows display settings: a change made from the UI is undone
 /// automatically unless the user confirms it within <see cref="ConfirmSeconds"/> seconds.
+/// The snapshot is taken before the FIRST unconfirmed change, so several changes in a row all revert
+/// to what the user had before them, not to the previous attempt.
 /// </summary>
 public sealed partial class MainViewModel
 {
@@ -51,31 +53,35 @@ public sealed partial class MainViewModel
     private void InitializeConfirmation()
     {
         KeepChangesCommand = new RelayCommand(Keep);
-        RevertChangesCommand = new RelayCommand(() => Revert(timedOut: false));
+        RevertChangesCommand = new RelayCommand(() => _ = Enqueue(() => RevertAsync(timedOut: false)));
         _confirmTimer.Tick += (_, _) => ConfirmTick();
     }
 
     /// <summary>Runs a user-initiated display change and, when it took effect, asks the user to keep it.</summary>
-    private void RunWithConfirmation(Action change, string detail)
+    private async Task RunWithConfirmationAsync(Func<Task> change, string detail, string busyText)
     {
+        StatusMessage = busyText;
         if (!ConfirmChanges)
         {
-            change();
+            CommitPending();
+            await change();
             return;
         }
 
-        CommitPending();
-        var snapshot = TakeSnapshot();
+        // Reuse the snapshot of an unconfirmed change so "revert" goes back to the original state.
+        var snapshot = _pending ?? await TakeSnapshotAsync();
         _lastChangeApplied = false;
-        change();
+        await change();
         if (_lastChangeApplied) BeginConfirmation(snapshot, detail);
     }
 
-    private ChangeSnapshot TakeSnapshot() => new(
-        _monitor.CaptureCurrentStates(),
-        _monitor.GetActivePowerPlan(),
-        [.. _settings.MonitorCorrections],
-        Profiles.FirstOrDefault(profile => profile.IsActive)?.Id);
+    private async Task<ChangeSnapshot> TakeSnapshotAsync()
+    {
+        var corrections = _settings.MonitorCorrections.ToList();
+        var activeProfileId = Profiles.FirstOrDefault(profile => profile.IsActive)?.Id;
+        var (states, plan) = await _runner.RunAsync(() => (_monitor.CaptureCurrentStates(), _monitor.GetActivePowerPlan()));
+        return new ChangeSnapshot(states, plan, corrections, activeProfileId);
+    }
 
     private void BeginConfirmation(ChangeSnapshot snapshot, string detail)
     {
@@ -87,7 +93,7 @@ public sealed partial class MainViewModel
         RaiseConfirmation();
     }
 
-    /// <summary>Accepts an outstanding change without asking (a newer change supersedes it).</summary>
+    /// <summary>Accepts an outstanding change without asking (automation supersedes the question).</summary>
     private void CommitPending()
     {
         if (_pending is null) return;
@@ -112,7 +118,8 @@ public sealed partial class MainViewModel
         _confirmRemaining--;
         if (_confirmRemaining <= 0)
         {
-            Revert(timedOut: true);
+            _confirmTimer.Stop();
+            _ = Enqueue(() => RevertAsync(timedOut: true));
             return;
         }
 
@@ -120,7 +127,20 @@ public sealed partial class MainViewModel
         Raise(nameof(ConfirmCountdownText));
     }
 
-    private void Revert(bool timedOut)
+    private async Task RevertAsync(bool timedOut)
+    {
+        var snapshot = _pending;
+        StopConfirmation();
+        if (snapshot is null) return;
+
+        CancelPendingReapply();
+        StatusMessage = T("Reverting");
+        var result = await _runner.RunAsync(() => _monitor.RestoreOriginal(snapshot.States, BothDisplays, snapshot.PowerPlan));
+        FinishRevert(snapshot, result, timedOut);
+    }
+
+    /// <summary>Synchronous variant used when the application is closing.</summary>
+    private void RevertNow()
     {
         var snapshot = _pending;
         StopConfirmation();
@@ -128,6 +148,11 @@ public sealed partial class MainViewModel
 
         CancelPendingReapply();
         var result = _monitor.RestoreOriginal(snapshot.States, BothDisplays, snapshot.PowerPlan);
+        FinishRevert(snapshot, result, timedOut: false);
+    }
+
+    private void FinishRevert(ChangeSnapshot snapshot, ApplyResult result, bool timedOut)
+    {
         _settings.MonitorCorrections.Clear();
         _settings.MonitorCorrections.AddRange(snapshot.Corrections);
         foreach (var profile in Profiles) profile.IsActive = profile.Id == snapshot.ActiveProfileId;

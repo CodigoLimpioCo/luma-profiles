@@ -115,6 +115,9 @@ public partial class MainWindow : Window
                 ApplyTheme();
                 ApplyAppearance();
                 break;
+            case nameof(MainViewModel.IsBusy):
+                Mouse.OverrideCursor = _viewModel.IsBusy ? Cursors.AppStarting : null;
+                break;
             case nameof(MainViewModel.AccentKey):
             case nameof(MainViewModel.ScrollBarThickness):
                 ApplyAppearance();
