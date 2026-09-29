@@ -1,6 +1,6 @@
 # Changelog
 
-## Sin publicar
+## 0.8.0 — Pantallas VA y punto de restauración
 
 ### Añadido
 - Categoría "Pantallas VA" con 10 modos pensados para paneles VA económicos (como los de 22" a 120 Hz): equilibrado, sombras abiertas, gaming 120 Hz, competitivo, cine, oficina, lectura, nocturno, corregir azulado y color vivo. Levantan las sombras con gamma (los VA aplastan los negros), recortan el azul de fábrica y mantienen el contraste del monitor por debajo de donde se queman los blancos; la biblioteca pasa a 60 perfiles.

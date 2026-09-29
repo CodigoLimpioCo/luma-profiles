@@ -19,21 +19,39 @@ public sealed record LocalizedOption(string Value, string DisplayName)
 public static class LocalizationService
 {
     private static readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, string>> Cache = new(StringComparer.OrdinalIgnoreCase);
+    private const string EmbeddedPrefix = "embedded:";
+
+    /// <summary>Folder next to the executable where languages are copied so users can edit or add their own.</summary>
     private static readonly string LocalesDirectory = Path.Combine(AppContext.BaseDirectory, "Locales");
 
-    public static IReadOnlyList<LanguageOption> DiscoverLanguages()
-    {
-        EnsureBuiltInLocales();
-        if (!Directory.Exists(LocalesDirectory)) return [];
+    public static IReadOnlyList<LanguageOption> DiscoverLanguages() => DiscoverLanguages(LocalesDirectory);
 
-        return Directory.EnumerateFiles(LocalesDirectory, "*.lang")
-            .Select(path =>
+    internal static IReadOnlyList<LanguageOption> DiscoverLanguages(string localesDirectory)
+    {
+        EnsureBuiltInLocales(localesDirectory);
+        var found = new Dictionary<string, LanguageOption>(StringComparer.OrdinalIgnoreCase);
+
+        if (Directory.Exists(localesDirectory))
+        {
+            foreach (var path in Directory.EnumerateFiles(localesDirectory, "*.lang"))
             {
                 var values = Parse(path);
                 var code = Value(values, "meta.code", Path.GetFileNameWithoutExtension(path));
-                var name = Value(values, "meta.name", code);
-                return new LanguageOption(code, name, path);
-            })
+                found[code] = new LanguageOption(code, Value(values, "meta.name", code), path);
+            }
+        }
+
+        // The bundled languages stay available even when the folder above cannot be created or written to
+        // (for example a portable executable run from a read-only location such as Program Files).
+        foreach (var resourceName in BundledLanguageResources())
+        {
+            var path = EmbeddedPrefix + resourceName;
+            var values = Parse(path);
+            var code = Value(values, "meta.code", BundledCode(resourceName));
+            if (!found.ContainsKey(code)) found[code] = new LanguageOption(code, Value(values, "meta.name", code), path);
+        }
+
+        return found.Values
             .OrderBy(language => language.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
     }
@@ -67,19 +85,37 @@ public static class LocalizationService
         }
     }
 
-    private static IReadOnlyDictionary<string, string> Load(string languageCode)
+    private static IReadOnlyDictionary<string, string> Load(string languageCode) =>
+        Cache.GetOrAdd(languageCode, code => LoadValues(LocalesDirectory, code));
+
+    /// <summary>
+    /// The texts of one language: the file in the folder first, then the bundled copy for any key the file lacks
+    /// (an older file in a folder that cannot be updated must not turn new texts into raw keys).
+    /// </summary>
+    internal static IReadOnlyDictionary<string, string> LoadValues(string localesDirectory, string languageCode)
     {
-        return Cache.GetOrAdd(languageCode, code =>
+        var language = DiscoverLanguages(localesDirectory)
+            .FirstOrDefault(item => item.Code.Equals(languageCode, StringComparison.OrdinalIgnoreCase));
+        if (language is null) return new Dictionary<string, string>();
+
+        var values = new Dictionary<string, string>(Parse(language.FilePath), StringComparer.OrdinalIgnoreCase);
+        if (!language.FilePath.StartsWith(EmbeddedPrefix, StringComparison.Ordinal))
         {
-            var language = DiscoverLanguages().FirstOrDefault(item => item.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
-            return language is null ? new Dictionary<string, string>() : Parse(language.FilePath);
-        });
+            var bundled = BundledLanguageResources()
+                .FirstOrDefault(name => BundledCode(name).Equals(languageCode, StringComparison.OrdinalIgnoreCase));
+            if (bundled is not null)
+            {
+                foreach (var (key, value) in Parse(EmbeddedPrefix + bundled)) values.TryAdd(key, value);
+            }
+        }
+
+        return values;
     }
 
     private static IReadOnlyDictionary<string, string> Parse(string path)
     {
         var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var rawLine in File.ReadLines(path))
+        foreach (var rawLine in ReadLines(path))
         {
             var line = rawLine.Trim();
             if (line.Length == 0 || line.StartsWith('#')) continue;
@@ -92,16 +128,32 @@ public static class LocalizationService
         return values;
     }
 
-    private static void EnsureBuiltInLocales()
+    private static IEnumerable<string> ReadLines(string path)
+    {
+        if (!path.StartsWith(EmbeddedPrefix, StringComparison.Ordinal)) return File.ReadLines(path);
+
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(path[EmbeddedPrefix.Length..]);
+        if (stream is null) return [];
+        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        return reader.ReadToEnd().Replace("\r\n", "\n").Split('\n');
+    }
+
+    private static IEnumerable<string> BundledLanguageResources() =>
+        Assembly.GetExecutingAssembly().GetManifestResourceNames()
+            .Where(name => name.Contains(".Locales.", StringComparison.Ordinal) && name.EndsWith(".lang", StringComparison.Ordinal));
+
+    private static string BundledCode(string resourceName) => resourceName.Split('.')[^2];
+
+    private static void EnsureBuiltInLocales(string localesDirectory)
     {
         try
         {
-            Directory.CreateDirectory(LocalesDirectory);
+            Directory.CreateDirectory(localesDirectory);
             var assembly = Assembly.GetExecutingAssembly();
             foreach (var resourceName in assembly.GetManifestResourceNames().Where(name => name.Contains(".Locales.") && name.EndsWith(".lang")))
             {
                 var segments = resourceName.Split('.');
-                var destination = Path.Combine(LocalesDirectory, $"{segments[^2]}.lang");
+                var destination = Path.Combine(localesDirectory, $"{segments[^2]}.lang");
                 using var source = assembly.GetManifestResourceStream(resourceName);
                 if (source is not null) MergeMissingEntries(destination, source);
             }
