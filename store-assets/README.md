@@ -10,15 +10,14 @@ Ya están tomadas de la versión actual de la app y copiadas en 3 carpetas (mism
 | `capturas-en-us/` | English (United States) |
 | `capturas-pt-br/` | Portuguese (Brazil) |
 
-Cada carpeta contiene:
-- `1-biblioteca.png` — Biblioteca de perfiles
+Cada carpeta contiene (versión 0.8.0, 1560 x 900):
+- `1-biblioteca.png` — Biblioteca de 60 perfiles (tema oscuro)
 - `2-tema-claro.png` — Tema claro
-- `3-panel-ajuste.png` — Panel de ajuste de perfil (Gaming HDR)
-- `4-cuidado-visual.png` — Categoría Cuidado visual
+- `3-vista-lista.png` — Vista de lista de la categoría Pantallas VA
+- `4-pantallas-va.png` — Categoría Pantallas VA en tarjetas
 
-Estado de subida ahora mismo:
-- Spanish (Spain): 1 de 4 subida (biblioteca). Faltan 3.
-- English (United States) y Portuguese (Brazil): 0 subidas. Faltan las 4.
+Los textos de la ficha (descripción, novedades y palabras clave en los tres idiomas) están en `docs/store-listing-v0.8.0.md`.
+Al enviar la nueva versión, reemplaza en cada idioma las capturas anteriores por estas cuatro.
 
 ## 2) Logos de Store — NUEVOS, generados con las medidas exactas
 

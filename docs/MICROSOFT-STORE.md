@@ -51,7 +51,7 @@ Para pruebas locales el paquete debe estar firmado con un certificado confiable.
 
 La Store requiere al menos una captura y recomienda cuatro o más por familia de dispositivo. En `docs/` se incluyen capturas de la aplicación; en `store-assets/` se generan el logo cuadrado, el logo panorámico y la imagen de ficha.
 
-Capturas recomendadas: `docs/app-screenshot.png`, `docs/luma-profiles-v0.7.0-live-preview.png`, `docs/luma-profiles-v0.7.0-about-modal.png` y `docs/luma-profiles-v0.7.2-light-contrast.png`.
+Capturas de la versión 0.8.0: `store-assets/capturas-es-es/`, `capturas-en-us/` y `capturas-pt-br/` (cuatro por idioma). Textos de la ficha y novedades en tres idiomas: `docs/store-listing-v0.8.0.md`.
 
 ## Datos que debe completar el publicador
 
