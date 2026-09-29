@@ -15,9 +15,11 @@ Cada carpeta contiene (versión 0.8.0, 1560 x 900):
 - `2-tema-claro.png` — Tema claro
 - `3-vista-lista.png` — Vista de lista de la categoría Pantallas VA
 - `4-pantallas-va.png` — Categoría Pantallas VA en tarjetas
+- `5-configuracion.png` — Configuración > Apariencia
+- `6-datos-restauracion.png` — Configuración > Datos y restauración (punto de restauración)
 
 Los textos de la ficha (descripción, novedades y palabras clave en los tres idiomas) están en `docs/store-listing-v0.8.0.md`.
-Al enviar la nueva versión, reemplaza en cada idioma las capturas anteriores por estas cuatro.
+Al enviar la nueva versión, reemplaza en cada idioma las capturas anteriores por estas seis (todas con la fuente y el color de acento por defecto).
 
 ## 2) Logos de Store — NUEVOS, generados con las medidas exactas
 

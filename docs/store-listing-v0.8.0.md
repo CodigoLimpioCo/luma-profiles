@@ -1,7 +1,7 @@
 # Ficha de Microsoft Store — Luma Profiles 0.8.0
 
 Paquete: `dist/store/LumaProfiles.msixupload` (generado con `scripts/build-msix.ps1`, versión de paquete `0.8.0.0`).
-Capturas: `store-assets/capturas-es-es/`, `capturas-en-us/`, `capturas-pt-br/` (1 biblioteca, 2 tema claro, 3 vista de lista, 4 categoría Pantallas VA).
+Capturas: `store-assets/capturas-es-es/`, `capturas-en-us/`, `capturas-pt-br/` (1 biblioteca, 2 tema claro, 3 vista de lista, 4 categoría Pantallas VA, 5 configuración, 6 datos y restauración).
 
 ## Español (España)
 
