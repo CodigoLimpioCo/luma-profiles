@@ -9,6 +9,7 @@ public interface IShellService
     void OpenUrl(string url);
     string? PickSaveFile(string title, string suggestedFileName);
     string? PickOpenFile(string title);
+    void IdentifyDisplays(IReadOnlyList<DisplayInfo> displays);
 }
 
 public sealed class ShellService : IShellService
@@ -32,6 +33,8 @@ public sealed class ShellService : IShellService
         var dialog = new SaveFileDialog { Title = title, FileName = suggestedFileName, Filter = Filter, DefaultExt = ".json" };
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
+
+    public void IdentifyDisplays(IReadOnlyList<DisplayInfo> displays) => DisplayIdentifier.Show(displays);
 
     public string? PickOpenFile(string title)
     {

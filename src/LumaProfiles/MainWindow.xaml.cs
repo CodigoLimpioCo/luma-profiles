@@ -318,6 +318,7 @@ public partial class MainWindow : Window
         }
         else if (message is NativeMethods.WmDisplayChange or NativeMethods.WmDeviceChange)
         {
+            _viewModel.OnDisplaysChanged();
             _viewModel.RequestReapply();
         }
         else if (message == NativeMethods.WmPowerBroadcast)

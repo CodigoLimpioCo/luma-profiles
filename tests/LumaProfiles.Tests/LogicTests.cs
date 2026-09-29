@@ -132,6 +132,8 @@ public class MainViewModelTests
         public int OriginalCalls { get; private set; }
         public bool HasOriginal { get; set; } = true;
         public bool FailApply { get; set; }
+        public List<DisplayInfo> Displays { get; set; } = [];
+        public IReadOnlyList<DisplayInfo> GetDisplays() => Displays;
         public IReadOnlyList<OriginalMonitorState>? LastRestoredStates { get; private set; }
         public string? LastRestoredPlan { get; private set; }
 
@@ -166,6 +168,8 @@ public class MainViewModelTests
 
     private sealed class FakeShell : IShellService
     {
+        public IReadOnlyList<DisplayInfo>? Identified { get; private set; }
+        public void IdentifyDisplays(IReadOnlyList<DisplayInfo> displays) => Identified = displays;
         public string? SavePath { get; set; }
         public string? OpenPath { get; set; }
         public List<string> Opened { get; } = [];
@@ -174,10 +178,13 @@ public class MainViewModelTests
         public string? PickOpenFile(string title) => OpenPath;
     }
 
-    private static (MainViewModel Vm, FakeMonitorService Monitor, FakeShell Shell, TempDirectory Dir) Create()
+    private static DisplayInfo Display(int number) =>
+        new(number, $"\\\\.\\DISPLAY{number}", $"MONITOR\\TEST\\{number}", (number - 1) * 1920, 0, 1920, 1080, number == 1);
+
+    private static (MainViewModel Vm, FakeMonitorService Monitor, FakeShell Shell, TempDirectory Dir) Create(int displayCount = 2)
     {
         var dir = new TempDirectory();
-        var monitor = new FakeMonitorService();
+        var monitor = new FakeMonitorService { Displays = Enumerable.Range(1, displayCount).Select(Display).ToList() };
         var shell = new FakeShell();
         var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), shell);
         return (vm, monitor, shell, dir);
@@ -708,6 +715,113 @@ public class MainViewModelTests
         Assert.True(vm.GlobalHotkeysEnabled);
         Assert.Equal("20:00", vm.ScheduleNightStart);
         Assert.False(vm.ScheduleEnabled);
+    }
+
+    [Fact]
+    public void Displays_OneButtonPerMonitorAndAllSelectedByDefault()
+    {
+        var (vm, _, _, dir) = Create(displayCount: 3);
+        using var _ = dir;
+
+        Assert.Equal(3, vm.DisplayButtons.Count);
+        Assert.True(vm.HasMultipleDisplays);
+        Assert.True(vm.IsAllDisplaysSelected);
+        Assert.Equal("Ambas pantallas", vm.SelectedMonitorTarget);
+        Assert.Contains("1920×1080", vm.DisplayButtons[0].Tooltip);
+    }
+
+    [Fact]
+    public void Displays_CanPickOneAndThreeButNotTwo()
+    {
+        var (vm, monitor, _, dir) = Create(displayCount: 3);
+        using var _ = dir;
+
+        vm.DisplayButtons[1].IsSelected = false;
+
+        Assert.Equal("Pantalla 1, Pantalla 3", vm.SelectedMonitorTarget);
+        Assert.False(vm.IsAllDisplaysSelected);
+        Assert.True(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().SelectedMonitorTarget == "Pantalla 1, Pantalla 3");
+
+        vm.ApplyProfileById("natural");
+        Assert.Equal(["natural"], monitor.Applied);
+    }
+
+    [Fact]
+    public void Displays_AllButtonSelectsEverythingAndIgnoresSwitchingOff()
+    {
+        var (vm, _, _, dir) = Create(displayCount: 3);
+        using var _ = dir;
+        vm.DisplayButtons[0].IsSelected = false;
+        vm.DisplayButtons[2].IsSelected = false;
+        Assert.Equal("Pantalla 2", vm.SelectedMonitorTarget);
+
+        vm.IsAllDisplaysSelected = true;
+        Assert.Equal("Ambas pantallas", vm.SelectedMonitorTarget);
+        Assert.All(vm.DisplayButtons, button => Assert.True(button.IsSelected));
+
+        vm.IsAllDisplaysSelected = false;
+        Assert.True(vm.IsAllDisplaysSelected);
+    }
+
+    [Fact]
+    public void Displays_LastSelectedDisplayCannotBeTurnedOff()
+    {
+        var (vm, _, _, dir) = Create(displayCount: 3);
+        using var _ = dir;
+        vm.DisplayButtons[0].IsSelected = false;
+        vm.DisplayButtons[1].IsSelected = false;
+
+        vm.DisplayButtons[2].IsSelected = false;
+
+        Assert.True(vm.DisplayButtons[2].IsSelected);
+        Assert.Equal("Pantalla 3", vm.SelectedMonitorTarget);
+    }
+
+    [Fact]
+    public void Displays_SelectingEveryButtonNormalizesToAll()
+    {
+        var (vm, _, _, dir) = Create(displayCount: 3);
+        using var _ = dir;
+        vm.DisplayButtons[1].IsSelected = false;
+
+        vm.DisplayButtons[1].IsSelected = true;
+
+        Assert.Equal("Ambas pantallas", vm.SelectedMonitorTarget);
+        Assert.True(vm.IsAllDisplaysSelected);
+    }
+
+    [Fact]
+    public void Displays_SelectionSurvivesRestartAndHotPlug()
+    {
+        var dir = new TempDirectory();
+        using var _ = dir;
+        var monitor = new FakeMonitorService { Displays = Enumerable.Range(1, 3).Select(Display).ToList() };
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell());
+        vm.DisplayButtons[1].IsSelected = false;
+
+        var restarted = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell());
+        Assert.Equal("Pantalla 1, Pantalla 3", restarted.SelectedMonitorTarget);
+
+        monitor.Displays = [Display(1), Display(2)];
+        restarted.OnDisplaysChanged();
+        Assert.Equal(2, restarted.DisplayButtons.Count);
+        Assert.Equal("Pantalla 1", restarted.SelectedMonitorTarget);
+
+        monitor.Displays = [Display(2)];
+        restarted.OnDisplaysChanged();
+        Assert.False(restarted.HasMultipleDisplays);
+        Assert.Equal("Ambas pantallas", restarted.SelectedMonitorTarget);
+    }
+
+    [Fact]
+    public void IdentifyCommand_ShowsTheCurrentDisplays()
+    {
+        var (vm, _, shell, dir) = Create(displayCount: 3);
+        using var _ = dir;
+
+        vm.IdentifyDisplaysCommand.Execute(null);
+
+        Assert.Equal([1, 2, 3], shell.Identified!.Select(display => display.Number));
     }
 
     [Fact]

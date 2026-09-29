@@ -319,3 +319,9 @@ ui.ShowSidebarDesc=Categorias e atalhos.
 ui.ShowInspectorTitle=Mostrar o painel de ajustes
 ui.ShowInspectorDesc=Controles de cor do perfil selecionado.
 
+ui.MonitorAll=Todas
+ui.MonitorIdentify=Identificar telas
+ui.MonitorIdentifyShort=Identificar
+ui.DisplayButtonTip=Tela {0} · {1}×{2}
+ui.DisplayButtonTipPrimary=Tela {0} · {1}×{2} · principal
+ui.IdentifyingDisplays=Mostrando o número de cada tela…

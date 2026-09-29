@@ -319,3 +319,9 @@ ui.ShowSidebarDesc=Categories and shortcuts.
 ui.ShowInspectorTitle=Show the adjustment panel
 ui.ShowInspectorDesc=Color controls for the selected profile.
 
+ui.MonitorAll=All
+ui.MonitorIdentify=Identify displays
+ui.MonitorIdentifyShort=Identify
+ui.DisplayButtonTip=Display {0} · {1}×{2}
+ui.DisplayButtonTipPrimary=Display {0} · {1}×{2} · primary
+ui.IdentifyingDisplays=Showing the number on each display…

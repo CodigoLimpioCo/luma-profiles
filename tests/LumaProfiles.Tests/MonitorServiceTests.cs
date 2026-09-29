@@ -12,6 +12,11 @@ public class MonitorServiceTests
     [InlineData("Pantalla 1", @"\\.\DISPLAY2", false)]
     [InlineData("Pantalla 2", @"\\.\display2", true)]
     [InlineData("Pantalla 2", @"\\.\DISPLAY1", false)]
+    [InlineData("Pantalla 1, Pantalla 3", @"\\.\DISPLAY1", true)]
+    [InlineData("Pantalla 1, Pantalla 3", @"\\.\DISPLAY3", true)]
+    [InlineData("Pantalla 1, Pantalla 3", @"\\.\DISPLAY2", false)]
+    [InlineData("Pantalla 1", @"\\.\DISPLAY11", false)]
+    [InlineData("Pantalla 11", @"\\.\DISPLAY11", true)]
     public void MatchesTarget_SelectsExpectedDisplays(string target, string device, bool expected) =>
         Assert.Equal(expected, MonitorService.MatchesTarget(device, target));
 
@@ -71,6 +76,13 @@ public class MonitorServiceTests
         Assert.Equal(profile.Id, restored.Id);
         Assert.Equal("id", correction.MonitorId);
     }
+
+    [Theory]
+    [InlineData(@"\\.\DISPLAY1", 1)]
+    [InlineData(@"\\.\display12", 12)]
+    [InlineData("nonsense", 0)]
+    public void DisplayNumber_ParsesTrailingNumber(string device, int expected) =>
+        Assert.Equal(expected, MonitorService.DisplayNumber(device));
 
     [Fact]
     public void ApplyResult_SuccessRequiresDisplaysAndNoFailures()

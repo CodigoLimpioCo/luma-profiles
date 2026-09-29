@@ -16,6 +16,9 @@ public interface IMonitorService
     /// <summary>Reads the live DDC/CI values and gamma ramp of every display (used to undo an unconfirmed change).</summary>
     IReadOnlyList<OriginalMonitorState> CaptureCurrentStates();
     ApplyResult RestoreNeutral(string target);
+
+    /// <summary>The currently connected displays, ordered by their Windows display number.</summary>
+    IReadOnlyList<DisplayInfo> GetDisplays();
 }
 
 public sealed class MonitorService : IMonitorService
@@ -23,6 +26,9 @@ public sealed class MonitorService : IMonitorService
     private static readonly byte[] ManagedVcpCodes = [0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x87, 0x8A, 0x89];
     private const string BalancedPlan = "381b4222-f694-41f0-9685-ff5bb260df2e";
     private const string HighPerformancePlan = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
+    public const string AllDisplaysTarget = "Ambas pantallas";
+    public const string DisplayTargetPrefix = "Pantalla ";
+    private const uint MonitorInfoPrimary = 1;
     private const int RestoreAttempts = 3;
     private const int RestoreSettleMilliseconds = 90;
 
@@ -142,6 +148,13 @@ public sealed class MonitorService : IMonitorService
     }
 
     public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() => CaptureOriginalStates([]);
+
+    public IReadOnlyList<DisplayInfo> GetDisplays() => EnumerateMonitors()
+        .Select(monitor => new DisplayInfo(
+            DisplayNumber(monitor.DeviceName), monitor.DeviceName, monitor.MonitorId,
+            monitor.Left, monitor.Top, monitor.Width, monitor.Height, monitor.IsPrimary))
+        .OrderBy(display => display.Number)
+        .ToList();
 
     public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections, CancellationToken cancellationToken = default)
     {
@@ -276,10 +289,32 @@ public sealed class MonitorService : IMonitorService
         ColorTemperature = "Neutro 6500 K"
     };
 
-    internal static bool MatchesTarget(string deviceName, string target) =>
-        target == "Ambas pantallas" ||
-        (target == "Pantalla 1" && deviceName.EndsWith("DISPLAY1", StringComparison.OrdinalIgnoreCase)) ||
-        (target == "Pantalla 2" && deviceName.EndsWith("DISPLAY2", StringComparison.OrdinalIgnoreCase));
+    /// <summary>
+    /// A target is "Ambas pantallas" (every display) or a comma separated list like "Pantalla 1, Pantalla 3".
+    /// </summary>
+    internal static bool MatchesTarget(string deviceName, string target)
+    {
+        if (target == AllDisplaysTarget) return true;
+
+        var number = DisplayNumber(deviceName);
+        foreach (var part in target.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (part.StartsWith(DisplayTargetPrefix, StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(part[DisplayTargetPrefix.Length..], out var wanted) && wanted == number)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Extracts N from a device name such as \.\DISPLAY3; 0 when it has no number.</summary>
+    internal static int DisplayNumber(string deviceName)
+    {
+        var index = deviceName.LastIndexOf("DISPLAY", StringComparison.OrdinalIgnoreCase);
+        return index >= 0 && int.TryParse(deviceName[(index + "DISPLAY".Length)..], out var number) ? number : 0;
+    }
 
     private static void ApplyDdc(IntPtr monitor, DisplayProfile profile, List<string> failures, bool applyImageControls)
     {
@@ -384,7 +419,11 @@ public sealed class MonitorService : IMonitorService
             var info = NativeMethods.MONITORINFOEX.Create();
             if (NativeMethods.GetMonitorInfo(handle, ref info))
             {
-                monitors.Add(new ConnectedMonitor(handle, GetMonitorId(info.szDevice), info.szDevice));
+                monitors.Add(new ConnectedMonitor(
+                    handle, GetMonitorId(info.szDevice), info.szDevice,
+                    info.rcMonitor.Left, info.rcMonitor.Top,
+                    info.rcMonitor.Right - info.rcMonitor.Left, info.rcMonitor.Bottom - info.rcMonitor.Top,
+                    (info.dwFlags & MonitorInfoPrimary) != 0));
             }
             return true;
         };
@@ -620,7 +659,11 @@ public sealed class MonitorService : IMonitorService
     }
 }
 
-internal sealed record ConnectedMonitor(IntPtr Handle, string MonitorId, string DeviceName);
+internal sealed record ConnectedMonitor(
+    IntPtr Handle, string MonitorId, string DeviceName, int Left, int Top, int Width, int Height, bool IsPrimary);
+
+/// <summary>A connected display as shown in the UI (bounds are in physical pixels).</summary>
+public sealed record DisplayInfo(int Number, string DeviceName, string MonitorId, int Left, int Top, int Width, int Height, bool IsPrimary);
 
 public sealed record AppliedMonitor(string MonitorId, string DeviceName);
 

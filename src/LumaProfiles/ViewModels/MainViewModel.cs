@@ -15,7 +15,7 @@ public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName)
 
 public sealed partial class MainViewModel : ObservableObject
 {
-    private const string BothDisplays = "Ambas pantallas";
+    private const string BothDisplays = MonitorService.AllDisplaysTarget;
     private const string AllCategory = "Todos";
     private const string FavoritesCategory = "Favoritos";
 
@@ -73,9 +73,7 @@ public sealed partial class MainViewModel : ObservableObject
             ?? new LanguageOption("es", "Español", string.Empty);
         _isDarkTheme = ComputeDarkTheme();
         _startWithWindows = _settings.StartWithWindows;
-        _selectedMonitorTarget = IsKnownMonitorTarget(_settings.SelectedMonitorTarget)
-            ? _settings.SelectedMonitorTarget
-            : BothDisplays;
+        _selectedMonitorTarget = _settings.SelectedMonitorTarget ?? BothDisplays;
         _selectedProfile = Profiles.First();
         _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
 
@@ -126,6 +124,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         InitializeConfirmation();
         InitializeSettingsPage();
+        InitializeDisplays();
         StatusMessage = T("Ready");
         _livePreviewTimer.Tick += (_, _) => LivePreviewTick();
         _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); _ = ReapplyPersistentCorrectionsAsync(); };
@@ -140,7 +139,6 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<DisplayProfile> Profiles { get; }
     public ObservableCollection<DisplayProfile> VisibleProfiles { get; } = [];
     public IReadOnlyList<LanguageOption> Languages { get; }
-    public ObservableCollection<LocalizedOption> MonitorTargets { get; } = [];
     public ObservableCollection<LocalizedOption> ColorTemperatureOptions { get; } = [];
     public ObservableCollection<AppRuleItem> AppRules { get; } = [];
 
@@ -177,18 +175,6 @@ public sealed partial class MainViewModel : ObservableObject
             _selectedProfile = value;
             _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
             Raise();
-            ScheduleLivePreview();
-        }
-    }
-
-    public string SelectedMonitorTarget
-    {
-        get => _selectedMonitorTarget;
-        set
-        {
-            if (!Set(ref _selectedMonitorTarget, value)) return;
-            _settings.SelectedMonitorTarget = value;
-            SaveSettings();
             ScheduleLivePreview();
         }
     }
@@ -395,6 +381,7 @@ public sealed partial class MainViewModel : ObservableObject
         Raise(nameof(SidebarToggleGlyph));
         Raise(nameof(SidebarToggleLabel));
         RefreshSettingsText();
+        RefreshDisplays();
     }
 
     public string MaximizeGlyph => _isMaximized ? "" : "";
@@ -878,9 +865,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private static bool IsKnownMonitorTarget(string target) =>
-        target is BothDisplays or "Pantalla 1" or "Pantalla 2";
-
     private string FormatResult(string successText, ApplyResult result)
     {
         if (result.Failures.Count == 0)
@@ -918,11 +902,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RefreshLocalizedOptions()
     {
-        MonitorTargets.Clear();
-        MonitorTargets.Add(new LocalizedOption(BothDisplays, T("BothDisplays")));
-        MonitorTargets.Add(new LocalizedOption("Pantalla 1", T("Display1")));
-        MonitorTargets.Add(new LocalizedOption("Pantalla 2", T("Display2")));
-
         ColorTemperatureOptions.Clear();
         ColorTemperatureOptions.Add(new LocalizedOption("Usuario (RGB)", T("UserRgb")));
         ColorTemperatureOptions.Add(new LocalizedOption("Cálido 5000 K", T("Warm5000")));
