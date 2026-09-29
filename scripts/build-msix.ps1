@@ -1,8 +1,8 @@
 param(
     [string]$Configuration = 'Release',
-    [string]$IdentityName = 'CodigoLimpio.LumaProfiles',
-    [string]$Publisher = 'CN=Código Limpio',
-    [string]$PublisherDisplayName = 'Código Limpio',
+    [string]$IdentityName = 'CodigoLimpioSAS.LumaProfiles',
+    [string]$Publisher = 'CN=8A15CF12-8168-4E07-90CB-02CB2EC28715',
+    [string]$PublisherDisplayName = 'Codigo Limpio',
     [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'dist\store')
 )
 

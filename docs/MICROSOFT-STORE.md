@@ -13,6 +13,17 @@ El paquete generado por `scripts/build-msix.ps1` queda sin firma para poder asoc
 3. En la página de identidad del producto copia el `Package/Identity Name`, `Publisher` y `Publisher display name`.
 4. Instala el Windows 10/11 SDK para disponer de `MakeAppx.exe`.
 
+## Identidad reservada
+
+Los valores por defecto de `scripts/build-msix.ps1` ya son los de Partner Center:
+
+- `Package/Identity/Name`: `CodigoLimpioSAS.LumaProfiles`
+- `Package/Identity/Publisher`: `CN=8A15CF12-8168-4E07-90CB-02CB2EC28715`
+- `Package/Properties/PublisherDisplayName`: `Codigo Limpio` (sin tilde: debe coincidir exactamente con Partner Center)
+- Store ID: `9PJRZB8HFCSN` · https://apps.microsoft.com/detail/9PJRZB8HFCSN
+
+La capacidad restringida `runFullTrust` genera un aviso de validación: es normal para una app WPF y se aprueba al enviar (en el cuestionario, indica que la app de escritorio controla el brillo/contraste de los monitores por DDC/CI).
+
 ## Generar el paquete
 
 Desde la raíz del repositorio:
