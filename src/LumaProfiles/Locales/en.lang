@@ -356,3 +356,4 @@ ui.MonitorControlsTitle=Control the monitor (DDC/CI)
 ui.MonitorControlsDesc=Adjusts brightness and contrast on the monitor itself. If your screen shows a color tint, turn it off: profiles will use software correction only and nothing is written to the monitor. Then press Neutralize color.
 ui.PreviewBefore=Before
 ui.PreviewAfter=After
+ui.SidebarResizeHint=Drag to change the menu width · double-click to reset it

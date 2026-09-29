@@ -27,7 +27,9 @@ public partial class MainWindow : Window
 
     private enum PinnedPanel { None, Left, Right }
 
-    private const double ExpandedSidebarPixels = 220;
+    private const double MinContentWidth = 520;
+    private const double InspectorPixels = 320;
+    private const double KeyboardResizeStep = 12;
     private const double CollapsedSidebarPixels = 80;
     private const double CompactSidebarWidth = 1100;
     private const double InspectorMinWidth = 1040;
@@ -134,6 +136,9 @@ public partial class MainWindow : Window
             case nameof(MainViewModel.GlobalHotkeysEnabled):
                 UpdateHotkeys();
                 break;
+            case nameof(MainViewModel.SidebarWidth):
+                ApplyResponsiveLayout();
+                break;
             case nameof(MainViewModel.IsSidebarCollapsed):
                 ApplyResponsiveLayout();
                 break;
@@ -219,6 +224,40 @@ public partial class MainWindow : Window
 
     private void UiScale_KeyUp(object sender, KeyEventArgs e) => _viewModel.CommitUiScale();
 
+    /// <summary>The widest the menu may get while the content area keeps a usable width.</summary>
+    private double MaxSidebarForWindow =>
+        LayoutWidth - MinContentWidth - (_isRightPanelVisible ? InspectorPixels : 0);
+
+    private void SidebarResizer_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) =>
+        _viewModel.ResizeSidebar(e.HorizontalChange, MaxSidebarForWindow);
+
+    private void SidebarResizer_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e) =>
+        _viewModel.CommitSidebarWidth();
+
+    private void SidebarResizer_DoubleClick(object sender, MouseButtonEventArgs e) => _viewModel.ResetSidebarWidth();
+
+    /// <summary>Keyboard access: arrows resize, Home restores the default width.</summary>
+    private void SidebarResizer_KeyDown(object sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Left:
+                _viewModel.ResizeSidebar(-KeyboardResizeStep, MaxSidebarForWindow);
+                break;
+            case Key.Right:
+                _viewModel.ResizeSidebar(KeyboardResizeStep, MaxSidebarForWindow);
+                break;
+            case Key.Home:
+                _viewModel.ResetSidebarWidth();
+                break;
+            default:
+                return;
+        }
+
+        _viewModel.CommitSidebarWidth();
+        e.Handled = true;
+    }
+
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void Maximize_Click(object sender, RoutedEventArgs e) => ToggleMaximized();
@@ -290,7 +329,7 @@ public partial class MainWindow : Window
         // Narrow windows switch the sidebar to icons only; the saved preference is left untouched.
         _viewModel.SetSidebarForcedCompact(showLeft && LayoutWidth < CompactSidebarWidth);
         LeftSidebarColumn.Width = showLeft
-            ? new GridLength(_viewModel.IsSidebarCollapsed ? CollapsedSidebarPixels : ExpandedSidebarPixels)
+            ? new GridLength(_viewModel.IsSidebarCollapsed ? CollapsedSidebarPixels : _viewModel.SidebarWidth)
             : new GridLength(0);
         RightInspectorColumn.Width = showRight ? new GridLength(320) : new GridLength(0);
         LeftSidebar.Visibility = showLeft ? Visibility.Visible : Visibility.Collapsed;

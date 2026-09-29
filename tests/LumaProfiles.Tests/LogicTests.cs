@@ -1286,6 +1286,81 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void SidebarWidth_DefaultsAndIsClampedToItsRange()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.Equal(MainViewModel.DefaultSidebarWidth, vm.SidebarWidth);
+
+        vm.ResizeSidebar(+1000);
+        Assert.Equal(MainViewModel.MaxSidebarWidth, vm.SidebarWidth);
+
+        vm.ResizeSidebar(-1000);
+        Assert.Equal(MainViewModel.MinSidebarWidth, vm.SidebarWidth);
+    }
+
+    [Fact]
+    public void SidebarWidth_RespectsTheRoomLeftByTheWindow()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.ResizeSidebar(+300, maxAvailable: 260);
+        Assert.Equal(260, vm.SidebarWidth);
+
+        // a window with no room shrinks the menu to its minimum, never below it
+        vm.ResizeSidebar(+50, maxAvailable: 10);
+        Assert.Equal(MainViewModel.MinSidebarWidth, vm.SidebarWidth);
+    }
+
+    [Fact]
+    public void SidebarWidth_IsOnlySavedWhenTheDragIsCommitted()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        var raised = 0;
+        vm.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(MainViewModel.SidebarWidth)) raised++; };
+
+        vm.ResizeSidebar(+30);
+        vm.ResizeSidebar(+30);
+
+        Assert.Equal(2, raised);
+        Assert.Equal(280, vm.SidebarWidth);
+        Assert.Equal(MainViewModel.DefaultSidebarWidth, new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().SidebarWidth);
+
+        vm.CommitSidebarWidth();
+
+        Assert.Equal(280, new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().SidebarWidth);
+    }
+
+    [Fact]
+    public void SidebarWidth_ResetRestoresTheDefaultAndSavesIt()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.ResizeSidebar(+100);
+        vm.CommitSidebarWidth();
+
+        vm.ResetSidebarWidth();
+
+        Assert.Equal(MainViewModel.DefaultSidebarWidth, vm.SidebarWidth);
+        Assert.Equal(MainViewModel.DefaultSidebarWidth, new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().SidebarWidth);
+    }
+
+    [Fact]
+    public void SidebarWidth_LayoutResetAlsoRestoresIt()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.ResizeSidebar(+80);
+
+        vm.SettingsSection = "Layout";
+        vm.ResetSectionCommand.Execute(null);
+
+        Assert.Equal(MainViewModel.DefaultSidebarWidth, vm.SidebarWidth);
+    }
+
+    [Fact]
     public void OpenUrlCommand_DelegatesToShell()
     {
         var (vm, _, shell, dir) = Create();

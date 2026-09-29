@@ -5,6 +5,8 @@ public sealed partial class ApplicationSettings
     public bool IsLeftPanelOpen { get; set; } = true;
     public bool IsRightPanelOpen { get; set; } = true;
     public bool IsLeftPanelCollapsed { get; set; }
+    /// <summary>Width in pixels of the expanded side menu (drag its edge to change it).</summary>
+    public double SidebarWidth { get; set; } = 220;
     public bool ConfirmChanges { get; set; } = true;
     /// <summary>When false only the software gamma is changed and the monitor (DDC/CI) is never written to.</summary>
     public bool UseMonitorControls { get; set; } = true;

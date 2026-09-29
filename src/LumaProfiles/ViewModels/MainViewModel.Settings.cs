@@ -263,6 +263,39 @@ public sealed partial class MainViewModel
 
     public string ScrollBarThicknessLabel => $"{ScrollBarThickness:0} px";
 
+    // ---- resizable side menu ---------------------------------------------------------------
+
+    public const double MinSidebarWidth = 180;
+    public const double MaxSidebarWidth = 420;
+    public const double DefaultSidebarWidth = 220;
+
+    /// <summary>Width of the expanded side menu, always within its allowed range.</summary>
+    public double SidebarWidth => Math.Clamp(_settings.SidebarWidth, MinSidebarWidth, MaxSidebarWidth);
+
+    /// <summary>Moves the menu edge while dragging. The window passes the largest width that still leaves room for the content.</summary>
+    public void ResizeSidebar(double delta, double maxAvailable = MaxSidebarWidth)
+    {
+        var limit = Math.Clamp(maxAvailable, MinSidebarWidth, MaxSidebarWidth);
+        SetSidebarWidth(Math.Clamp(SidebarWidth + delta, MinSidebarWidth, limit));
+    }
+
+    /// <summary>Saves the width once the drag (or key press) is finished, so the file is not rewritten on every mouse move.</summary>
+    public void CommitSidebarWidth() => SaveSettings();
+
+    public void ResetSidebarWidth()
+    {
+        SetSidebarWidth(DefaultSidebarWidth);
+        SaveSettings();
+    }
+
+    private void SetSidebarWidth(double width)
+    {
+        var rounded = Math.Round(width);
+        if (Math.Abs(rounded - SidebarWidth) < 0.5) return;
+        _settings.SidebarWidth = rounded;
+        Raise(nameof(SidebarWidth));
+    }
+
     // ---- layout preferences ----------------------------------------------------------------
 
     public bool SidebarCollapsedPreference
@@ -318,6 +351,7 @@ public sealed partial class MainViewModel
                 break;
             case "Layout":
                 SidebarCollapsedPreference = false;
+                ResetSidebarWidth();
                 LeftPanelRequested = true;
                 RightPanelRequested = true;
                 ViewMode = ViewModes[0];
