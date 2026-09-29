@@ -54,8 +54,10 @@ public sealed partial class MainViewModel : ObservableObject
         IShellService shell,
         Func<bool>? systemPrefersDark = null,
         IWorkRunner? workRunner = null,
-        IReadOnlyList<string>? availableFonts = null)
+        IReadOnlyList<string>? availableFonts = null,
+        RestorePointStore? restorePointStore = null)
     {
+        _restorePoints = restorePointStore ?? new RestorePointStore();
         if (workRunner is not null) _runner = workRunner;
         _availableFonts = availableFonts is { Count: > 0 } ? availableFonts : FontCatalog.Installed();
         if (systemPrefersDark is not null) _systemPrefersDark = systemPrefersDark;
@@ -125,11 +127,13 @@ public sealed partial class MainViewModel : ObservableObject
         AddAppRuleCommand = new RelayCommand(AddAppRule);
         RemoveAppRuleCommand = new RelayCommand<AppRuleItem>(RemoveAppRule);
 
+        AdoptRestorePointCopy();
         _monitor.UseMonitorControls = _settings.UseMonitorControls;
         _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
         InitializeConfirmation();
         InitializeSettingsPage();
         InitializeDisplays();
+        InitializeRestorePoint();
         StatusMessage = T("Ready");
         _livePreviewTimer.Tick += (_, _) => LivePreviewTick();
         _reapplyTimer.Tick += (_, _) =>

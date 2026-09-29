@@ -110,10 +110,7 @@ public sealed class MonitorService : IMonitorService
                 }
             }
 
-            if (state.GammaRamp.Length == 768 || state.PhysicalMonitors.Any(item => item.Values.Count > 0))
-            {
-                captured.Add(state);
-            }
+            captured.Add(state);
         }
 
         return captured;
@@ -153,7 +150,11 @@ public sealed class MonitorService : IMonitorService
             if (state is null) continue;
 
             RestoreDdc(monitor.Handle, state, failures);
-            if (state.GammaRamp.Length == 768 && !ApplyGammaRamp(monitor.DeviceName, state.GammaRamp))
+            // A display whose ramp could not be read when the restore point was taken goes back to Windows' neutral ramp.
+            var gammaRestored = state.GammaRamp.Length == 768
+                ? ApplyGammaRamp(monitor.DeviceName, state.GammaRamp)
+                : ApplyGamma(monitor.DeviceName, 1.0, 1.0, 1.0, 1.0);
+            if (!gammaRestored)
             {
                 failures.Add($"No fue posible restaurar la gamma original en {monitor.DeviceName}.");
             }

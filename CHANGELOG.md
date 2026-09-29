@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Añadido
+- Punto de restauración reforzado: se guarda al primer arranque (antes de cualquier cambio) también en un archivo propio, `restore-point.json`, que se recupera solo si `settings.json` se daña; se muestra su fecha en Configuración > Datos y se puede reemplazar con el estado actual ("Guardar estado actual", con confirmación). Las pantallas que no permiten leer su estado vuelven a la gamma neutra de Windows al restaurar.
 - El menú lateral se puede ensanchar o estrechar (180–420 px) arrastrando su borde; también con las flechas del teclado cuando el borde tiene el foco. Doble clic o Inicio lo restablece, y el ancho se recuerda. Nunca deja el contenido con menos de 520 px.
 - Vista previa antes/después: al pasar el ratón sobre la imagen de una tarjeta (normal o grande) aparece una comparación con divisor que sigue al puntero, simulando por software el perfil (brillo, contraste, saturación, matiz, gamma, RGB y temperatura) sin tocar el monitor. Se actualiza en vivo al mover los deslizadores.
 - Registro de errores no controlados en `%LOCALAPPDATA%\LumaProfiles\logs` para diagnosticar cierres en otros equipos.

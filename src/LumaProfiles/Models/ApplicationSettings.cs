@@ -9,6 +9,8 @@ public sealed partial class ApplicationSettings
     public List<MonitorColorCorrection> MonitorCorrections { get; set; } = [];
     public List<OriginalMonitorState> OriginalMonitorStates { get; set; } = [];
     public string? OriginalPowerPlan { get; set; }
+    /// <summary>When the restore point (original display state) was captured.</summary>
+    public DateTime? OriginalCapturedAt { get; set; }
     public bool MinimizeToTray { get; set; }
     public bool GlobalHotkeysEnabled { get; set; } = true;
     public ScheduleSettings Schedule { get; set; } = new();

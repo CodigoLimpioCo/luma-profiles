@@ -192,7 +192,9 @@ public class MainViewModelTests
         }
         public ApplyResult Reapply(IEnumerable<MonitorColorCorrection> corrections, CancellationToken cancellationToken = default) => Result();
         private int _snapshots;
-        public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() => [new OriginalMonitorState { MonitorId = $"snapshot-{++_snapshots}" }];
+        public IReadOnlyList<OriginalMonitorState>? CurrentSnapshot { get; set; }
+        public IReadOnlyList<OriginalMonitorState> CaptureCurrentStates() =>
+            CurrentSnapshot ?? [new OriginalMonitorState { MonitorId = $"snapshot-{++_snapshots}" }];
 
         public ApplyResult RestoreNeutral(string target)
         {
@@ -206,6 +208,13 @@ public class MainViewModelTests
 
     private sealed class FakeShell : IShellService
     {
+        public bool ConfirmAnswer { get; set; } = true;
+        public int ConfirmCalls { get; private set; }
+        public bool Confirm(string title, string message)
+        {
+            ConfirmCalls++;
+            return ConfirmAnswer;
+        }
         public IReadOnlyList<DisplayInfo>? Identified { get; private set; }
         public void IdentifyDisplays(IReadOnlyList<DisplayInfo> displays) => Identified = displays;
         public string? SavePath { get; set; }
@@ -224,7 +233,7 @@ public class MainViewModelTests
         var dir = new TempDirectory();
         var monitor = new FakeMonitorService { Displays = Enumerable.Range(1, displayCount).Select(Display).ToList() };
         var shell = new FakeShell();
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), shell, workRunner: new InlineWorkRunner());
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), shell, workRunner: new InlineWorkRunner(), restorePointStore: new RestorePointStore(dir.Path));
         return (vm, monitor, shell, dir);
     }
 
@@ -618,7 +627,7 @@ public class MainViewModelTests
         using var _ = dir;
         var runner = new ManualWorkRunner();
         var monitor = new FakeMonitorService { Displays = [Display(1)] };
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner);
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner, restorePointStore: new RestorePointStore(dir.Path));
         Assert.False(vm.IsBusy);
         Assert.True(vm.ApplyProfileCommand.CanExecute(vm.Profiles[0]));
 
@@ -646,7 +655,7 @@ public class MainViewModelTests
         using var _ = dir;
         var runner = new ManualWorkRunner();
         var monitor = new FakeMonitorService { Displays = [Display(1)] };
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner);
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner, restorePointStore: new RestorePointStore(dir.Path));
 
         vm.ApplyProfileById("natural");
         vm.ApplyProfileById("eyes-night");
@@ -665,7 +674,7 @@ public class MainViewModelTests
         var dir = new TempDirectory();
         using var _ = dir;
         var monitor = new FakeMonitorService { Displays = [Display(1)], ThrowOnApply = true };
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner());
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner(), restorePointStore: new RestorePointStore(dir.Path));
 
         vm.ApplyProfileCommand.Execute(vm.Profiles[0]);
 
@@ -939,10 +948,10 @@ public class MainViewModelTests
         var dir = new TempDirectory();
         using var _ = dir;
         var monitor = new FakeMonitorService { Displays = Enumerable.Range(1, 3).Select(Display).ToList() };
-        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner());
+        var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner(), restorePointStore: new RestorePointStore(dir.Path));
         vm.DisplayButtons[1].IsSelected = false;
 
-        var restarted = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner());
+        var restarted = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: new InlineWorkRunner(), restorePointStore: new RestorePointStore(dir.Path));
         Assert.Equal("Pantalla 1, Pantalla 3", restarted.SelectedMonitorTarget);
 
         monitor.Displays = [Display(1), Display(2)];
@@ -1148,7 +1157,7 @@ public class MainViewModelTests
     private static MainViewModel CreateWithFonts(TempDirectory dir, params string[] fonts) =>
         new(new FakeMonitorService { Displays = [Display(1)] }, new ProfileStore(dir.Path),
             new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(),
-            workRunner: new InlineWorkRunner(), availableFonts: fonts);
+            workRunner: new InlineWorkRunner(), availableFonts: fonts, restorePointStore: new RestorePointStore(dir.Path));
 
     [Fact]
     public void Fonts_OneChoicePerInstalledFontAndSelectionPersists()
@@ -1264,7 +1273,7 @@ public class MainViewModelTests
         store.Save(settings);
         var monitor = new FakeMonitorService { Displays = [Display(1)] };
 
-        _ = new MainViewModel(monitor, new ProfileStore(dir.Path), store, new FakeShell(), workRunner: new InlineWorkRunner());
+        _ = new MainViewModel(monitor, new ProfileStore(dir.Path), store, new FakeShell(), workRunner: new InlineWorkRunner(), restorePointStore: new RestorePointStore(dir.Path));
 
         Assert.False(monitor.UseMonitorControls);
     }
@@ -1358,6 +1367,127 @@ public class MainViewModelTests
         vm.ResetSectionCommand.Execute(null);
 
         Assert.Equal(MainViewModel.DefaultSidebarWidth, vm.SidebarWidth);
+    }
+
+    private static OriginalMonitorState Original(string id, int brightness) => new()
+    {
+        MonitorId = id,
+        DeviceName = id,
+        PhysicalMonitors = [new OriginalPhysicalMonitorState { Values = [new OriginalVcpValue { Code = 0x10, Value = (uint)brightness }] }]
+    };
+
+    [Fact]
+    public void RestorePoint_IsCapturedOnFirstUseAndCopiedToItsOwnFile()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        Assert.False(vm.HasRestorePoint);
+
+        vm.ApplyProfileById("natural");
+
+        Assert.True(vm.HasRestorePoint);
+        var copy = new RestorePointStore(dir.Path).Load();
+        Assert.NotNull(copy);
+        Assert.Equal(["MON-A"], copy!.Monitors.Select(state => state.MonitorId));
+        Assert.True(copy.CapturedAt > DateTime.Now.AddMinutes(-2));
+        Assert.Contains("1", vm.RestorePointText);
+    }
+
+    [Fact]
+    public void RestorePoint_SurvivesADamagedSettingsFile()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        File.WriteAllText(Path.Combine(dir.Path, "settings.json"), "corrupted {");
+
+        var reopened = new MainViewModel(new FakeMonitorService { Displays = [Display(1)] }, new ProfileStore(dir.Path),
+            new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(),
+            workRunner: new InlineWorkRunner(), restorePointStore: new RestorePointStore(dir.Path));
+
+        Assert.True(reopened.HasRestorePoint);
+        Assert.Single(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().OriginalMonitorStates);
+    }
+
+    [Fact]
+    public void RestorePoint_IsNeverOverwrittenByLaterApplies()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        var first = new RestorePointStore(dir.Path).Load()!.CapturedAt;
+        monitor.Capturable.Clear();
+        monitor.Capturable.Add(Original("MON-A", 99));
+
+        vm.ApplyProfileById("eyes-night");
+
+        var copy = new RestorePointStore(dir.Path).Load()!;
+        Assert.Equal(first, copy.CapturedAt);
+        Assert.Equal(14u, copy.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
+    }
+
+    [Fact]
+    public void RestorePoint_NewDisplaysAreAddedWithoutTouchingTheExistingOnes()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        monitor.Capturable.Add(Original("MON-B", 30));
+
+        vm.ApplyProfileById("natural");
+
+        var copy = new RestorePointStore(dir.Path).Load()!;
+        Assert.Equal(["MON-A", "MON-B"], copy.Monitors.Select(state => state.MonitorId).Order());
+    }
+
+    [Fact]
+    public void SaveRestorePoint_AsksFirstAndDoesNothingWhenDeclined()
+    {
+        var (vm, monitor, shell, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        shell.ConfirmAnswer = false;
+
+        vm.SaveRestorePointCommand.Execute(null);
+
+        Assert.Equal(1, shell.ConfirmCalls);
+        Assert.Equal(14u, new RestorePointStore(dir.Path).Load()!.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
+    }
+
+    [Fact]
+    public void SaveRestorePoint_ReplacesItWithTheCurrentStateWhenConfirmed()
+    {
+        var (vm, monitor, shell, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        monitor.CurrentSnapshot = [Original("MON-A", 77)];
+
+        vm.SaveRestorePointCommand.Execute(null);
+
+        var copy = new RestorePointStore(dir.Path).Load()!;
+        Assert.Equal(77u, copy.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
+        Assert.Equal(77u, monitor.KnownOriginals.Single().PhysicalMonitors.Single().Values.Single().Value);
+        Assert.Contains("1", vm.StatusMessage);
+    }
+
+    [Fact]
+    public void SaveRestorePoint_KeepsTheOldOneWhenTheDisplaysCannotBeRead()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        monitor.CurrentSnapshot = [];
+
+        vm.SaveRestorePointCommand.Execute(null);
+
+        Assert.Equal(14u, new RestorePointStore(dir.Path).Load()!.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
     }
 
     [Fact]

@@ -10,6 +10,9 @@ public interface IShellService
     string? PickSaveFile(string title, string suggestedFileName);
     string? PickOpenFile(string title);
     void IdentifyDisplays(IReadOnlyList<DisplayInfo> displays);
+
+    /// <summary>Asks a yes/no question before something the user cannot easily undo.</summary>
+    bool Confirm(string title, string message);
 }
 
 public sealed class ShellService : IShellService
@@ -35,6 +38,10 @@ public sealed class ShellService : IShellService
     }
 
     public void IdentifyDisplays(IReadOnlyList<DisplayInfo> displays) => DisplayIdentifier.Show(displays);
+
+    public bool Confirm(string title, string message) =>
+        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question, System.Windows.MessageBoxResult.No) == System.Windows.MessageBoxResult.Yes;
 
     public string? PickOpenFile(string title)
     {

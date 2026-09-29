@@ -206,6 +206,7 @@ public sealed partial class MainViewModel
         {
             if (_settings.OriginalMonitorStates.Any(item => item.MonitorId == state.MonitorId)) continue;
             _settings.OriginalMonitorStates.Add(state);
+            _settings.OriginalCapturedAt ??= DateTime.Now;
             changed = true;
         }
 
@@ -219,6 +220,7 @@ public sealed partial class MainViewModel
         {
             _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
             SaveSettings();
+            PersistRestorePointCopy();
         }
     }
 
