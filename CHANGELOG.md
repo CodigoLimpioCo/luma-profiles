@@ -7,6 +7,7 @@
 - Los errores al leer el tema de Windows, el inicio con Windows y los idiomas incluidos ahora quedan en el registro en vez de ignorarse.
 - Nuevas pruebas que exigen que todos los textos, perfiles y categorías estén traducidos a inglés y portugués.
 - `MonitorService` (787 líneas) se divide en clases parciales por responsabilidad: DDC/CI, gamma, pantallas, estado original y llamadas nativas; sin cambios de comportamiento.
+- `MainViewModel` pasa de 786 a 395 líneas: automatización (reglas, horario), diseño (vistas, menú lateral) y biblioteca (favoritos, importar/exportar, correcciones) viven en archivos parciales propios.
 - `scripts/release.ps1`: compila y prueba el ejecutable y el ZIP, y con `-Publish` crea el release y verifica que se subieron ambos archivos.
 
 ## 0.8.0 — Pantallas VA y punto de restauración
