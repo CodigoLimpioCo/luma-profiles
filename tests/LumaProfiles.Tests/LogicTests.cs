@@ -1132,6 +1132,96 @@ public class MainViewModelTests
         Assert.Equal(vm.Profiles.Count, vm.VisibleProfiles.Count);
     }
 
+    private static MainViewModel CreateWithFonts(TempDirectory dir, params string[] fonts) =>
+        new(new FakeMonitorService { Displays = [Display(1)] }, new ProfileStore(dir.Path),
+            new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(),
+            workRunner: new InlineWorkRunner(), availableFonts: fonts);
+
+    [Fact]
+    public void Fonts_OneChoicePerInstalledFontAndSelectionPersists()
+    {
+        using var dir = new TempDirectory();
+        var vm = CreateWithFonts(dir, "Segoe UI Variable Text", "Georgia", "Consolas");
+        Assert.Equal(["Segoe UI Variable Text", "Georgia", "Consolas"], vm.FontChoices.Select(choice => choice.Name));
+        Assert.Equal("Segoe UI Variable Text", vm.FontFamilyName);
+
+        vm.FontChoices.First(choice => choice.Name == "Georgia").IsSelected = true;
+
+        Assert.Equal("Georgia", vm.FontFamilyName);
+        Assert.Single(vm.FontChoices, choice => choice.IsSelected);
+        Assert.Equal("Georgia", new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().FontFamilyName);
+        vm.FontFamilyName = "Not Installed";
+        Assert.Equal("Georgia", vm.FontFamilyName);
+    }
+
+    [Fact]
+    public void Fonts_FallBackWhenTheSavedFontIsNoLongerInstalled()
+    {
+        using var dir = new TempDirectory();
+        var store = new ApplicationSettingsStore(dir.Path, manageStartup: false);
+        var settings = store.Load();
+        settings.FontFamilyName = "Removed Font";
+        store.Save(settings);
+
+        var vm = CreateWithFonts(dir, "Arial", "Georgia");
+
+        Assert.Equal("Arial", vm.FontFamilyName);
+        Assert.Single(vm.FontChoices, choice => choice.IsSelected && choice.Name == "Arial");
+    }
+
+    [Fact]
+    public void UiScale_PreviewOnlyTakesEffectWhenCommitted()
+    {
+        using var dir = new TempDirectory();
+        var vm = CreateWithFonts(dir, "Arial");
+        Assert.Equal(100, vm.UiScalePercent);
+
+        vm.UiScalePreview = 123;
+
+        Assert.Equal(125, vm.UiScalePreview);
+        Assert.Equal("125%", vm.UiScalePreviewLabel);
+        Assert.Equal(100, vm.UiScalePercent);
+        Assert.Equal(1.0, vm.UiScaleFactor);
+
+        vm.CommitUiScale();
+
+        Assert.Equal(125, vm.UiScalePercent);
+        Assert.Equal(1.25, vm.UiScaleFactor);
+        Assert.Equal(125, new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().UiScalePercent);
+    }
+
+    [Fact]
+    public void UiScale_IsClampedToTheSupportedRange()
+    {
+        using var dir = new TempDirectory();
+        var vm = CreateWithFonts(dir, "Arial");
+
+        vm.UiScalePreview = 500;
+        vm.CommitUiScale();
+        Assert.Equal(MainViewModel.MaxUiScale, vm.UiScalePercent);
+
+        vm.UiScalePreview = 1;
+        vm.CommitUiScale();
+        Assert.Equal(MainViewModel.MinUiScale, vm.UiScalePercent);
+    }
+
+    [Fact]
+    public void ResetAppearance_AlsoRestoresFontAndScale()
+    {
+        using var dir = new TempDirectory();
+        var vm = CreateWithFonts(dir, "Segoe UI Variable Text", "Georgia");
+        vm.FontFamilyName = "Georgia";
+        vm.UiScalePreview = 140;
+        vm.CommitUiScale();
+
+        vm.SettingsSection = "Appearance";
+        vm.ResetSectionCommand.Execute(null);
+
+        Assert.Equal("Segoe UI Variable Text", vm.FontFamilyName);
+        Assert.Equal(100, vm.UiScalePercent);
+        Assert.Equal(100, vm.UiScalePreview);
+    }
+
     [Fact]
     public void OpenUrlCommand_DelegatesToShell()
     {

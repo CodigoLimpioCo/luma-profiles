@@ -16,16 +16,31 @@ public sealed partial class MainViewModel
 
     public static IReadOnlyList<string> ThemeModes { get; } = ["Light", "Dark", "System"];
 
+    public const int MinUiScale = 80;
+    public const int MaxUiScale = 150;
+    public const int UiScaleStep = 5;
+    public const int DefaultUiScale = 100;
+
     private string _settingsSection = "Appearance";
+    private IReadOnlyList<string> _availableFonts = [FontCatalog.DefaultFont];
+    private double _uiScalePreview = DefaultUiScale;
     private Func<bool> _systemPrefersDark = WindowsTheme.PrefersDark;
 
     public ObservableCollection<AccentChoice> AccentChoices { get; } = [];
+    public ObservableCollection<FontChoice> FontChoices { get; } = [];
 
     public ICommand ResetSectionCommand { get; private set; } = null!;
 
     private void InitializeSettingsPage()
     {
         ResetSectionCommand = new RelayCommand(ResetSection);
+        _uiScalePreview = UiScalePercent;
+        FontChoices.Clear();
+        foreach (var name in _availableFonts)
+        {
+            FontChoices.Add(new FontChoice(name, name == FontFamilyName, selected => FontFamilyName = selected));
+        }
+
         AccentChoices.Clear();
         foreach (var option in AccentPalette.All)
         {
@@ -152,6 +167,68 @@ public sealed partial class MainViewModel
         }
     }
 
+    // ---- typeface and interface size ---------------------------------------------------------
+
+    /// <summary>The saved typeface, or the first installed one when it is no longer available.</summary>
+    public string FontFamilyName
+    {
+        get
+        {
+            var saved = _settings.FontFamilyName;
+            if (_availableFonts.Contains(saved, StringComparer.OrdinalIgnoreCase)) return saved;
+            return _availableFonts.Contains(FontCatalog.DefaultFont) ? FontCatalog.DefaultFont : _availableFonts[0];
+        }
+        set
+        {
+            var match = _availableFonts.FirstOrDefault(name => name.Equals(value, StringComparison.OrdinalIgnoreCase));
+            if (match is null || FontFamilyName == match) return;
+            _settings.FontFamilyName = match;
+            SaveSettings();
+            Raise();
+            foreach (var choice in FontChoices) choice.SetSelectedSilently(choice.Name == match);
+        }
+    }
+
+    /// <summary>Committed interface scale in percent (what the window uses).</summary>
+    public int UiScalePercent
+    {
+        get => Math.Clamp(_settings.UiScalePercent, MinUiScale, MaxUiScale);
+        private set
+        {
+            var clamped = Math.Clamp(value, MinUiScale, MaxUiScale);
+            if (clamped == UiScalePercent) return;
+            _settings.UiScalePercent = clamped;
+            SaveSettings();
+            Raise();
+            Raise(nameof(UiScaleFactor));
+        }
+    }
+
+    public double UiScaleFactor => UiScalePercent / 100.0;
+
+    /// <summary>
+    /// Value shown by the slider while it is being dragged. It only takes effect on
+    /// <see cref="CommitUiScale"/>, because resizing the UI under the pointer would make the slider jump.
+    /// </summary>
+    public double UiScalePreview
+    {
+        get => _uiScalePreview;
+        set
+        {
+            var snapped = Math.Clamp(Math.Round(value / UiScaleStep) * UiScaleStep, MinUiScale, MaxUiScale);
+            if (!Set(ref _uiScalePreview, snapped)) return;
+            Raise(nameof(UiScalePreviewLabel));
+            Raise(nameof(UiScalePreviewFontSize));
+        }
+    }
+
+    public string UiScalePreviewLabel => $"{UiScalePreview:0}%";
+
+    /// <summary>Font size of the sample text: 14 pt scaled by the value being previewed.</summary>
+    public double UiScalePreviewFontSize => 14 * UiScalePreview / Math.Max(UiScalePercent, 1);
+
+    public void CommitUiScale() => UiScalePercent = (int)UiScalePreview;
+
     // ---- scrollbar -------------------------------------------------------------------------
 
     public double ScrollBarThickness
@@ -219,6 +296,9 @@ public sealed partial class MainViewModel
                 ThemeMode = "Dark";
                 AccentKey = AccentPalette.Default.Key;
                 ScrollBarThickness = DefaultScrollBarThickness;
+                FontFamilyName = FontCatalog.DefaultFont;
+                UiScalePreview = DefaultUiScale;
+                CommitUiScale();
                 break;
             case "Layout":
                 SidebarCollapsedPreference = false;

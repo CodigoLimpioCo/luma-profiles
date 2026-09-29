@@ -120,7 +120,12 @@ public partial class MainWindow : Window
                 break;
             case nameof(MainViewModel.AccentKey):
             case nameof(MainViewModel.ScrollBarThickness):
+            case nameof(MainViewModel.FontFamilyName):
                 ApplyAppearance();
+                break;
+            case nameof(MainViewModel.UiScalePercent):
+                ApplyAppearance();
+                ApplyResponsiveLayout();
                 break;
             case nameof(MainViewModel.LeftPanelRequested):
             case nameof(MainViewModel.RightPanelRequested):
@@ -148,6 +153,8 @@ public partial class MainWindow : Window
         Resources["AccentBrush"] = CreateBrush(accent.Accent);
         Resources["AccentHoverBrush"] = CreateBrush(accent.Hover);
         Resources["AccentTextBrush"] = CreateBrush(_viewModel.IsDarkTheme ? accent.TextOnDark : accent.TextOnLight);
+        FontFamily = new FontFamily(_viewModel.FontFamilyName);
+        Resources["UiScaleTransform"] = new ScaleTransform(_viewModel.UiScaleFactor, _viewModel.UiScaleFactor);
         Resources["ScrollThumbWidth"] = _viewModel.ScrollBarThickness;
         Resources["ScrollBarTrackWidth"] = _viewModel.ScrollBarThickness + 6;
     }
@@ -206,6 +213,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void UiScale_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e) => _viewModel.CommitUiScale();
+
+    private void UiScale_MouseUp(object sender, MouseButtonEventArgs e) => _viewModel.CommitUiScale();
+
+    private void UiScale_KeyUp(object sender, KeyEventArgs e) => _viewModel.CommitUiScale();
+
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void Maximize_Click(object sender, RoutedEventArgs e) => ToggleMaximized();
@@ -247,7 +260,10 @@ public partial class MainWindow : Window
         }
     }
 
-    private bool IsNarrowForInspector => ActualWidth < InspectorMinWidth;
+    /// <summary>Window width in the units of the scaled content (a 150% interface has less room).</summary>
+    private double LayoutWidth => ActualWidth / Math.Max(0.5, _viewModel.UiScaleFactor);
+
+    private bool IsNarrowForInspector => LayoutWidth < InspectorMinWidth;
 
     private void ApplyResponsiveLayout()
     {
@@ -258,7 +274,7 @@ public partial class MainWindow : Window
         var showRight = _viewModel.RightPanelRequested;
 
         // Small windows drop panels unless the user opened one explicitly ("pinned"); the saved preference is untouched.
-        if (ActualWidth < BothPanelsHiddenWidth)
+        if (LayoutWidth < BothPanelsHiddenWidth)
         {
             showLeft = _pinnedPanel == PinnedPanel.Left;
             showRight = _pinnedPanel == PinnedPanel.Right;
@@ -272,7 +288,7 @@ public partial class MainWindow : Window
         if (narrow && _pinnedPanel == PinnedPanel.Left) showRight = false;
 
         // Narrow windows switch the sidebar to icons only; the saved preference is left untouched.
-        _viewModel.SetSidebarForcedCompact(showLeft && ActualWidth < CompactSidebarWidth);
+        _viewModel.SetSidebarForcedCompact(showLeft && LayoutWidth < CompactSidebarWidth);
         LeftSidebarColumn.Width = showLeft
             ? new GridLength(_viewModel.IsSidebarCollapsed ? CollapsedSidebarPixels : ExpandedSidebarPixels)
             : new GridLength(0);
@@ -282,10 +298,10 @@ public partial class MainWindow : Window
         _isLeftPanelVisible = showLeft;
         _isRightPanelVisible = showRight;
 
-        TitleStatus.Visibility = ActualWidth >= 1280 ? Visibility.Visible : Visibility.Collapsed;
-        TitleWebsiteButton.Visibility = ActualWidth >= 1180 ? Visibility.Visible : Visibility.Collapsed;
-        TitleLanguageSelector.Visibility = ActualWidth >= 960 ? Visibility.Visible : Visibility.Collapsed;
-        BrandSubtitle.Visibility = ActualWidth >= 900 ? Visibility.Visible : Visibility.Collapsed;
+        TitleStatus.Visibility = LayoutWidth >= 1280 ? Visibility.Visible : Visibility.Collapsed;
+        TitleWebsiteButton.Visibility = LayoutWidth >= 1180 ? Visibility.Visible : Visibility.Collapsed;
+        TitleLanguageSelector.Visibility = LayoutWidth >= 960 ? Visibility.Visible : Visibility.Collapsed;
+        BrandSubtitle.Visibility = LayoutWidth >= 900 ? Visibility.Visible : Visibility.Collapsed;
         PushWindowState();
     }
 

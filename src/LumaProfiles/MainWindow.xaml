@@ -21,6 +21,7 @@
         </ResourceDictionary.MergedDictionaries>
         <SolidColorBrush x:Key="AccentBrush" Color="#55D6F5"/>
         <SolidColorBrush x:Key="AccentHoverBrush" Color="#83E5FA"/>
+        <ScaleTransform x:Key="UiScaleTransform" ScaleX="1" ScaleY="1"/>
         <sys:Double x:Key="ScrollThumbWidth">7</sys:Double>
         <sys:Double x:Key="ScrollBarTrackWidth">13</sys:Double>
 
@@ -304,7 +305,7 @@
                                 </ToggleButton.Template>
                             </ToggleButton>
                             <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="220">
+                                <Border LayoutTransform="{DynamicResource UiScaleTransform}" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1" CornerRadius="8" Padding="4" MinWidth="220">
                                     <ScrollViewer MaxHeight="260">
                                         <StackPanel IsItemsHost="True"/>
                                     </ScrollViewer>
@@ -430,7 +431,7 @@
                             </ToggleButton>
                             <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="6"
                                    IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Slide">
-                                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                                <Border LayoutTransform="{DynamicResource UiScaleTransform}" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
                                         BorderThickness="1" CornerRadius="11" Padding="4" MinWidth="190">
                                     <Border.Effect>
                                         <DropShadowEffect BlurRadius="18" ShadowDepth="6" Opacity="0.35" Color="#000000"/>
@@ -559,7 +560,7 @@
                             </ToggleButton>
                             <Popup x:Name="PART_Popup" Placement="Bottom" VerticalOffset="9"
                                    IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" PopupAnimation="Fade">
-                                <Border Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
+                                <Border LayoutTransform="{DynamicResource UiScaleTransform}" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"
                                         CornerRadius="13" Padding="5" MinWidth="225">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="7" Opacity="0.55"/>
@@ -1389,7 +1390,7 @@
       </ResourceDictionary>
     </Window.Resources>
 
-    <Grid>
+    <Grid LayoutTransform="{DynamicResource UiScaleTransform}">
         <Grid.RowDefinitions>
             <RowDefinition Height="52"/>
             <RowDefinition Height="*"/>
@@ -2120,6 +2121,46 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                            <TextBlock Text="{Binding [FontFamilyTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                            <TextBlock Text="{Binding [FontFamilyDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            <ItemsControl ItemsSource="{Binding FontChoices}" Margin="0,12,0,0" IsTabStop="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <RadioButton Style="{StaticResource ChoiceButton}" GroupName="FontFamilyChoice" Width="136"
+                                                     IsChecked="{Binding IsSelected, Mode=TwoWay}" AutomationProperties.Name="{Binding Name}">
+                                            <StackPanel>
+                                                <TextBlock Text="Aa" FontFamily="{Binding Name}" FontSize="24" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Name}" FontFamily="{Binding Name}" FontSize="11" Margin="0,6,0,0"
+                                                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="118"/>
+                                            </StackPanel>
+                                        </RadioButton>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                            <TextBlock Text="{Binding [FontSizeTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                            <TextBlock Text="{Binding [FontSizeDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="A" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="0,0,10,0"/>
+                                <Slider Grid.Column="1" Minimum="80" Maximum="150" TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center"
+                                        AutomationProperties.Name="{Binding [FontSizeTitle]}"
+                                        Value="{Binding UiScalePreview, Mode=TwoWay}"
+                                        Thumb.DragCompleted="UiScale_DragCompleted" PreviewMouseLeftButtonUp="UiScale_MouseUp" PreviewKeyUp="UiScale_KeyUp"/>
+                                <TextBlock Grid.Column="2" Text="A" FontSize="20" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" Margin="10,0,0,0"/>
+                                <TextBlock Grid.Column="3" Text="{Binding UiScalePreviewLabel}" FontWeight="SemiBold" MinWidth="52" TextAlignment="Right"
+                                           VerticalAlignment="Center" Foreground="{DynamicResource AccentTextBrush}" Margin="16,0,0,0"/>
+                            </Grid>
+                            <Border Margin="0,14,0,0" Padding="14,12" CornerRadius="10" BorderThickness="1"
+                                    Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderThemeBrush}">
+                                <TextBlock Text="{Binding [FontSample]}" FontSize="{Binding UiScalePreviewFontSize}" TextWrapping="Wrap"/>
+                            </Border>
                         <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
                             <TextBlock Text="{Binding [ScrollTitle]}" FontWeight="SemiBold" FontSize="14"/>
                             <TextBlock Text="{Binding [ScrollDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>

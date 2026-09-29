@@ -53,9 +53,11 @@ public sealed partial class MainViewModel : ObservableObject
         ApplicationSettingsStore settingsStore,
         IShellService shell,
         Func<bool>? systemPrefersDark = null,
-        IWorkRunner? workRunner = null)
+        IWorkRunner? workRunner = null,
+        IReadOnlyList<string>? availableFonts = null)
     {
         if (workRunner is not null) _runner = workRunner;
+        _availableFonts = availableFonts is { Count: > 0 } ? availableFonts : FontCatalog.Installed();
         if (systemPrefersDark is not null) _systemPrefersDark = systemPrefersDark;
         _monitor = monitor;
         _profileStore = profileStore;

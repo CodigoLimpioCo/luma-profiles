@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Añadido
+- Tipo de letra (12 fuentes, las instaladas en el equipo) y tamaño de la interfaz (80 %–150 %) configurables en Apariencia, con vista previa; la escala se aplica al soltar el control y el diseño adaptable la tiene en cuenta.
 - Buscador avanzado: la búsqueda ignora mayúsculas y acentos y exige todas las palabras (en cualquier orden). El botón "Filtros" abre un panel con categorías combinables, estado (favoritos, HDR, alto rendimiento, modificados), temperatura de color, rangos de brillo/contraste/saturación y orden; muestra cuántos filtros hay activos, "N de M perfiles" y un botón para limpiar todo.
 - Selector de pantallas con botones toggle: "Todas" y uno por cada monitor conectado (multiselección: por ejemplo 1 y 3 sin la 2). Se recuerda la elección, se actualiza al conectar o desconectar monitores y nunca deja todas desactivadas.
 - Botón "Identificar" que muestra el número de cada pantalla sobre ella durante unos segundos.
