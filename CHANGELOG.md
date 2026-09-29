@@ -1,5 +1,13 @@
 # Changelog
 
+## Sin publicar
+
+### Mantenimiento
+- Los estilos y plantillas de la interfaz pasan de `MainWindow.xaml` a `Themes/ControlStyles.xaml` (de 2.640 a 1.207 líneas), sin cambios visuales.
+- Los errores al leer el tema de Windows, el inicio con Windows y los idiomas incluidos ahora quedan en el registro en vez de ignorarse.
+- Nuevas pruebas que exigen que todos los textos, perfiles y categorías estén traducidos a inglés y portugués.
+- `scripts/release.ps1`: compila y prueba el ejecutable y el ZIP, y con `-Publish` crea el release y verifica que se subieron ambos archivos.
+
 ## 0.8.0 — Pantallas VA y punto de restauración
 
 ### Añadido

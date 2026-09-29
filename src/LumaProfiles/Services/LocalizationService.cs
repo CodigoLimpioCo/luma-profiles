@@ -158,9 +158,10 @@ public static class LocalizationService
                 if (source is not null) MergeMissingEntries(destination, source);
             }
         }
-        catch
+        catch (Exception exception)
         {
-            // A read-only install directory must not prevent the app from opening.
+            // A read-only install directory must not prevent the app from opening; the bundled copies are used instead.
+            AppLog.Warn($"Could not update the language files in '{localesDirectory}'.", exception);
         }
     }
 

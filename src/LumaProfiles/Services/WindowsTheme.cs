@@ -14,8 +14,9 @@ public static class WindowsTheme
             using var key = Registry.CurrentUser.OpenSubKey(PersonalizeKey, writable: false);
             return key?.GetValue("AppsUseLightTheme") is not int light || light == 0;
         }
-        catch
+        catch (Exception exception)
         {
+            AppLog.Warn("Could not read the Windows theme; assuming dark.", exception);
             return true;
         }
     }

@@ -105,8 +105,9 @@ public sealed class ApplicationSettingsStore
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: false);
             return key?.GetValue(RunValueName) is string value && !string.IsNullOrWhiteSpace(value);
         }
-        catch
+        catch (Exception exception)
         {
+            AppLog.Warn("Could not read the startup registry entry; assuming it is disabled.", exception);
             return false;
         }
     }
