@@ -354,3 +354,5 @@ ui.FontSizeDesc=Ajusta a escala do texto e dos elementos da interface. É aplica
 ui.FontSample=Um pequeno jabuti xereta viu dez cegonhas felizes. 0123456789
 ui.MonitorControlsTitle=Controlar o monitor (DDC/CI)
 ui.MonitorControlsDesc=Ajusta brilho e contraste no próprio monitor. Se a tela ficar com um tom de cor, desative: os perfis usarão apenas a correção por software e nada será gravado no monitor. Depois pressione Neutralizar cor.
+ui.PreviewBefore=Antes
+ui.PreviewAfter=Depois

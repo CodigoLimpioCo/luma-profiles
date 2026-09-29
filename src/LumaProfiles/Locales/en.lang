@@ -354,3 +354,5 @@ ui.FontSizeDesc=Scales the text and the interface elements. It applies when you 
 ui.FontSample=The quick brown fox jumps over the lazy dog. 0123456789
 ui.MonitorControlsTitle=Control the monitor (DDC/CI)
 ui.MonitorControlsDesc=Adjusts brightness and contrast on the monitor itself. If your screen shows a color tint, turn it off: profiles will use software correction only and nothing is written to the monitor. Then press Neutralize color.
+ui.PreviewBefore=Before
+ui.PreviewAfter=After

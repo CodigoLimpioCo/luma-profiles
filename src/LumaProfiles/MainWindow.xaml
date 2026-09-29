@@ -1,6 +1,8 @@
 <Window x:Class="LumaProfiles.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctl="clr-namespace:LumaProfiles.Controls"
+        xmlns:svc="clr-namespace:LumaProfiles.Services"
         xmlns:sys="clr-namespace:System;assembly=System.Runtime"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -824,6 +826,15 @@
             <StackPanel IsItemsHost="True"/>
         </ItemsPanelTemplate>
 
+        <Style x:Key="ProfileCompare" TargetType="ctl:BeforeAfterView">
+            <Setter Property="Opacity" Value="0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                    <Setter Property="Opacity" Value="1"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
 <DataTemplate x:Key="CardTemplate">
         <Border Width="248" Height="330" Margin="0,0,12,14" Padding="11"
                 Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1"
@@ -861,6 +872,24 @@
                                 </LinearGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
+                        <ctl:BeforeAfterView Style="{StaticResource ProfileCompare}"
+                                             Before="{x:Static svc:ProfilePreviewRenderer.Original}"
+                                             BeforeLabel="{Binding DataContext[PreviewBefore], RelativeSource={RelativeSource AncestorType=Window}}"
+                                             AfterLabel="{Binding DataContext[PreviewAfter], RelativeSource={RelativeSource AncestorType=Window}}">
+                            <ctl:BeforeAfterView.After>
+                                <MultiBinding Converter="{StaticResource ProfilePreviewConverter}">
+                                    <Binding Path="Brightness"/>
+                                    <Binding Path="Contrast"/>
+                                    <Binding Path="Saturation"/>
+                                    <Binding Path="Hue"/>
+                                    <Binding Path="Gamma"/>
+                                    <Binding Path="Red"/>
+                                    <Binding Path="Green"/>
+                                    <Binding Path="Blue"/>
+                                    <Binding Path="ColorTemperature"/>
+                                </MultiBinding>
+                            </ctl:BeforeAfterView.After>
+                        </ctl:BeforeAfterView>
                         <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
                             <Grid>
                                 <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="#DCEAF3"/>
@@ -970,6 +999,24 @@
                                 </LinearGradientBrush>
                             </Rectangle.Fill>
                         </Rectangle>
+                        <ctl:BeforeAfterView Style="{StaticResource ProfileCompare}"
+                                             Before="{x:Static svc:ProfilePreviewRenderer.Original}"
+                                             BeforeLabel="{Binding DataContext[PreviewBefore], RelativeSource={RelativeSource AncestorType=Window}}"
+                                             AfterLabel="{Binding DataContext[PreviewAfter], RelativeSource={RelativeSource AncestorType=Window}}">
+                            <ctl:BeforeAfterView.After>
+                                <MultiBinding Converter="{StaticResource ProfilePreviewConverter}">
+                                    <Binding Path="Brightness"/>
+                                    <Binding Path="Contrast"/>
+                                    <Binding Path="Saturation"/>
+                                    <Binding Path="Hue"/>
+                                    <Binding Path="Gamma"/>
+                                    <Binding Path="Red"/>
+                                    <Binding Path="Green"/>
+                                    <Binding Path="Blue"/>
+                                    <Binding Path="ColorTemperature"/>
+                                </MultiBinding>
+                            </ctl:BeforeAfterView.After>
+                        </ctl:BeforeAfterView>
                         <Border Background="#9A071018" VerticalAlignment="Bottom" Padding="9,5">
                             <Grid>
                                 <TextBlock Text="{Binding DisplayCategory}" FontSize="10" Foreground="#DCEAF3"/>

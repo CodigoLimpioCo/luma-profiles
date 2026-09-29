@@ -255,3 +255,5 @@ ui.FontSizeDesc=Escala el texto y los elementos de la interfaz. Se aplica al sol
 ui.FontSample=El veloz murciélago hindú comía feliz cardillo y kiwi. 0123456789
 ui.MonitorControlsTitle=Controlar el monitor (DDC/CI)
 ui.MonitorControlsDesc=Ajusta brillo y contraste en el propio monitor. Si tu pantalla se ve con un tinte de color, desactívalo: los perfiles usarán solo la corrección por software y no se escribirá nada en el monitor. Luego pulsa Neutralizar color.
+ui.PreviewBefore=Antes
+ui.PreviewAfter=Después

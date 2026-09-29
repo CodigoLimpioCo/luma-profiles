@@ -6,5 +6,6 @@
     <Application.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
         <local:EqualsConverter x:Key="EqualsConverter"/>
+        <local:ProfilePreviewConverter x:Key="ProfilePreviewConverter"/>
     </Application.Resources>
 </Application>

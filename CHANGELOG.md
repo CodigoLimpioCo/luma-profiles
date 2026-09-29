@@ -3,6 +3,8 @@
 ## Sin publicar
 
 ### Añadido
+- Vista previa antes/después: al pasar el ratón sobre la imagen de una tarjeta (normal o grande) aparece una comparación con divisor que sigue al puntero, simulando por software el perfil (brillo, contraste, saturación, matiz, gamma, RGB y temperatura) sin tocar el monitor. Se actualiza en vivo al mover los deslizadores.
+- Registro de errores no controlados en `%LOCALAPPDATA%\LumaProfiles\logs` para diagnosticar cierres en otros equipos.
 - Interruptor "Controlar el monitor (DDC/CI)" en Configuración > General: apagado, los perfiles solo usan la corrección por software y no se escribe nada en el monitor.
 - Tipo de letra (12 fuentes, las instaladas en el equipo) y tamaño de la interfaz (80 %–150 %) configurables en Apariencia, con vista previa; la escala se aplica al soltar el control y el diseño adaptable la tiene en cuenta.
 - Buscador avanzado: la búsqueda ignora mayúsculas y acentos y exige todas las palabras (en cualquier orden). El botón "Filtros" abre un panel con categorías combinables, estado (favoritos, HDR, alto rendimiento, modificados), temperatura de color, rangos de brillo/contraste/saturación y orden; muestra cuántos filtros hay activos, "N de M perfiles" y un botón para limpiar todo.
