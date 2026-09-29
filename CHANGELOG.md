@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Añadido
+- Categoría "Pantallas VA" con 10 modos pensados para paneles VA económicos (como los de 22" a 120 Hz): equilibrado, sombras abiertas, gaming 120 Hz, competitivo, cine, oficina, lectura, nocturno, corregir azulado y color vivo. Levantan las sombras con gamma (los VA aplastan los negros), recortan el azul de fábrica y mantienen el contraste del monitor por debajo de donde se queman los blancos; la biblioteca pasa a 60 perfiles.
 - Punto de restauración reforzado: se guarda al primer arranque (antes de cualquier cambio) también en un archivo propio, `restore-point.json`, que se recupera solo si `settings.json` se daña; se muestra su fecha en Configuración > Datos y se puede reemplazar con el estado actual ("Guardar estado actual", con confirmación). Las pantallas que no permiten leer su estado vuelven a la gamma neutra de Windows al restaurar.
 - El menú lateral se puede ensanchar o estrechar (180–420 px) arrastrando su borde; también con las flechas del teclado cuando el borde tiene el foco. Doble clic o Inicio lo restablece, y el ancho se recuerda. Nunca deja el contenido con menos de 520 px.
 - Vista previa antes/después: al pasar el ratón sobre la imagen de una tarjeta (normal o grande) aparece una comparación con divisor que sigue al puntero, simulando por software el perfil (brillo, contraste, saturación, matiz, gamma, RGB y temperatura) sin tocar el monitor. Se actualiza en vivo al mover los deslizadores.

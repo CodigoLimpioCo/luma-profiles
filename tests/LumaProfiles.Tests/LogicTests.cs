@@ -998,7 +998,7 @@ public class MainViewModelTests
         vm.SearchText = "zzzz-nothing";
 
         Assert.True(vm.HasNoResults);
-        Assert.Equal("0 de 50 perfiles", vm.ProfileCountSubtitle);
+        Assert.Equal("0 de 60 perfiles", vm.ProfileCountSubtitle);
         vm.ClearFiltersCommand.Execute(null);
         Assert.False(vm.HasNoResults);
         Assert.Equal(vm.Profiles.Count, vm.VisibleProfiles.Count);
@@ -1488,6 +1488,21 @@ public class MainViewModelTests
         vm.SaveRestorePointCommand.Execute(null);
 
         Assert.Equal(14u, new RestorePointStore(dir.Path).Load()!.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
+    }
+
+    [Fact]
+    public void TheVaCategoryShowsExactlyTheTenVaProfiles()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.SelectCategoryCommand.Execute("Pantallas VA");
+
+        Assert.Equal(10, vm.VisibleProfiles.Count);
+        Assert.All(vm.VisibleProfiles, profile => Assert.Equal("Pantallas VA", profile.Category));
+        Assert.Equal("Pantallas VA", vm.SidebarCategory);
+        Assert.Equal(60, vm.Profiles.Count);
+        Assert.Contains(vm.CategoryChips, chip => chip.Value == "Pantallas VA" && chip.Count == 10);
     }
 
     [Fact]

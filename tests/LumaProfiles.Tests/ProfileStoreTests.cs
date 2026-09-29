@@ -10,7 +10,7 @@ public class ProfileStoreTests
         using var dir = new TempDirectory();
         var store = new ProfileStore(dir.Path);
 
-        Assert.Equal(50, store.Defaults.Count);
+        Assert.Equal(60, store.Defaults.Count);
         Assert.Equal(store.Defaults.Count, store.Defaults.Select(p => p.Id).Distinct().Count());
         Assert.All(store.Defaults, p =>
         {

@@ -267,3 +267,5 @@ ui.RestorePointConfirmTitle=Reemplazar el punto de restauración
 ui.RestorePointConfirmMessage=Se guardará el estado actual de tus pantallas y reemplazará al anterior. ¿Continuar?
 ui.RestorePointSaved=Punto de restauración guardado ({0} pantalla(s)).
 ui.RestorePointFailed=No se pudo leer el estado de las pantallas.
+category.Pantallas VA=Pantallas VA
+ui.VaScreens=Pantallas VA

@@ -13,7 +13,8 @@ También puedes consultar la vista previa en tiempo real y el tema claro:
 
 ## Funciones
 
-- 50 perfiles ajustables organizados por finalidad, incluidos Blanco y negro, Lectura amarilla y Filtro azul.
+- 60 perfiles ajustables organizados por finalidad, incluidos Blanco y negro, Lectura amarilla y Filtro azul.
+- Diez modos pensados para paneles VA económicos (sombras abiertas, corrección del tono azulado, gaming a 120 Hz, lectura y nocturno).
 - Categoría Gamer con modos Competitivo, Inmersivo, Sombras y Arcade vibrante.
 - Favoritos persistentes: marca perfiles con una estrella y encuéntralos en su propia categoría.
 - Versión visible y sección Acerca de con información del producto, autor y repositorio.
