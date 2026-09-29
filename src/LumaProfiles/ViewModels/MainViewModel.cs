@@ -55,8 +55,10 @@ public sealed partial class MainViewModel : ObservableObject
         IMonitorService monitor,
         ProfileStore profileStore,
         ApplicationSettingsStore settingsStore,
-        IShellService shell)
+        IShellService shell,
+        Func<bool>? systemPrefersDark = null)
     {
+        if (systemPrefersDark is not null) _systemPrefersDark = systemPrefersDark;
         _monitor = monitor;
         _profileStore = profileStore;
         _settingsStore = settingsStore;
@@ -69,7 +71,7 @@ public sealed partial class MainViewModel : ObservableObject
             ?? Languages.FirstOrDefault(item => item.Code == "es")
             ?? Languages.FirstOrDefault()
             ?? new LanguageOption("es", "Español", string.Empty);
-        _isDarkTheme = _settings.IsDarkTheme;
+        _isDarkTheme = ComputeDarkTheme();
         _startWithWindows = _settings.StartWithWindows;
         _selectedMonitorTarget = IsKnownMonitorTarget(_settings.SelectedMonitorTarget)
             ? _settings.SelectedMonitorTarget
@@ -112,9 +114,7 @@ public sealed partial class MainViewModel : ObservableObject
         CloseOverlaysCommand = new RelayCommand(() => { IsAboutOpen = false; IsSettingsOpen = false; });
         ToggleSidebarCollapseCommand = new RelayCommand(() =>
         {
-            _settings.IsLeftPanelCollapsed = !_settings.IsLeftPanelCollapsed;
-            SaveSettings();
-            RaiseSidebar();
+            SidebarCollapsedPreference = !SidebarCollapsedPreference;
         });
         ClearSearchCommand = new RelayCommand(() => SearchText = string.Empty);
         OpenUrlCommand = new RelayCommand<string>(url => _shell.OpenUrl(url));
@@ -125,6 +125,7 @@ public sealed partial class MainViewModel : ObservableObject
         RemoveAppRuleCommand = new RelayCommand<AppRuleItem>(RemoveAppRule);
 
         InitializeConfirmation();
+        InitializeSettingsPage();
         StatusMessage = T("Ready");
         _livePreviewTimer.Tick += (_, _) => LivePreviewTick();
         _reapplyTimer.Tick += (_, _) => { _reapplyTimer.Stop(); _ = ReapplyPersistentCorrectionsAsync(); };
@@ -342,25 +343,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool IsDarkTheme
     {
         get => _isDarkTheme;
-        set
-        {
-            if (!Set(ref _isDarkTheme, value)) return;
-            _settings.IsDarkTheme = value;
-            SaveSettings();
-            RaiseUiProperties();
-        }
-    }
-
-    public bool LeftPanelRequested
-    {
-        get => _settings.IsLeftPanelOpen;
-        set => _settings.IsLeftPanelOpen = value;
-    }
-
-    public bool RightPanelRequested
-    {
-        get => _settings.IsRightPanelOpen;
-        set => _settings.IsRightPanelOpen = value;
+        set => ThemeMode = value ? "Dark" : "Light";
     }
 
     public static IReadOnlyList<string> ViewModes { get; } = ["Cards", "Large", "Compact", "List", "Details"];
@@ -411,6 +394,7 @@ public sealed partial class MainViewModel : ObservableObject
         Raise(nameof(IsSidebarToggleAvailable));
         Raise(nameof(SidebarToggleGlyph));
         Raise(nameof(SidebarToggleLabel));
+        RefreshSettingsText();
     }
 
     public string MaximizeGlyph => _isMaximized ? "" : "";

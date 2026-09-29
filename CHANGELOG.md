@@ -3,6 +3,8 @@
 ## Sin publicar
 
 ### Añadido
+- Configuración por categorías (Apariencia, Diseño, General, Idioma, Automatización, Datos y restauración) con "Restablecer sección" en cada una.
+- Tema Claro / Oscuro / Sistema (sigue a Windows), color de acento (cian, índigo, azul, esmeralda, rosa, ámbar) y grosor de la barra de desplazamiento configurables.
 - Confirmación al estilo Windows: tras Aplicar, Guardar y aplicar, Neutralizar o Restaurar aparece "¿Conservar los cambios?" y, si no confirmas en 30 s (o cierras la app), se revierte todo: valores DDC/CI, gamma, plan de energía, correcciones guardadas y perfil activo. Se puede desactivar en Configuración.
 - Cinco vistas de la biblioteca: tarjetas, tarjetas grandes, mosaico compacto, lista y detalles (se recuerda la elegida).
 - Menú lateral contraíble: por defecto muestra iconos y texto; contraído, solo iconos. En ventanas estrechas pasa a iconos automáticamente.

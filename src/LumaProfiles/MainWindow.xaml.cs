@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using LumaProfiles.Services;
+using Microsoft.Win32;
 using LumaProfiles.ViewModels;
 
 namespace LumaProfiles;
@@ -39,6 +40,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _viewModel;
         ApplyTheme();
+        ApplyAppearance();
+        SystemEvents.UserPreferenceChanged += SystemPreferenceChanged;
 
         _viewModel.PropertyChanged += ViewModel_PropertyChanged;
         _viewModel.InspectorRequested += (_, _) =>
@@ -87,6 +90,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        SystemEvents.UserPreferenceChanged -= SystemPreferenceChanged;
         _viewModel.Shutdown();
         _foregroundWatcher.Dispose();
         _hotkeys.Dispose();
@@ -109,6 +113,15 @@ public partial class MainWindow : Window
         {
             case nameof(MainViewModel.IsDarkTheme):
                 ApplyTheme();
+                ApplyAppearance();
+                break;
+            case nameof(MainViewModel.AccentKey):
+            case nameof(MainViewModel.ScrollBarThickness):
+                ApplyAppearance();
+                break;
+            case nameof(MainViewModel.LeftPanelRequested):
+            case nameof(MainViewModel.RightPanelRequested):
+                ApplyResponsiveLayout();
                 break;
             case nameof(MainViewModel.GlobalHotkeysEnabled):
                 UpdateHotkeys();
@@ -123,6 +136,28 @@ public partial class MainWindow : Window
     {
         var source = _viewModel.IsDarkTheme ? "Themes/DarkTheme.xaml" : "Themes/LightTheme.xaml";
         Resources.MergedDictionaries[0] = new ResourceDictionary { Source = new Uri(source, UriKind.Relative) };
+    }
+
+    /// <summary>Accent color and scrollbar width come from settings and override the theme dictionary.</summary>
+    private void ApplyAppearance()
+    {
+        var accent = _viewModel.Accent;
+        Resources["AccentBrush"] = CreateBrush(accent.Accent);
+        Resources["AccentHoverBrush"] = CreateBrush(accent.Hover);
+        Resources["AccentTextBrush"] = CreateBrush(_viewModel.IsDarkTheme ? accent.TextOnDark : accent.TextOnLight);
+        Resources["ScrollThumbWidth"] = _viewModel.ScrollBarThickness;
+        Resources["ScrollBarTrackWidth"] = _viewModel.ScrollBarThickness + 6;
+    }
+
+    private static SolidColorBrush CreateBrush(string hex) =>
+        new((Color)ColorConverter.ConvertFromString(hex));
+
+    private void SystemPreferenceChanged(object? sender, UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color or UserPreferenceCategory.VisualStyle)
+        {
+            Dispatcher.BeginInvoke(_viewModel.RefreshSystemTheme);
+        }
     }
 
     private void UpdateHotkeys()

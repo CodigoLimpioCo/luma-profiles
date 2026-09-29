@@ -565,6 +565,152 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void ThemeMode_DefaultsFromLegacyFlagAndPersistsExplicitChoice()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.Equal("Dark", vm.ThemeMode);
+        Assert.True(vm.IsDarkTheme);
+
+        vm.IsThemeLight = true;
+
+        Assert.False(vm.IsDarkTheme);
+        var saved = new ApplicationSettingsStore(dir.Path, manageStartup: false).Load();
+        Assert.Equal("Light", saved.ThemeMode);
+        Assert.False(saved.IsDarkTheme);
+    }
+
+    [Fact]
+    public void ThemeMode_SystemFollowsWindowsPreference()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        var systemDark = false;
+        vm.UseSystemThemeProvider(() => systemDark);
+
+        vm.IsThemeSystem = true;
+        Assert.False(vm.IsDarkTheme);
+
+        systemDark = true;
+        vm.RefreshSystemTheme();
+        Assert.True(vm.IsDarkTheme);
+    }
+
+    [Fact]
+    public void HeaderThemeToggle_SwitchesToExplicitMode()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.ToggleThemeCommand.Execute(null);
+
+        Assert.Equal("Light", vm.ThemeMode);
+        Assert.False(vm.IsThemeSystem);
+    }
+
+    [Fact]
+    public void Accent_SelectingSwatchPersistsAndUpdatesChoices()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.Equal("Cyan", vm.AccentKey);
+
+        vm.AccentChoices.First(choice => choice.Key == "Amber").IsSelected = true;
+
+        Assert.Equal("Amber", vm.AccentKey);
+        Assert.Equal("Amber", vm.Accent.Key);
+        Assert.Single(vm.AccentChoices, choice => choice.IsSelected);
+        Assert.Equal("Amber", new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().AccentColor);
+        vm.AccentKey = "NotAColor";
+        Assert.Equal("Amber", vm.AccentKey);
+    }
+
+    [Fact]
+    public void ScrollBarThickness_IsClampedAndRounded()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.ScrollBarThickness = 100;
+        Assert.Equal(MainViewModel.MaxScrollBarThickness, vm.ScrollBarThickness);
+        vm.ScrollBarThickness = 0;
+        Assert.Equal(MainViewModel.MinScrollBarThickness, vm.ScrollBarThickness);
+        vm.ScrollBarThickness = 9.4;
+        Assert.Equal(9, vm.ScrollBarThickness);
+        Assert.Equal("9 px", vm.ScrollBarThicknessLabel);
+    }
+
+    [Fact]
+    public void SettingsSections_SwitchAndExposeTitles()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.True(vm.IsSectionAppearance);
+
+        vm.IsSectionData = true;
+
+        Assert.Equal("Data", vm.SettingsSection);
+        Assert.False(vm.IsSectionAppearance);
+        Assert.False(vm.IsResetAvailable);
+        vm.SettingsSection = "Bogus";
+        Assert.Equal("Data", vm.SettingsSection);
+        Assert.All(MainViewModel.SettingsSections, section =>
+        {
+            vm.SettingsSection = section;
+            Assert.False(string.IsNullOrWhiteSpace(vm.SectionTitle));
+            Assert.NotEqual("Section" + section, vm.SectionTitle);
+        });
+    }
+
+    [Fact]
+    public void ResetSection_RestoresOnlyThatSectionsDefaults()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.IsThemeLight = true;
+        vm.AccentKey = "Rose";
+        vm.ScrollBarThickness = 12;
+        vm.IsViewList = true;
+
+        vm.SettingsSection = "Appearance";
+        vm.ResetSectionCommand.Execute(null);
+
+        Assert.Equal("Dark", vm.ThemeMode);
+        Assert.Equal("Cyan", vm.AccentKey);
+        Assert.Equal(MainViewModel.DefaultScrollBarThickness, vm.ScrollBarThickness);
+        Assert.Equal("List", vm.ViewMode);
+
+        vm.SettingsSection = "Layout";
+        vm.SidebarCollapsedPreference = true;
+        vm.LeftPanelRequested = false;
+        vm.ResetSectionCommand.Execute(null);
+        Assert.Equal("Cards", vm.ViewMode);
+        Assert.False(vm.SidebarCollapsedPreference);
+        Assert.True(vm.LeftPanelRequested);
+        Assert.True(vm.RightPanelRequested);
+    }
+
+    [Fact]
+    public void ResetAutomation_ClearsRulesAndSchedule()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.NewRuleProcess = "game";
+        vm.NewRuleProfileId = "natural";
+        vm.AddAppRuleCommand.Execute(null);
+        vm.GlobalHotkeysEnabled = false;
+        vm.ScheduleNightStart = "22:15";
+
+        vm.SettingsSection = "Automation";
+        vm.ResetSectionCommand.Execute(null);
+
+        Assert.Empty(vm.AppRules);
+        Assert.True(vm.GlobalHotkeysEnabled);
+        Assert.Equal("20:00", vm.ScheduleNightStart);
+        Assert.False(vm.ScheduleEnabled);
+    }
+
+    [Fact]
     public void OpenUrlCommand_DelegatesToShell()
     {
         var (vm, _, shell, dir) = Create();
