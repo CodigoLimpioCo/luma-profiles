@@ -23,6 +23,7 @@
             <ResourceDictionary Source="Themes/ControlStyles.xaml"/>
         </ResourceDictionary.MergedDictionaries>
         <SolidColorBrush x:Key="AccentBrush" Color="#55D6F5"/>
+        <SolidColorBrush x:Key="AccentOnBrush" Color="#051016"/>
         <SolidColorBrush x:Key="AccentHoverBrush" Color="#83E5FA"/>
         <ScaleTransform x:Key="UiScaleTransform" ScaleX="1" ScaleY="1"/>
         <sys:Double x:Key="ScrollThumbWidth">7</sys:Double>
@@ -121,7 +122,7 @@
                                                 <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsDarkTheme}" Value="False">
-                                                        <Setter Property="Foreground" Value="#07141C"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource AccentOnBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -146,7 +147,7 @@
                                                 <Setter Property="Foreground" Value="{DynamicResource MutedBrush}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsDarkTheme}" Value="True">
-                                                        <Setter Property="Foreground" Value="#07141C"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource AccentOnBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -396,7 +397,7 @@
                             <TextBlock Text="{Binding [FilterButton]}" Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             <Border Background="{DynamicResource AccentBrush}" CornerRadius="9" MinWidth="18" Height="18" Margin="8,0,0,0" Padding="5,0"
                                     Visibility="{Binding HasActiveFilters, Converter={StaticResource BoolToVisibility}}">
-                                <TextBlock Text="{Binding ActiveFilterCount}" FontSize="10" FontWeight="Bold" Foreground="#051016"
+                                <TextBlock Text="{Binding ActiveFilterCount}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource AccentOnBrush}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
                         </StackPanel>
@@ -784,6 +785,34 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                            <!-- Your own color: only while the "custom" tile is the accent. -->
+                            <Border Margin="0,6,0,0" Padding="16,14" CornerRadius="12" Background="{DynamicResource SurfaceBrush}"
+                                    BorderBrush="{DynamicResource BorderThemeBrush}" BorderThickness="1" MaxWidth="560" HorizontalAlignment="Left"
+                                    Visibility="{Binding IsCustomAccent, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding [AccentCustomTitle]}" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Text="{Binding [AccentCustomDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,3,0,10" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding [AccentHue]}" Foreground="{DynamicResource MutedBrush}" FontSize="10"/>
+                                    <Slider Style="{StaticResource GradientSlider}" Minimum="0" Maximum="360" Tag="{Binding CustomHueBrush}"
+                                            AutomationProperties.Name="{Binding [AccentHue]}" Value="{Binding CustomAccentHue, Mode=TwoWay}"
+                                            Thumb.DragCompleted="AccentSlider_DragCompleted" PreviewMouseLeftButtonUp="AccentSlider_MouseUp" PreviewKeyUp="AccentSlider_KeyUp"/>
+                                    <TextBlock Text="{Binding [AccentSaturation]}" Foreground="{DynamicResource MutedBrush}" FontSize="10"/>
+                                    <Slider Style="{StaticResource GradientSlider}" Minimum="0" Maximum="100" Tag="{Binding CustomSaturationBrush}"
+                                            AutomationProperties.Name="{Binding [AccentSaturation]}" Value="{Binding CustomAccentSaturation, Mode=TwoWay}"
+                                            Thumb.DragCompleted="AccentSlider_DragCompleted" PreviewMouseLeftButtonUp="AccentSlider_MouseUp" PreviewKeyUp="AccentSlider_KeyUp"/>
+                                    <TextBlock Text="{Binding [AccentBrightness]}" Foreground="{DynamicResource MutedBrush}" FontSize="10"/>
+                                    <Slider Style="{StaticResource GradientSlider}" Minimum="0" Maximum="100" Tag="{Binding CustomBrightnessBrush}"
+                                            AutomationProperties.Name="{Binding [AccentBrightness]}" Value="{Binding CustomAccentBrightness, Mode=TwoWay}"
+                                            Thumb.DragCompleted="AccentSlider_DragCompleted" PreviewMouseLeftButtonUp="AccentSlider_MouseUp" PreviewKeyUp="AccentSlider_KeyUp"/>
+                                    <Grid Margin="0,2,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="10"/><ColumnDefinition Width="120"/></Grid.ColumnDefinitions>
+                                        <Border CornerRadius="9" Background="{DynamicResource AccentBrush}" Height="36"/>
+                                        <TextBox Grid.Column="2" Text="{Binding CustomAccentHex, Mode=OneWay, UpdateSourceTrigger=LostFocus}" MaxLength="7" Tag="#RRGGBB"
+                                                 HorizontalContentAlignment="Center" AutomationProperties.Name="{Binding [AccentHex]}" ToolTip="{Binding [AccentHex]}"
+                                                 LostFocus="AccentHex_LostFocus" KeyDown="AccentHex_KeyDown"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
                             <TextBlock Text="{Binding [FontFamilyTitle]}" FontWeight="SemiBold" FontSize="14"/>
                             <TextBlock Text="{Binding [FontFamilyDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>

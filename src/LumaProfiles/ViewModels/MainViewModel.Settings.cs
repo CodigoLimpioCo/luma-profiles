@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using System.Windows.Media;
 using LumaProfiles.Services;
 
 namespace LumaProfiles.ViewModels;
@@ -46,6 +47,10 @@ public sealed partial class MainViewModel
         {
             AccentChoices.Add(new AccentChoice(option, T("Accent" + option.Key), option.Key == Accent.Key, key => AccentKey = key));
         }
+
+        AccentChoices.Add(AccentChoice.CreateCustomEntry(T("Accent" + AccentPalette.CustomKey), _settings.CustomAccentColor,
+            Accent.IsCustom, key => AccentKey = key));
+        LoadCustomAccentFromSettings();
     }
 
     // ---- sections -------------------------------------------------------------------------
@@ -153,18 +158,139 @@ public sealed partial class MainViewModel
 
     public AccentOption Accent => AccentPalette.Get(_settings.AccentColor);
 
+    private double _customHue;
+    private double _customSaturation = 0.7;
+    private double _customBrightness = 0.9;
+
+    /// <summary>A preset name, a custom color (#RRGGBB), or "Custom" to start from the last color you composed.</summary>
     public string AccentKey
     {
         get => Accent.Key;
         set
         {
+            if (value == AccentPalette.CustomKey) value = CustomAccentHex;
             if (AccentPalette.Find(value) is not { } option || Accent.Key == option.Key) return;
+
             _settings.AccentColor = option.Key;
+            if (option.IsCustom)
+            {
+                _settings.CustomAccentColor = option.Key;
+                (_customHue, _customSaturation, _customBrightness) = AccentColors.ToHsv(option.Key);
+            }
+
             SaveSettings();
-            Raise();
-            Raise(nameof(Accent));
-            foreach (var choice in AccentChoices) choice.SetSelectedSilently(choice.Key == option.Key);
+            RaiseAccent();
         }
+    }
+
+    /// <summary>True while the user's own color is the accent, which shows the color sliders.</summary>
+    public bool IsCustomAccent => Accent.IsCustom;
+
+    public double CustomAccentHue
+    {
+        get => _customHue;
+        set => SetCustomAccent(hue: value);
+    }
+
+    /// <summary>0..100 for the slider; stored as 0..1.</summary>
+    public double CustomAccentSaturation
+    {
+        get => _customSaturation * 100;
+        set => SetCustomAccent(saturation: value / 100);
+    }
+
+    public double CustomAccentBrightness
+    {
+        get => _customBrightness * 100;
+        set => SetCustomAccent(brightness: value / 100);
+    }
+
+    /// <summary>The color as #RRGGBB: the current custom color, else the last one composed, else the current accent.</summary>
+    public string CustomAccentHex
+    {
+        get => Accent.IsCustom ? Accent.Key
+            : AccentColors.TryNormalizeHex(_settings.CustomAccentColor, out var remembered) ? remembered
+            : Accent.Accent;
+        set
+        {
+            if (!AccentColors.TryNormalizeHex(value, out var hex))
+            {
+                StatusMessage = T("AccentInvalidHex");
+                Raise();
+                return;
+            }
+
+            AccentKey = hex;
+        }
+    }
+
+    public Brush CustomHueBrush { get; } = CreateHueBrush();
+
+    public Brush CustomSaturationBrush =>
+        CreateGradient(AccentColors.FromHsv(_customHue, 0, _customBrightness), AccentColors.FromHsv(_customHue, 1, _customBrightness));
+
+    public Brush CustomBrightnessBrush =>
+        CreateGradient(AccentColors.FromHsv(_customHue, _customSaturation, 0), AccentColors.FromHsv(_customHue, _customSaturation, 1));
+
+    /// <summary>Live while a slider moves: the whole interface follows, and the file is written when the drag ends.</summary>
+    private void SetCustomAccent(double? hue = null, double? saturation = null, double? brightness = null)
+    {
+        if (hue is { } h) _customHue = Math.Clamp(h, 0, 360);
+        if (saturation is { } s) _customSaturation = Math.Clamp(s, 0, 1);
+        if (brightness is { } v) _customBrightness = Math.Clamp(v, 0, 1);
+
+        var hex = AccentColors.FromHsv(_customHue, _customSaturation, _customBrightness);
+        _settings.AccentColor = hex;
+        _settings.CustomAccentColor = hex;
+        RaiseAccent();
+    }
+
+    /// <summary>Saves the custom color once the slider is released or the key is lifted.</summary>
+    public void CommitCustomAccent() => SaveSettings();
+
+    private void LoadCustomAccentFromSettings()
+    {
+        if (AccentColors.TryNormalizeHex(_settings.CustomAccentColor ?? (Accent.IsCustom ? Accent.Key : null), out var hex))
+        {
+            (_customHue, _customSaturation, _customBrightness) = AccentColors.ToHsv(hex);
+        }
+    }
+
+    private void RaiseAccent()
+    {
+        Raise(nameof(AccentKey));
+        Raise(nameof(Accent));
+        Raise(nameof(IsCustomAccent));
+        Raise(nameof(CustomAccentHex));
+        Raise(nameof(CustomAccentHue));
+        Raise(nameof(CustomAccentSaturation));
+        Raise(nameof(CustomAccentBrightness));
+        Raise(nameof(CustomSaturationBrush));
+        Raise(nameof(CustomBrightnessBrush));
+        foreach (var choice in AccentChoices)
+        {
+            choice.SetSelectedSilently(choice.IsCustomEntry ? Accent.IsCustom : !Accent.IsCustom && choice.Key == Accent.Key);
+            if (choice.IsCustomEntry) choice.ShowCustomColor(_settings.CustomAccentColor);
+        }
+    }
+
+    private static Brush CreateHueBrush()
+    {
+        var brush = new LinearGradientBrush { StartPoint = new System.Windows.Point(0, 0), EndPoint = new System.Windows.Point(1, 0) };
+        for (var step = 0; step <= 6; step++)
+        {
+            brush.GradientStops.Add(new GradientStop(AccentColors.ToColor(AccentColors.FromHsv(step * 60, 1, 1)), step / 6.0));
+        }
+
+        brush.Freeze();
+        return brush;
+    }
+
+    private static Brush CreateGradient(string from, string to)
+    {
+        var brush = new LinearGradientBrush(AccentColors.ToColor(from), AccentColors.ToColor(to), 0);
+        brush.Freeze();
+        return brush;
     }
 
     // ---- typeface and interface size ---------------------------------------------------------
@@ -343,7 +469,9 @@ public sealed partial class MainViewModel
         {
             case "Appearance":
                 ThemeMode = "Dark";
+                _settings.CustomAccentColor = null;
                 AccentKey = AccentPalette.Default.Key;
+                RaiseAccent();
                 ScrollBarThickness = DefaultScrollBarThickness;
                 FontFamilyName = FontCatalog.DefaultFont;
                 UiScalePreview = DefaultUiScale;

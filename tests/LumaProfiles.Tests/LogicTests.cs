@@ -910,6 +910,7 @@ public class MainViewModelTests
                 styles["AccentBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xB8, 0x4D));
                 styles["AccentHoverBrush"] = styles["AccentBrush"];
                 styles["AccentTextBrush"] = styles["AccentBrush"];
+                styles["AccentOnBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x05, 0x10, 0x16));
                 styles["UiScaleTransform"] = new System.Windows.Media.ScaleTransform(1, 1);
                 styles["ScrollThumbWidth"] = 7.0;
                 styles["ScrollBarTrackWidth"] = 13.0;
@@ -942,6 +943,93 @@ public class MainViewModelTests
         thread.Join();
 
         Assert.Null(failure);
+    }
+
+    [Fact]
+    public void CustomAccent_PickingTheTileStartsFromTheCurrentColorAndPersists()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        Assert.False(vm.IsCustomAccent);
+        Assert.Contains(vm.AccentChoices, choice => choice.IsCustomEntry);
+
+        vm.AccentChoices.First(choice => choice.IsCustomEntry).IsSelected = true;
+
+        Assert.True(vm.IsCustomAccent);
+        Assert.Equal("#55D6F5", vm.AccentKey);
+        Assert.Single(vm.AccentChoices, choice => choice.IsSelected);
+        Assert.True(vm.AccentChoices.Single(choice => choice.IsSelected).IsCustomEntry);
+        Assert.Equal("#55D6F5", new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().AccentColor);
+    }
+
+    [Fact]
+    public void CustomAccent_SlidersApplyLiveAndSaveOnCommit()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.AccentKey = "#FF0000";
+        var raised = 0;
+        vm.PropertyChanged += (_, e) => raised += e.PropertyName == nameof(MainViewModel.AccentKey) ? 1 : 0;
+
+        vm.CustomAccentHue = 120;
+
+        Assert.Equal("#00FF00", vm.AccentKey);
+        Assert.True(raised > 0);
+        Assert.Equal("#FF0000", new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().AccentColor);
+
+        vm.CommitCustomAccent();
+
+        Assert.Equal("#00FF00", new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().AccentColor);
+        vm.CustomAccentBrightness = 50;
+        Assert.Equal("#008000", vm.AccentKey);
+        Assert.Equal(50, vm.CustomAccentBrightness, 0);
+    }
+
+    [Fact]
+    public void CustomAccent_HexEntryAcceptsValidCodesAndRejectsTheRest()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.CustomAccentHex = "#abc";
+        Assert.Equal("#AABBCC", vm.AccentKey);
+        Assert.True(vm.IsCustomAccent);
+
+        vm.CustomAccentHex = "not a color";
+        Assert.Equal("#AABBCC", vm.AccentKey);
+        Assert.Contains("#RRGGBB", vm.StatusMessage);
+    }
+
+    [Fact]
+    public void CustomAccent_IsRememberedWhenYouTryAPresetAndComeBack()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.AccentKey = "#8B5CF6";
+        vm.AccentKey = "Amber";
+
+        Assert.False(vm.IsCustomAccent);
+        Assert.Equal("#8B5CF6", vm.CustomAccentHex);
+
+        vm.AccentChoices.First(choice => choice.IsCustomEntry).IsSelected = true;
+
+        Assert.Equal("#8B5CF6", vm.AccentKey);
+        Assert.Equal("#8B5CF6", new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().CustomAccentColor);
+    }
+
+    [Fact]
+    public void ResetAppearance_ClearsTheCustomColorToo()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.AccentKey = "#8B5CF6";
+
+        vm.SettingsSection = "Appearance";
+        vm.ResetSectionCommand.Execute(null);
+
+        Assert.Equal("Cyan", vm.AccentKey);
+        Assert.False(vm.IsCustomAccent);
+        Assert.Null(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().CustomAccentColor);
     }
 
     [Fact]

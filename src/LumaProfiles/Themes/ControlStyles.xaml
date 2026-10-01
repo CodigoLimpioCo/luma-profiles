@@ -104,7 +104,7 @@
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}"/>
                             <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
-                            <Setter TargetName="Knob" Property="Fill" Value="#07141C"/>
+                            <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource AccentOnBrush}"/>
                             <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
                             <Setter TargetName="Knob" Property="Margin" Value="0,0,4,0"/>
                         </Trigger>
@@ -157,7 +157,7 @@
     </Style>
 
     <Style TargetType="Button" x:Key="PrimaryButton">
-        <Setter Property="Foreground" Value="#051016"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentOnBrush}"/>
         <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Padding" Value="16,11"/>
@@ -191,10 +191,10 @@
         <Setter Property="Background" Value="{DynamicResource SecondaryButtonBrush}"/>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Foreground" Value="#07141C"/>
+                <Setter Property="Foreground" Value="{DynamicResource AccentOnBrush}"/>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Foreground" Value="#07141C"/>
+                <Setter Property="Foreground" Value="{DynamicResource AccentOnBrush}"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -221,6 +221,39 @@
                             </Track.Thumb>
                             <Track.IncreaseRepeatButton>
                                 <RepeatButton IsTabStop="False" Background="#344552" BorderThickness="0" Height="4"/>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Slider whose track shows the colors it selects (hue, saturation, brightness); the gradient comes in through Tag. -->
+    <Style x:Key="GradientSlider" TargetType="Slider">
+        <Setter Property="Margin" Value="0,4,0,10"/>
+        <Setter Property="Height" Value="22"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid>
+                        <Border Height="12" CornerRadius="6" Background="{TemplateBinding Tag}"
+                                BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1"/>
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton IsTabStop="False" Opacity="0" Height="22" Background="Transparent" BorderThickness="0"/>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Width="20" Height="20">
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Ellipse Fill="#FFFFFF" Stroke="#1F2933" StrokeThickness="2"/>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton IsTabStop="False" Opacity="0" Height="22" Background="Transparent" BorderThickness="0"/>
                             </Track.IncreaseRepeatButton>
                         </Track>
                     </Grid>
@@ -387,7 +420,7 @@
                                                    VerticalAlignment="Center"/>
                                         <Border x:Name="LanguageCheck" Grid.Column="2" Width="18" Height="18" CornerRadius="9"
                                                 Background="{DynamicResource AccentBrush}" Visibility="Collapsed" HorizontalAlignment="Right">
-                                            <Path Data="M 4 9 L 7.5 12.5 L 14 5.5" Stroke="#07141C" StrokeThickness="1.7"
+                                            <Path Data="M 4 9 L 7.5 12.5 L 14 5.5" Stroke="{DynamicResource AccentOnBrush}" StrokeThickness="1.7"
                                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
                                         </Border>
                                     </Grid>
@@ -693,10 +726,10 @@
                     <Border x:Name="Field" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9" MinHeight="{TemplateBinding MinHeight}">
                         <Grid>
-                            <TextBlock x:Name="Placeholder" Text="{TemplateBinding Tag}" Margin="{TemplateBinding Padding}"
+                            <TextBlock x:Name="Placeholder" Text="{TemplateBinding Tag}" Margin="{TemplateBinding Padding}" Padding="2,0,0,0"
                                        VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False"
                                        Visibility="Collapsed" TextTrimming="CharacterEllipsis"/>
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"
+                            <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center"
                                           Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                         </Grid>
                     </Border>
@@ -1359,7 +1392,21 @@
                     <StackPanel Background="Transparent" MinWidth="54">
                         <Grid Width="36" Height="36" HorizontalAlignment="Center">
                             <Ellipse x:Name="Ring" Stroke="{DynamicResource PrimaryTextBrush}" StrokeThickness="2" Opacity="0"/>
-                            <Ellipse Margin="4" Fill="{Binding Color}"/>
+                            <Ellipse Margin="4" Fill="{Binding Fill}"/>
+                            <TextBlock Text="&#xE70F;" FontFamily="Segoe Fluent Icons" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="#FFFFFF">
+                                <TextBlock.Effect><DropShadowEffect BlurRadius="3" ShadowDepth="0" Opacity="0.9"/></TextBlock.Effect>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCustomEntry}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </Grid>
                         <TextBlock Text="{TemplateBinding Content}" FontSize="11" HorizontalAlignment="Center" Margin="0,6,0,0"
                                    Foreground="{TemplateBinding Foreground}"/>

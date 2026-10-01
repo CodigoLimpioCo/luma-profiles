@@ -12,7 +12,10 @@ public sealed partial class ApplicationSettings
     public bool UseMonitorControls { get; set; } = true;
     /// <summary>"Light", "Dark" or "System". Null in files written before theme modes existed.</summary>
     public string? ThemeMode { get; set; }
+    /// <summary>A preset name ("Cyan"...) or a custom color as #RRGGBB.</summary>
     public string AccentColor { get; set; } = "Cyan";
+    /// <summary>The last color the user composed, kept so the "your color" tile remembers it after trying a preset.</summary>
+    public string? CustomAccentColor { get; set; }
     public string FontFamilyName { get; set; } = "Segoe UI Variable Text";
     /// <summary>Scale of the whole interface (text and elements) in percent.</summary>
     public int UiScalePercent { get; set; } = 100;

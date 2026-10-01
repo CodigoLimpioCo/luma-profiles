@@ -195,6 +195,7 @@ public partial class MainWindow : Window
         Resources["AccentBrush"] = CreateBrush(accent.Accent);
         Resources["AccentHoverBrush"] = CreateBrush(accent.Hover);
         Resources["AccentTextBrush"] = CreateBrush(_viewModel.IsDarkTheme ? accent.TextOnDark : accent.TextOnLight);
+        Resources["AccentOnBrush"] = CreateBrush(accent.OnAccent);
         FontFamily = new FontFamily(_viewModel.FontFamilyName);
         Resources["UiScaleTransform"] = new ScaleTransform(_viewModel.UiScaleFactor, _viewModel.UiScaleFactor);
         Resources["ScrollThumbWidth"] = _viewModel.ScrollBarThickness;
@@ -241,7 +242,7 @@ public partial class MainWindow : Window
         var theme = _viewModel.IsDarkTheme ? "Themes/DarkTheme.xaml" : "Themes/LightTheme.xaml";
         styles.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(theme, UriKind.Relative) });
         styles.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("Themes/ControlStyles.xaml", UriKind.Relative) });
-        foreach (var key in new[] { "AccentBrush", "AccentHoverBrush", "AccentTextBrush", "UiScaleTransform", "ScrollThumbWidth", "ScrollBarTrackWidth" })
+        foreach (var key in new[] { "AccentBrush", "AccentHoverBrush", "AccentTextBrush", "AccentOnBrush", "UiScaleTransform", "ScrollThumbWidth", "ScrollBarTrackWidth" })
         {
             styles[key] = Resources[key];
         }
@@ -291,6 +292,24 @@ public partial class MainWindow : Window
     private void UiScale_MouseUp(object sender, MouseButtonEventArgs e) => _viewModel.CommitUiScale();
 
     private void UiScale_KeyUp(object sender, KeyEventArgs e) => _viewModel.CommitUiScale();
+
+    private void AccentHex_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.TextBox box) _viewModel.CustomAccentHex = box.Text;
+    }
+
+    private void AccentHex_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || sender is not System.Windows.Controls.TextBox box) return;
+        _viewModel.CustomAccentHex = box.Text;
+        Keyboard.ClearFocus();
+    }
+
+    private void AccentSlider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e) => _viewModel.CommitCustomAccent();
+
+    private void AccentSlider_MouseUp(object sender, MouseButtonEventArgs e) => _viewModel.CommitCustomAccent();
+
+    private void AccentSlider_KeyUp(object sender, KeyEventArgs e) => _viewModel.CommitCustomAccent();
 
     /// <summary>The widest the menu may get while the content area keeps a usable width.</summary>
     private double MaxSidebarForWindow =>

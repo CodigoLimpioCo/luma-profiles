@@ -1,5 +1,13 @@
 # Changelog
 
+## Sin publicar
+
+### Añadido
+- Color de acento: la paleta pasa de 6 a 17 colores (celeste, turquesa, verde, lima, amarillo, naranja, rojo, rosado, fucsia, violeta y pizarra, además de los anteriores) y aparece una opción **Tu color** para crear el tuyo con tres controles (tono, intensidad y brillo) o escribiendo un código `#RRGGBB`. Los textos se ajustan solos para que se lean bien en el tema claro y el oscuro, y el texto de los botones pasa a blanco cuando el acento es oscuro.
+
+### Corregido
+- Los campos de texto ya no dibujan el texto de ayuda bajo el cursor, y el cursor empieza donde debe (antes quedaba unos 14 px más a la derecha por contarse dos veces el margen interior).
+
 ## 0.8.2 — Seguridad de los atajos e inicio en la Store
 
 ### Seguridad
