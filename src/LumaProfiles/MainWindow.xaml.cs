@@ -371,9 +371,31 @@ public partial class MainWindow : Window
     private void ToggleMaximized() =>
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
+    /// <summary>A borderless window maximizes past the work area (under the taskbar); clamp it to the monitor's work area.</summary>
+    private static void ConstrainMaximizedBounds(IntPtr hwnd, IntPtr lParam)
+    {
+        var monitor = NativeMethods.MonitorFromWindow(hwnd, NativeMethods.MonitorDefaultToNearest);
+        var monitorInfo = new NativeMethods.MonitorInfo { Size = Marshal.SizeOf<NativeMethods.MonitorInfo>() };
+        if (monitor == IntPtr.Zero || !NativeMethods.GetMonitorInfo(monitor, ref monitorInfo)) return;
+
+        var minMax = Marshal.PtrToStructure<NativeMethods.MinMaxInfo>(lParam);
+        var work = monitorInfo.WorkArea;
+        var screen = monitorInfo.Monitor;
+        minMax.MaxPosition.X = work.Left - screen.Left;
+        minMax.MaxPosition.Y = work.Top - screen.Top;
+        minMax.MaxSize.X = work.Right - work.Left;
+        minMax.MaxSize.Y = work.Bottom - work.Top;
+        Marshal.StructureToPtr(minMax, lParam, true);
+    }
+
     private IntPtr WindowMessageHook(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (HotkeyService.FromMessage(message, wParam) is { } hotkey)
+        if (message == NativeMethods.WmGetMinMaxInfo)
+        {
+            ConstrainMaximizedBounds(hwnd, lParam);
+            handled = true;
+        }
+        else if (HotkeyService.FromMessage(message, wParam) is { } hotkey)
         {
             handled = true;
             switch (hotkey)
@@ -410,6 +432,7 @@ public partial class MainWindow : Window
     private static class NativeMethods
     {
         internal const uint MonitorDefaultToNearest = 2;
+        internal const int WmGetMinMaxInfo = 0x0024;
         internal const int WmDisplayChange = 0x007E;
         internal const int WmDeviceChange = 0x0219;
         internal const int WmPowerBroadcast = 0x0218;
@@ -436,6 +459,23 @@ public partial class MainWindow : Window
             public NativeRect Monitor;
             public NativeRect WorkArea;
             public uint Flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct NativePoint
+        {
+            public int X;
+            public int Y;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MinMaxInfo
+        {
+            public NativePoint Reserved;
+            public NativePoint MaxSize;
+            public NativePoint MaxPosition;
+            public NativePoint MinTrackSize;
+            public NativePoint MaxTrackSize;
         }
 
         [StructLayout(LayoutKind.Sequential)]
