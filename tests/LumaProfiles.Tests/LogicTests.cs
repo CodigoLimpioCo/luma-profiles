@@ -1491,6 +1491,40 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void ResetDisplayState_ForgetsCorrectionsAndOldRestorePointThenSavesTheCleanState()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("eyes-night");
+        monitor.CurrentSnapshot = [Original("MON-A", 60)];
+
+        vm.ResetDisplayStateCommand.Execute(null);
+
+        var settings = new ApplicationSettingsStore(dir.Path, manageStartup: false).Load();
+        Assert.Empty(settings.MonitorCorrections);
+        Assert.Equal(60u, settings.OriginalMonitorStates.Single().PhysicalMonitors.Single().Values.Single().Value);
+        Assert.Equal(60u, new RestorePointStore(dir.Path).Load()!.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
+        Assert.Equal(1, monitor.NeutralCalls);
+        Assert.All(vm.Profiles, profile => Assert.False(profile.IsActive));
+    }
+
+    [Fact]
+    public void ResetDisplayState_DoesNothingWhenDeclined()
+    {
+        var (vm, monitor, shell, dir) = Create();
+        using var _ = dir;
+        monitor.Capturable.Add(Original("MON-A", 14));
+        vm.ApplyProfileById("natural");
+        shell.ConfirmAnswer = false;
+
+        vm.ResetDisplayStateCommand.Execute(null);
+
+        Assert.Equal(0, monitor.NeutralCalls);
+        Assert.Equal(14u, new RestorePointStore(dir.Path).Load()!.Monitors.Single().PhysicalMonitors.Single().Values.Single().Value);
+    }
+
+    [Fact]
     public void TheVaCategoryShowsExactlyTheTenVaProfiles()
     {
         var (vm, _, _, dir) = Create();

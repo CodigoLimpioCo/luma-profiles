@@ -19,10 +19,17 @@ public sealed partial class MainViewModel
         ? L("RestorePointInfo", (_settings.OriginalCapturedAt ?? DateTime.Now).ToString("g", System.Globalization.CultureInfo.CurrentCulture), _settings.OriginalMonitorStates.Count)
         : T("RestorePointNone");
 
-    private void InitializeRestorePoint() =>
+    public ICommand ResetDisplayStateCommand { get; private set; } = null!;
+
+    private void InitializeRestorePoint()
+    {
         SaveRestorePointCommand = new RelayCommand(
             () => _ = Enqueue(SaveRestorePointAsync),
             () => !IsBusy);
+        ResetDisplayStateCommand = new RelayCommand(
+            () => _ = Enqueue(ResetDisplayStateAsync),
+            () => !IsBusy);
+    }
 
     /// <summary>If settings.json was lost or reset, take the restore point back from its own file.</summary>
     private void AdoptRestorePointCopy()
@@ -52,6 +59,48 @@ public sealed partial class MainViewModel
         });
         Raise(nameof(HasRestorePoint));
         Raise(nameof(RestorePointText));
+    }
+
+    /// <summary>
+    /// Starts over: forgets the saved corrections and the old restore point (also its file copy), puts every display
+    /// back to neutral and records that clean state as the new restore point. Repairs installs whose saved baseline
+    /// was already tinted by an older version.
+    /// </summary>
+    private async Task ResetDisplayStateAsync()
+    {
+        if (!_shell.Confirm(T("ResetStateConfirmTitle"), T("ResetStateConfirmMessage"))) return;
+
+        CommitPending();
+        CancelPendingReapply();
+
+        // The old baseline goes first, so returning to neutral cannot write back values an older version left behind.
+        _settings.MonitorCorrections.Clear();
+        _settings.OriginalMonitorStates.Clear();
+        _settings.OriginalCapturedAt = null;
+        _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
+        _restorePoints.Delete();
+
+        var (states, plan) = await _runner.RunAsync(() =>
+        {
+            _monitor.RestoreNeutral("Ambas pantallas");
+            return (_monitor.CaptureCurrentStates(), _monitor.GetActivePowerPlan());
+        });
+
+        if (states.Count > 0)
+        {
+            _settings.OriginalMonitorStates.AddRange(states);
+            _settings.OriginalPowerPlan = plan ?? _settings.OriginalPowerPlan;
+            _settings.OriginalCapturedAt = DateTime.Now;
+            _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
+        }
+
+        foreach (var profile in Profiles) profile.IsActive = false;
+        SaveProfiles();
+        SaveSettings();
+        PersistRestorePointCopy();
+        Raise(nameof(HasRestorePoint));
+        Raise(nameof(RestorePointText));
+        StatusMessage = T(states.Count > 0 ? "ResetStateDone" : "RestorePointFailed");
     }
 
     private async Task SaveRestorePointAsync()

@@ -1035,7 +1035,17 @@
                     <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="{Binding [RestorePointSave]}"
                             Command="{Binding SaveRestorePointCommand}" Padding="14,8" VerticalAlignment="Center"/>
                 </Grid>
-            
+                <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                        <TextBlock Text="{Binding [ResetStateTitle]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [ResetStateDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="{Binding [ResetStateButton]}"
+                            Command="{Binding ResetDisplayStateCommand}" Padding="14,8" VerticalAlignment="Center"/>
+                </Grid>
+
                         <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>

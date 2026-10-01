@@ -41,6 +41,18 @@ public sealed class RestorePointStore
         }
     }
 
+    public void Delete()
+    {
+        try
+        {
+            File.Delete(_path);
+        }
+        catch (Exception exception)
+        {
+            AppLog.Warn("The restore point copy could not be deleted.", exception);
+        }
+    }
+
     public void Save(RestorePoint point)
     {
         try
