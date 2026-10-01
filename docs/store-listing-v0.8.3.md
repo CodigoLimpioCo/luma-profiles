@@ -18,17 +18,17 @@ Luma Profiles es tu estudio de color para monitores Windows. Elige entre 60 perf
 - Punto de restauración guardado en el primer arranque para volver siempre a tu configuración original.
 - Tema claro, oscuro o del sistema; español, inglés y portugués; cinco vistas de biblioteca.
 
-**Novedades de la versión 0.8.3**
-- Color de acento a tu gusto: 17 colores en la paleta y la opción «Tu color» para crear el tuyo; los textos se ajustan para que siempre se lean bien.
-- Horarios múltiples: cambia de perfil a las horas que quieras a lo largo del día, o al amanecer y al atardecer según tu ubicación (sin conexión a Internet).
-- Transición suave: al cambiar de perfil por horario, la pantalla pasa de uno a otro gradualmente.
-- Atajos por perfil: Ctrl+Alt + una tecla para aplicar el perfil que elijas.
+**Novedades de la versión 0.8.3** (incluye todo desde la 0.8.0)
+- Nueva categoría «Pantallas VA»: 10 modos para paneles VA económicos; la biblioteca llega a 60 perfiles.
+- Punto de restauración reforzado: se guarda antes de cualquier cambio y sobrevive a un archivo de ajustes dañado.
+- Horarios con varios tramos a lo largo del día, también al amanecer y al atardecer según tu ubicación (sin conexión), con transición suave entre perfiles.
+- Atajos por perfil: Ctrl+Alt + una tecla aplica el perfil que elijas.
 - Perfiles propios: guarda tus ajustes como un perfil nuevo, renómbralo o elimínalo.
 - Exportar e importar ahora incluye tus perfiles propios, el horario, las reglas por aplicación y los atajos.
-- Segundo plano: se inicia oculto en la bandeja con Windows, no abre una segunda copia y pregunta una vez si debe seguir activo al cerrar la ventana.
-- Selectores y campos de texto rediseñados; la ventana maximizada ya no se corta por abajo.
+- Segundo plano: puede iniciarse con Windows en la bandeja, no abre una segunda copia y pregunta una vez si debe seguir activo al cerrar la ventana.
 - Más seguridad: los atajos y la bandeja piden confirmar el cambio (se revierte solo en 30 segundos); desactivar la confirmación exige aceptar un aviso de riesgo.
-- Inicio con Windows desde la Store y opción de iniciar en la bandeja, ambas desactivables.
+- Color de acento a tu gusto: 17 colores y la opción «Tu color» para crear el tuyo, con textos siempre legibles.
+- Selectores y campos de texto rediseñados, menú lateral de ancho ajustable y correcciones (ventana maximizada, cursor al escribir).
 
 **Palabras clave:** monitor, color, brillo, contraste, gamma, HDR, VA, gaming, cuidado visual, luz azul, perfiles
 
@@ -47,17 +47,17 @@ Luma Profiles is a color studio for Windows monitors. Pick from 60 adjustable pr
 - A restore point saved on first launch so you can always return to your original setup.
 - Light, dark or system theme; Spanish, English and Portuguese; five library views.
 
-**What's new in 0.8.3**
-- Accent color your way: 17 colors in the palette plus a "Your color" option to make your own; text colors adjust so everything stays readable.
-- Multiple schedule slots: switch profiles at any times of the day, or at sunrise and sunset based on your location (works offline).
-- Smooth transition: when the schedule changes profile, the screen fades from one to the other.
+**What's new in 0.8.3** (includes everything since 0.8.0)
+- New "VA displays" category: 10 modes for budget VA panels; the library reaches 60 profiles.
+- Hardened restore point: saved before any change and it survives a damaged settings file.
+- Multi-slot schedule through the day, also at sunrise and sunset based on your location (works offline), with a smooth fade between profiles.
 - Per-profile shortcuts: Ctrl+Alt plus a key applies the profile you choose.
 - Your own profiles: save your adjustments as a new profile, rename it or delete it.
 - Export and import now include your own profiles, the schedule, per-app rules and shortcuts.
-- Background mode: starts hidden in the tray with Windows, never opens a second copy, and asks once whether to keep running when you close the window.
-- Redesigned selects and text fields; the maximized window no longer gets cut off at the bottom.
-- Safer: hotkeys and the tray ask you to keep the change (it reverts by itself after 30 seconds); turning confirmation off requires accepting a risk warning.
-- Start with Windows from the Store, plus an option to start in the tray; both can be turned off.
+- Background mode: can start with Windows in the tray, never opens a second copy, and asks once whether to keep running when you close the window.
+- Safer: shortcuts and the tray ask you to keep the change (it reverts by itself after 30 seconds); turning confirmation off requires accepting a risk warning.
+- Accent color your way: 17 colors plus a "Your color" option to make your own, with text that always stays readable.
+- Redesigned selects and text fields, an adjustable side menu, and fixes (maximized window, caret while typing).
 
 **Keywords:** monitor, color, brightness, contrast, gamma, HDR, VA, gaming, eye care, blue light, profiles
 
@@ -76,17 +76,17 @@ O Luma Profiles é o seu estúdio de cor para monitores Windows. Escolha entre 6
 - Ponto de restauração salvo na primeira abertura para sempre voltar à sua configuração original.
 - Tema claro, escuro ou do sistema; espanhol, inglês e português; cinco modos de exibição da biblioteca.
 
-**Novidades da versão 0.8.3**
-- Cor de destaque do seu jeito: 17 cores na paleta e a opção "Sua cor" para criar a sua; as cores do texto se ajustam para tudo ficar legível.
-- Vários horários: troque de perfil nos horários que quiser ao longo do dia, ou ao nascer e pôr do sol conforme sua localização (funciona sem internet).
-- Transição suave: quando o horário muda de perfil, a tela passa gradualmente de um para o outro.
+**Novidades da versão 0.8.3** (inclui tudo desde a 0.8.0)
+- Nova categoria "Telas VA": 10 modos para painéis VA econômicos; a biblioteca chega a 60 perfis.
+- Ponto de restauração reforçado: salvo antes de qualquer alteração e sobrevive a um arquivo de configurações danificado.
+- Horários com vários períodos ao longo do dia, também ao nascer e pôr do sol conforme sua localização (sem internet), com transição suave entre perfis.
 - Atalhos por perfil: Ctrl+Alt mais uma tecla aplica o perfil que você escolher.
 - Perfis próprios: salve seus ajustes como um novo perfil, renomeie ou exclua.
 - Exportar e importar agora incluem seus perfis próprios, o horário, as regras por aplicativo e os atalhos.
-- Segundo plano: inicia oculto na bandeja com o Windows, não abre uma segunda cópia e pergunta uma vez se deve continuar ativo ao fechar a janela.
-- Seletores e campos de texto redesenhados; a janela maximizada não é mais cortada na parte de baixo.
+- Segundo plano: pode iniciar com o Windows na bandeja, não abre uma segunda cópia e pergunta uma vez se deve continuar ativo ao fechar a janela.
 - Mais segurança: atalhos e bandeja pedem para manter a alteração (ela é desfeita sozinha em 30 segundos); desativar a confirmação exige aceitar um aviso de risco.
-- Iniciar com o Windows pela Store e opção de iniciar na bandeja, ambos desativáveis.
+- Cor de destaque do seu jeito: 17 cores e a opção "Sua cor" para criar a sua, com textos sempre legíveis.
+- Seletores e campos de texto redesenhados, menu lateral com largura ajustável e correções (janela maximizada, cursor ao digitar).
 
 **Palavras-chave:** monitor, cor, brilho, contraste, gama, HDR, VA, gaming, cuidado visual, luz azul, perfis
 
