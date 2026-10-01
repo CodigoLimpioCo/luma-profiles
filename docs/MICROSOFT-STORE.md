@@ -62,7 +62,7 @@ Para pruebas locales el paquete debe estar firmado con un certificado confiable.
 
 La Store requiere al menos una captura y recomienda cuatro o más por familia de dispositivo. En `docs/` se incluyen capturas de la aplicación; en `store-assets/` se generan el logo cuadrado, el logo panorámico y la imagen de ficha.
 
-Capturas (válidas desde 0.8.0 hasta 0.8.2): `store-assets/capturas-es-es/`, `capturas-en-us/` y `capturas-pt-br/` (cuatro por idioma). Textos de la ficha y novedades en tres idiomas: `docs/store-listing-v0.8.2.md`.
+Capturas (válidas desde 0.8.0 hasta 0.8.3): `store-assets/capturas-es-es/`, `capturas-en-us/` y `capturas-pt-br/` (cuatro por idioma). Textos de la ficha y novedades en tres idiomas: `docs/store-listing-v0.8.3.md`.
 
 ## Datos que debe completar el publicador
 

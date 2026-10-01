@@ -1,6 +1,6 @@
 # Changelog
 
-## Sin publicar
+## 0.8.3 — Más colores de acento
 
 ### Añadido
 - Color de acento: la paleta pasa de 6 a 17 colores (celeste, turquesa, verde, lima, amarillo, naranja, rojo, rosado, fucsia, violeta y pizarra, además de los anteriores) y aparece una opción **Tu color** para crear el tuyo con tres controles (tono, intensidad y brillo) o escribiendo un código `#RRGGBB`. Los textos se ajustan solos para que se lean bien en el tema claro y el oscuro, y el texto de los botones pasa a blanco cuando el acento es oscuro.
