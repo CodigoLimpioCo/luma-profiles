@@ -1,6 +1,6 @@
 # Changelog
 
-## Sin publicar
+## 0.8.1 — Automatización y perfiles propios
 
 ### Añadido
 - Horarios múltiples: el horario automático admite cualquier cantidad de tramos (hora → perfil) en vez de solo día y noche. Los ajustes anteriores se migran solos.
@@ -9,6 +9,10 @@
 - Atajos por perfil: Ctrl+Alt + una tecla (1-9 o F1-F12) aplica el perfil elegido.
 - Perfiles personalizados: guarda los valores del panel de ajuste como un perfil propio (categoría Personalizados), renómbralo o elimínalo. Al eliminarlo se quita también de horarios, reglas y atajos.
 - Exportar e importar ahora incluye tus perfiles personalizados, el horario, las reglas por aplicación y los atajos; los archivos anteriores siguen funcionando.
+- Segundo plano: al iniciar con Windows la aplicación arranca oculta en la bandeja (`--background`); las entradas de inicio antiguas se actualizan solas.
+- Instancia única: abrir la aplicación otra vez trae al frente la que ya está en ejecución en vez de lanzar una segunda copia.
+- Al cerrar la ventana con horario, reglas o atajos configurados, se pregunta una sola vez si seguir en la bandeja o salir.
+- Selectores y campos de texto rediseñados: campo redondeado, flecha que gira, lista desplegable del mismo ancho con ✓ en la opción elegida y textos de ayuda; los formularios de Automatización se ordenan en tarjetas con etiquetas.
 
 ### Corregido
 - Al maximizar, la ventana ya no se extiende bajo la barra de tareas ni se corta por abajo.

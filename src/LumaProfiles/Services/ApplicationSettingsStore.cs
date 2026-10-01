@@ -47,7 +47,11 @@ public sealed class ApplicationSettingsStore
                     settings.ProfileHotkeys ??= [];
                     settings.Schedule ??= new ScheduleSettings();
                     settings.Schedule.EnsureEntries();
-                    if (_manageStartup) settings.StartWithWindows = IsStartupEnabled();
+                    if (_manageStartup)
+                    {
+                        settings.StartWithWindows = IsStartupEnabled();
+                        if (settings.StartWithWindows) UpgradeLegacyStartupEntry();
+                    }
                     return settings;
                 }
             }
@@ -85,7 +89,7 @@ public sealed class ApplicationSettingsStore
             {
                 var executablePath = Environment.ProcessPath;
                 if (string.IsNullOrWhiteSpace(executablePath)) return false;
-                key.SetValue(RunValueName, $"\"{executablePath}\"");
+                key.SetValue(RunValueName, StartupArguments.StartupCommand(executablePath));
             }
             else
             {
@@ -98,6 +102,28 @@ public sealed class ApplicationSettingsStore
         {
             AppLog.Warn("Could not update the Windows startup entry.", exception);
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Entries written by older versions opened the window at every sign-in. Only an entry that points at this very
+    /// executable is rewritten, so running a development build never redirects someone else's installed copy.
+    /// </summary>
+    private static void UpgradeLegacyStartupEntry()
+    {
+        try
+        {
+            var executablePath = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(executablePath)) return;
+            using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
+            if (key?.GetValue(RunValueName) is string value && value == StartupArguments.LegacyStartupCommand(executablePath))
+            {
+                key.SetValue(RunValueName, StartupArguments.StartupCommand(executablePath));
+            }
+        }
+        catch (Exception exception)
+        {
+            AppLog.Warn("Could not update the startup entry to start in the tray.", exception);
         }
     }
 

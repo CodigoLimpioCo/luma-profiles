@@ -12,6 +12,8 @@ public sealed partial class ApplicationSettings
     /// <summary>When the restore point (original display state) was captured.</summary>
     public DateTime? OriginalCapturedAt { get; set; }
     public bool MinimizeToTray { get; set; }
+    /// <summary>Set once the user has answered the "keep running in the tray?" question when closing.</summary>
+    public bool CloseChoiceAsked { get; set; }
     public bool GlobalHotkeysEnabled { get; set; } = true;
     public ScheduleSettings Schedule { get; set; } = new();
     public List<AppProfileRule> AppRules { get; set; } = [];

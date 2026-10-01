@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private bool _isLeftPanelVisible;
     private bool _isRightPanelVisible;
     private bool _isExiting;
+    private bool _initialized;
     private PinnedPanel _pinnedPanel;
 
     private enum PinnedPanel { None, Left, Right }
@@ -57,9 +58,27 @@ public partial class MainWindow : Window
         {
             ProfilesScrollViewer.ScrollToTop();
             ApplyResponsiveLayout();
-            _viewModel.Initialize();
+            EnsureInitialized();
         };
     }
+
+    /// <summary>Starts the schedule, rules and display watching once, whether the window was shown or never was.</summary>
+    private void EnsureInitialized()
+    {
+        if (_initialized) return;
+        _initialized = true;
+        _viewModel.Initialize();
+    }
+
+    /// <summary>Runs everything except the visible window: tray icon, hotkeys, schedule and rules (sign-in launch).</summary>
+    public void StartInBackground()
+    {
+        new WindowInteropHelper(this).EnsureHandle();
+        EnsureInitialized();
+    }
+
+    /// <summary>Windows is signing out or shutting down: close for real instead of hiding to the tray.</summary>
+    public void PrepareToExit() => _isExiting = true;
 
     protected override void OnSourceInitialized(EventArgs e)
     {
@@ -80,11 +99,18 @@ public partial class MainWindow : Window
 
     protected override void OnClosing(CancelEventArgs e)
     {
-        if (!_isExiting && _viewModel.MinimizeToTray)
+        if (!_isExiting)
         {
-            e.Cancel = true;
-            Hide();
-            return;
+            switch (_viewModel.DecideOnClose())
+            {
+                case CloseDecision.Stay:
+                    e.Cancel = true;
+                    return;
+                case CloseDecision.Hide:
+                    e.Cancel = true;
+                    Hide();
+                    return;
+            }
         }
 
         base.OnClosing(e);
@@ -183,11 +209,12 @@ public partial class MainWindow : Window
         if (_viewModel.GlobalHotkeysEnabled) _hotkeys.Register(handle, _viewModel.ProfileHotkeyBindings); else _hotkeys.Unregister();
     }
 
-    private void ShowFromTray()
+    public void ShowFromTray()
     {
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
+        ApplyResponsiveLayout();
     }
 
     private void ExitApplication()

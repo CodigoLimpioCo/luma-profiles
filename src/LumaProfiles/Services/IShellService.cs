@@ -3,6 +3,8 @@ using Microsoft.Win32;
 
 namespace LumaProfiles.Services;
 
+public enum CloseChoice { MinimizeToTray, Exit, Cancel }
+
 /// <summary>OS interactions the view model needs but should not perform directly (keeps it testable).</summary>
 public interface IShellService
 {
@@ -13,6 +15,9 @@ public interface IShellService
 
     /// <summary>Asks a yes/no question before something the user cannot easily undo.</summary>
     bool Confirm(string title, string message);
+
+    /// <summary>Asks whether closing the window should keep the app running in the tray or quit it.</summary>
+    CloseChoice AskCloseChoice(string title, string message);
 }
 
 public sealed class ShellService : IShellService
@@ -42,6 +47,15 @@ public sealed class ShellService : IShellService
     public bool Confirm(string title, string message) =>
         System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Question, System.Windows.MessageBoxResult.No) == System.Windows.MessageBoxResult.Yes;
+
+    public CloseChoice AskCloseChoice(string title, string message) =>
+        System.Windows.MessageBox.Show(message, title, System.Windows.MessageBoxButton.YesNoCancel,
+            System.Windows.MessageBoxImage.Question, System.Windows.MessageBoxResult.Yes) switch
+        {
+            System.Windows.MessageBoxResult.Yes => CloseChoice.MinimizeToTray,
+            System.Windows.MessageBoxResult.No => CloseChoice.Exit,
+            _ => CloseChoice.Cancel,
+        };
 
     public string? PickOpenFile(string title)
     {

@@ -13,6 +13,8 @@ public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName)
     public string ProcessName => Rule.ProcessName;
 }
 
+public enum CloseDecision { Exit, Hide, Stay }
+
 public sealed partial class MainViewModel : ObservableObject
 {
     private const string BothDisplays = MonitorService.AllDisplaysTarget;

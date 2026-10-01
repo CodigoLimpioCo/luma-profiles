@@ -246,6 +246,13 @@ public class MainViewModelTests
         public void OpenUrl(string url) => Opened.Add(url);
         public string? PickSaveFile(string title, string suggestedFileName) => SavePath;
         public string? PickOpenFile(string title) => OpenPath;
+        public CloseChoice CloseAnswer { get; set; } = CloseChoice.Cancel;
+        public int CloseAsked { get; private set; }
+        public CloseChoice AskCloseChoice(string title, string message)
+        {
+            CloseAsked++;
+            return CloseAnswer;
+        }
     }
 
     private static DisplayInfo Display(int number) =>
@@ -688,6 +695,74 @@ public class MainViewModelTests
         Assert.Equal(["08:00"], vm.ScheduleEntries.Select(item => item.Label));
         Assert.Equal(["b"], vm.AppRules.Select(item => item.ProcessName));
         Assert.Equal(["Ctrl+Alt+F2"], vm.ProfileHotkeys.Select(item => item.Shortcut));
+    }
+
+    [Fact]
+    public void DecideOnClose_WithoutAutomationJustExits()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        vm.ScheduleEnabled = false;
+        foreach (var rule in vm.AppRules.ToList()) vm.RemoveAppRuleCommand.Execute(rule);
+
+        Assert.Equal(CloseDecision.Exit, vm.DecideOnClose());
+        Assert.Equal(0, shell.CloseAsked);
+    }
+
+    [Fact]
+    public void DecideOnClose_WithTrayEnabledAlwaysHides()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        vm.MinimizeToTray = true;
+
+        Assert.Equal(CloseDecision.Hide, vm.DecideOnClose());
+        Assert.Equal(0, shell.CloseAsked);
+    }
+
+    [Fact]
+    public void DecideOnClose_AsksOnceWhenAutomationIsConfigured_AndRemembersTheTrayChoice()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        vm.ScheduleEnabled = true;
+        shell.CloseAnswer = CloseChoice.MinimizeToTray;
+
+        Assert.Equal(CloseDecision.Hide, vm.DecideOnClose());
+        Assert.True(vm.MinimizeToTray);
+        Assert.Equal(CloseDecision.Hide, vm.DecideOnClose());
+        Assert.Equal(1, shell.CloseAsked);
+        Assert.True(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().CloseChoiceAsked);
+    }
+
+    [Fact]
+    public void DecideOnClose_ExitChoiceIsRememberedAndNotAskedAgain()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        vm.NewRuleProcess = "game";
+        vm.NewRuleProfileId = "natural";
+        vm.AddAppRuleCommand.Execute(null);
+        shell.CloseAnswer = CloseChoice.Exit;
+
+        Assert.Equal(CloseDecision.Exit, vm.DecideOnClose());
+        Assert.False(vm.MinimizeToTray);
+        Assert.Equal(CloseDecision.Exit, vm.DecideOnClose());
+        Assert.Equal(1, shell.CloseAsked);
+    }
+
+    [Fact]
+    public void DecideOnClose_CancelKeepsTheWindowOpenAndAsksAgainNextTime()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        vm.ScheduleEnabled = true;
+        shell.CloseAnswer = CloseChoice.Cancel;
+
+        Assert.Equal(CloseDecision.Stay, vm.DecideOnClose());
+        Assert.Equal(CloseDecision.Stay, vm.DecideOnClose());
+        Assert.Equal(2, shell.CloseAsked);
+        Assert.False(vm.MinimizeToTray);
     }
 
     [Fact]
