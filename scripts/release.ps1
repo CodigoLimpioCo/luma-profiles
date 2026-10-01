@@ -42,7 +42,10 @@ Copy-Item (Join-Path $out 'exe\LumaProfiles.exe') (Join-Path $out $exeName)
 $smoke = Join-Path $out 'smoke'
 New-Item -ItemType Directory -Force $smoke | Out-Null
 Copy-Item (Join-Path $out $exeName) $smoke
+# Its own instance id, so the check works even while Luma Profiles is open on this computer.
+$env:LUMA_PROFILES_INSTANCE_ID = 'release-smoke'
 $process = Start-Process (Join-Path $smoke $exeName) -PassThru
+Remove-Item Env:\LUMA_PROFILES_INSTANCE_ID
 Start-Sleep -Seconds 8
 $alive = -not $process.HasExited
 if ($alive) { $process.Kill() }

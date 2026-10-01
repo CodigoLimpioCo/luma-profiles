@@ -23,7 +23,11 @@ public partial class App : Application
         var forceBackground = StartupArguments.IsBackground(e.Args);
         var signIn = StartupArguments.IsSignInLaunch(e.Args) || PackagedStartup.WasLaunchedByStartupTask();
 
-        _instanceGuard = new SingleInstanceGuard();
+        // Release checks start a copy next to the one you are using; a separate id gives that copy its own guard.
+        var instanceId = Environment.GetEnvironmentVariable("LUMA_PROFILES_INSTANCE_ID");
+        _instanceGuard = string.IsNullOrWhiteSpace(instanceId)
+            ? new SingleInstanceGuard()
+            : new SingleInstanceGuard("LumaProfiles.SingleInstance." + instanceId);
         if (!_instanceGuard.TryAcquire())
         {
             // Opening the app again brings the running copy forward; the sign-in launch stays silent.
