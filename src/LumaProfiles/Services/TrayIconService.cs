@@ -25,16 +25,11 @@ public sealed class TrayIconService : IDisposable
             Visible = true
         };
         _icon.ContextMenuStrip.Opening += (_, _) => BuildMenu();
-        _icon.BalloonTipClicked += (_, _) => _showWindow();
         _icon.MouseClick += (_, args) =>
         {
             if (args.Button == System.Windows.Forms.MouseButtons.Left) _showWindow();
         };
     }
-
-    /// <summary>Last resort when Windows will not let the window come forward: a balloon next to the clock.</summary>
-    public void NotifyConfirmation(string title, string text) =>
-        _icon.ShowBalloonTip(10000, title, text, System.Windows.Forms.ToolTipIcon.Warning);
 
     public void Dispose()
     {

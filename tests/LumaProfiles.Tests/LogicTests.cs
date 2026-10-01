@@ -886,6 +886,65 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void ConfirmationAlertWindow_LoadsRendersAndFollowsTheConfirmation()
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                GC.KeepAlive(System.Windows.Application.Current ?? new System.Windows.Application());
+                var (vm, _, _, dir) = Create();
+                using var _ = dir;
+                vm.ApplyProfileById("eyes-night");
+                Assert.True(vm.IsConfirmationPending);
+
+                var styles = new System.Windows.ResourceDictionary();
+                foreach (var name in new[] { "DarkTheme", "ControlStyles" })
+                {
+                    styles.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+                    {
+                        Source = new Uri($"pack://application:,,,/LumaProfiles;component/Themes/{name}.xaml", UriKind.Absolute),
+                    });
+                }
+                styles["AccentBrush"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xFF, 0xB8, 0x4D));
+                styles["AccentHoverBrush"] = styles["AccentBrush"];
+                styles["AccentTextBrush"] = styles["AccentBrush"];
+                styles["UiScaleTransform"] = new System.Windows.Media.ScaleTransform(1, 1);
+                styles["ScrollThumbWidth"] = 7.0;
+                styles["ScrollBarTrackWidth"] = 13.0;
+
+                var window = new LumaProfiles.ConfirmationAlertWindow(vm, styles);
+                window.Show();
+                window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+
+                Assert.False(window.ShowActivated);
+                Assert.True(window.Topmost);
+                Assert.True(window.ActualWidth > 300 && window.ActualHeight > 60);
+
+                var content = (System.Windows.FrameworkElement)window.Content;
+                var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                    (int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                bitmap.Render(content);
+                var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                using (var file = File.Create(Path.Combine(Path.GetTempPath(), "luma-alert-preview.png"))) encoder.Save(file);
+
+                window.Close();
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
+
+        Assert.Null(failure);
+    }
+
+    [Fact]
     public void ScheduleEntry_RejectsInvalidTimes()
     {
         var (vm, _, _, dir) = Create();

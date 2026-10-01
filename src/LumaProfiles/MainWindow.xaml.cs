@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private bool _isRightPanelVisible;
     private bool _isExiting;
     private bool _initialized;
+    private ConfirmationAlertWindow? _alert;
     private PinnedPanel _pinnedPanel;
 
     private enum PinnedPanel { None, Left, Right }
@@ -51,7 +52,8 @@ public partial class MainWindow : Window
         {
             if (!_isRightPanelVisible) SetInspectorOpen(true);
         };
-        _viewModel.ConfirmationStarted += (_, _) => BringConfirmationForward();
+        _viewModel.ConfirmationStarted += (_, _) => ShowConfirmationAlert();
+        Activated += (_, _) => CloseConfirmationAlert();
         _viewModel.ScrollToTopRequested += (_, _) => ProfilesScrollViewer?.ScrollToTop();
         _foregroundWatcher.ForegroundProcessChanged += _viewModel.OnForegroundProcessChanged;
         StateChanged += (_, _) => PushWindowState();
@@ -123,6 +125,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         SystemEvents.UserPreferenceChanged -= SystemPreferenceChanged;
+        CloseConfirmationAlert();
         _viewModel.Shutdown();
         _foregroundWatcher.Dispose();
         _hotkeys.Dispose();
@@ -146,6 +149,9 @@ public partial class MainWindow : Window
             case nameof(MainViewModel.IsDarkTheme):
                 ApplyTheme();
                 ApplyAppearance();
+                break;
+            case nameof(MainViewModel.IsConfirmationPending) when !_viewModel.IsConfirmationPending:
+                CloseConfirmationAlert();
                 break;
             case nameof(MainViewModel.IsBusy):
                 Mouse.OverrideCursor = _viewModel.IsBusy ? Cursors.AppStarting : null;
@@ -214,17 +220,33 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// A "keep changes?" question started (hotkey, tray). It must be seen whether the window is hidden in the tray,
-    /// minimized or buried behind other windows; if Windows refuses to bring it forward, a tray balloon asks instead.
+    /// A "keep changes?" question started (hotkey, tray). When the main window is already in front its banner is
+    /// enough; otherwise only a small always-on-top card appears, without opening or focusing the app.
     /// </summary>
-    private void BringConfirmationForward()
+    private void ShowConfirmationAlert()
     {
-        if (IsVisible && WindowState != WindowState.Minimized && IsActive) return;
+        if (_alert is not null || (IsVisible && WindowState != WindowState.Minimized && IsActive)) return;
 
-        ShowFromTray();
-        Topmost = true;
-        Topmost = false;
-        if (!IsActive) _tray?.NotifyConfirmation(_viewModel["ConfirmTitle"], _viewModel.ConfirmCountdownText);
+        _alert = new ConfirmationAlertWindow(_viewModel, BuildAlertStyles()) { FontFamily = FontFamily };
+        _alert.Closed += (_, _) => _alert = null;
+        _alert.Show();
+    }
+
+    private void CloseConfirmationAlert() => _alert?.Close();
+
+    /// <summary>The current theme, control styles and accent, so the card matches the app.</summary>
+    private ResourceDictionary BuildAlertStyles()
+    {
+        var styles = new ResourceDictionary();
+        var theme = _viewModel.IsDarkTheme ? "Themes/DarkTheme.xaml" : "Themes/LightTheme.xaml";
+        styles.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(theme, UriKind.Relative) });
+        styles.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("Themes/ControlStyles.xaml", UriKind.Relative) });
+        foreach (var key in new[] { "AccentBrush", "AccentHoverBrush", "AccentTextBrush", "UiScaleTransform", "ScrollThumbWidth", "ScrollBarTrackWidth" })
+        {
+            styles[key] = Resources[key];
+        }
+
+        return styles;
     }
 
     public void ShowFromTray()
