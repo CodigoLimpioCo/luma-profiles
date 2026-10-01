@@ -9,60 +9,9 @@ using LumaProfiles.Services;
 
 namespace LumaProfiles.ViewModels;
 
-/// <summary>Automation: per-application rules, the day/night schedule and profile cycling.</summary>
+/// <summary>Automation: per-application rules (the schedule lives in the Schedule partial).</summary>
 public sealed partial class MainViewModel
 {
-    public bool ScheduleEnabled
-    {
-        get => _settings.Schedule.Enabled;
-        set
-        {
-            if (_settings.Schedule.Enabled == value) return;
-            _settings.Schedule.Enabled = value;
-            SaveSettings();
-            Raise();
-            RestartSchedule();
-        }
-    }
-
-    public string? ScheduleDayProfileId
-    {
-        get => _settings.Schedule.DayProfileId;
-        set
-        {
-            if (value is null || _settings.Schedule.DayProfileId == value) return;
-            _settings.Schedule.DayProfileId = value;
-            SaveSettings();
-            Raise();
-            RestartSchedule();
-        }
-    }
-
-    public string? ScheduleNightProfileId
-    {
-        get => _settings.Schedule.NightProfileId;
-        set
-        {
-            if (value is null || _settings.Schedule.NightProfileId == value) return;
-            _settings.Schedule.NightProfileId = value;
-            SaveSettings();
-            Raise();
-            RestartSchedule();
-        }
-    }
-
-    public string ScheduleDayStart
-    {
-        get => _settings.Schedule.DayStart;
-        set => SetScheduleTime(value, time => _settings.Schedule.DayStart = time, nameof(ScheduleDayStart));
-    }
-
-    public string ScheduleNightStart
-    {
-        get => _settings.Schedule.NightStart;
-        set => SetScheduleTime(value, time => _settings.Schedule.NightStart = time, nameof(ScheduleNightStart));
-    }
-
     public string NewRuleProcess { get => _newRuleProcess; set => Set(ref _newRuleProcess, value); }
 
     public string? NewRuleProfileId { get => _newRuleProfileId; set => Set(ref _newRuleProfileId, value); }
@@ -86,41 +35,6 @@ public sealed partial class MainViewModel
                 _ = EnqueueAutomation(RestoreAfterRuleAsync);
                 break;
         }
-    }
-
-    private void SetScheduleTime(string value, Action<string> assign, string propertyName)
-    {
-        if (!ScheduleResolver.TryParseTime(value, out var time))
-        {
-            StatusMessage = T("ScheduleInvalidTime");
-            Raise(propertyName);
-            return;
-        }
-
-        assign(time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture));
-        SaveSettings();
-        Raise(propertyName);
-        RestartSchedule();
-    }
-
-    private void RestartSchedule()
-    {
-        _lastScheduleSlot = null;
-        EvaluateSchedule();
-    }
-
-    /// <summary>Applies the day/night profile once per boundary crossing so manual changes are not overridden.</summary>
-    internal void EvaluateSchedule()
-    {
-        if (!_settings.Schedule.Enabled || _ruleEngine.ActiveRule is not null) return;
-
-        var slot = ScheduleResolver.Resolve(_settings.Schedule, TimeOnly.FromDateTime(DateTime.Now));
-        if (slot == _lastScheduleSlot) return;
-        _lastScheduleSlot = slot;
-
-        if (FindProfile(ScheduleResolver.ProfileFor(_settings.Schedule, slot)) is not { } profile) return;
-        var scheduleStatus = L("ScheduleApplied", profile.DisplayName);
-        _ = EnqueueAutomation(() => ApplyAsync(profile, scheduleStatus));
     }
 
     private void AddAppRule()

@@ -36,34 +36,61 @@ internal sealed class ManualWorkRunner : IWorkRunner
 
 public class ScheduleResolverTests
 {
-    private static readonly ScheduleSettings Default = new() { DayStart = "07:00", NightStart = "20:00" };
-
-    [Theory]
-    [InlineData("06:59", ScheduleSlot.Night)]
-    [InlineData("07:00", ScheduleSlot.Day)]
-    [InlineData("12:00", ScheduleSlot.Day)]
-    [InlineData("19:59", ScheduleSlot.Day)]
-    [InlineData("20:00", ScheduleSlot.Night)]
-    [InlineData("23:59", ScheduleSlot.Night)]
-    [InlineData("00:00", ScheduleSlot.Night)]
-    public void Resolve_SplitsTheDayAtConfiguredTimes(string time, ScheduleSlot expected) =>
-        Assert.Equal(expected, ScheduleResolver.Resolve(Default, TimeOnly.Parse(time)));
-
-    [Theory]
-    [InlineData("22:00", ScheduleSlot.Day)]
-    [InlineData("01:00", ScheduleSlot.Day)]
-    [InlineData("06:00", ScheduleSlot.Night)]
-    public void Resolve_HandlesDayWindowThatWrapsPastMidnight(string time, ScheduleSlot expected)
+    private static ScheduleSettings Slots(params (string Time, string Profile)[] entries) => new()
     {
-        var wrapped = new ScheduleSettings { DayStart = "21:00", NightStart = "05:00" };
+        Entries = entries.Select(item => new ScheduleEntry { Time = item.Time, ProfileId = item.Profile }).ToList(),
+    };
 
-        Assert.Equal(expected, ScheduleResolver.Resolve(wrapped, TimeOnly.Parse(time)));
+    private static readonly ScheduleSettings Default = Slots(("07:00", "day"), ("20:00", "night"));
+
+    [Theory]
+    [InlineData("06:59", "night")]
+    [InlineData("07:00", "day")]
+    [InlineData("12:00", "day")]
+    [InlineData("19:59", "day")]
+    [InlineData("20:00", "night")]
+    [InlineData("23:59", "night")]
+    [InlineData("00:00", "night")]
+    public void Resolve_SplitsTheDayAtConfiguredTimes(string time, string expected) =>
+        Assert.Equal(expected, ScheduleResolver.Resolve(Default, TimeOnly.Parse(time))?.ProfileId);
+
+    [Theory]
+    [InlineData("05:59", "night")]
+    [InlineData("06:00", "morning")]
+    [InlineData("11:59", "morning")]
+    [InlineData("12:00", "afternoon")]
+    [InlineData("18:00", "evening")]
+    [InlineData("21:59", "evening")]
+    [InlineData("23:30", "night")]
+    public void Resolve_SupportsManySlotsRegardlessOfOrder(string time, string expected)
+    {
+        var schedule = Slots(("18:00", "evening"), ("06:00", "morning"), ("22:00", "night"), ("12:00", "afternoon"));
+
+        Assert.Equal(expected, ScheduleResolver.Resolve(schedule, TimeOnly.Parse(time))?.ProfileId);
     }
 
     [Fact]
-    public void Resolve_InvalidTimesFallBackToDefaults() =>
-        Assert.Equal(ScheduleSlot.Night,
-            ScheduleResolver.Resolve(new ScheduleSettings { DayStart = "x", NightStart = "y" }, new TimeOnly(21, 0)));
+    public void Resolve_NoEntriesOrOnlyInvalidTimes_ReturnsNull()
+    {
+        Assert.Null(ScheduleResolver.Resolve(new ScheduleSettings { Entries = [] }, new TimeOnly(9, 0)));
+        Assert.Null(ScheduleResolver.Resolve(Slots(("x", "a")), new TimeOnly(9, 0)));
+    }
+
+    [Fact]
+    public void Resolve_IgnoresInvalidEntriesAmongValidOnes() =>
+        Assert.Equal("b", ScheduleResolver.Resolve(Slots(("x", "a"), ("08:00", "b")), new TimeOnly(21, 0))?.ProfileId);
+
+    [Fact]
+    public void EnsureEntries_MigratesLegacyDayNightPair()
+    {
+        var legacy = new ScheduleSettings { DayProfileId = "a", NightProfileId = "b", DayStart = "06:30", NightStart = "21:00" };
+
+        var entries = legacy.EnsureEntries();
+
+        Assert.Collection(entries,
+            day => Assert.Equal(("06:30", "a"), (day.Time, day.ProfileId)),
+            night => Assert.Equal(("21:00", "b"), (night.Time, night.ProfileId)));
+    }
 
     [Theory]
     [InlineData("20:30", true)]
@@ -72,15 +99,6 @@ public class ScheduleResolverTests
     [InlineData("", false)]
     public void TryParseTime_RequiresHHmm(string text, bool valid) =>
         Assert.Equal(valid, ScheduleResolver.TryParseTime(text, out _));
-
-    [Fact]
-    public void ProfileFor_ReturnsSlotProfile()
-    {
-        var schedule = new ScheduleSettings { DayProfileId = "a", NightProfileId = "b" };
-
-        Assert.Equal("a", ScheduleResolver.ProfileFor(schedule, ScheduleSlot.Day));
-        Assert.Equal("b", ScheduleResolver.ProfileFor(schedule, ScheduleSlot.Night));
-    }
 }
 
 public class AppRuleEngineTests
@@ -174,7 +192,12 @@ public class MainViewModelTests
             return FailApply ? new ApplyResult(0, ["no display"], []) : Result();
         }
 
-        public ApplyResult Preview(DisplayProfile profile, string target) => Result();
+        public List<int> PreviewedBrightness { get; } = [];
+        public ApplyResult Preview(DisplayProfile profile, string target)
+        {
+            PreviewedBrightness.Add(profile.Brightness);
+            return Result();
+        }
         public List<OriginalMonitorState> Capturable { get; } = [];
 
         public IReadOnlyList<OriginalMonitorState> CaptureOriginalStates(IEnumerable<string> knownMonitorIds)
@@ -389,14 +412,297 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public void ScheduleTime_RejectsInvalidValues()
+    public void AddScheduleEntry_KeepsListSortedAndReplacesSameTime()
     {
         var (vm, _, _, dir) = Create();
         using var _ = dir;
 
-        vm.ScheduleNightStart = "99:99";
+        vm.NewScheduleTime = "13:00";
+        vm.NewScheduleProfileId = "natural";
+        vm.AddScheduleEntryCommand.Execute(null);
+        vm.NewScheduleProfileId = "eyes-night";
+        vm.AddScheduleEntryCommand.Execute(null);
 
-        Assert.Equal("20:00", vm.ScheduleNightStart);
+        Assert.Equal(["07:00", "13:00", "20:00"], vm.ScheduleEntries.Select(item => item.Label));
+        Assert.Equal("eyes-night", vm.ScheduleEntries.Single(item => item.Label == "13:00").Entry.ProfileId);
+    }
+
+    private static DisplayProfile Profile(MainViewModel vm, string id) => vm.Profiles.First(item => item.Id == id);
+
+    [Fact]
+    public void SaveAsNewProfile_CreatesCustomProfileFromCurrentValues()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        var source = Profile(vm, "natural");
+        source.Brightness = 33;
+        vm.SelectedProfile = source;
+        vm.NewProfileName = "Mi trabajo";
+
+        vm.SaveAsNewProfileCommand.Execute(null);
+
+        var custom = Assert.Single(vm.Profiles, item => item.IsCustom);
+        Assert.Equal("Mi trabajo", custom.Name);
+        Assert.Equal(MainViewModel.CustomCategory, custom.Category);
+        Assert.Equal(33, custom.Brightness);
+        Assert.Same(custom, vm.SelectedProfile);
+        Assert.True(vm.SelectedProfileIsCustom);
+        Assert.Contains(custom, vm.VisibleProfiles);
+        Assert.Contains(new ProfileStore(dir.Path).Load(), saved => saved.Id == custom.Id && saved.IsCustom && saved.Brightness == 33);
+    }
+
+    [Fact]
+    public void SaveAsNewProfile_BlankOrRepeatedNamesStayUnique()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.NewProfileName = "Foto";
+        vm.SaveAsNewProfileCommand.Execute(null);
+        vm.NewProfileName = "foto";
+        vm.SaveAsNewProfileCommand.Execute(null);
+        vm.NewProfileName = string.Empty;
+        vm.SaveAsNewProfileCommand.Execute(null);
+
+        var names = vm.Profiles.Where(item => item.IsCustom).Select(item => item.Name).ToList();
+        Assert.Equal(3, names.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.Contains("foto (2)", names);
+    }
+
+    [Fact]
+    public void DeleteCustomProfile_RemovesItAndEverythingThatPointedAtIt()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        vm.NewProfileName = "Temporal";
+        vm.SaveAsNewProfileCommand.Execute(null);
+        var custom = vm.SelectedProfile;
+        vm.NewScheduleProfileId = custom.Id;
+        vm.AddScheduleEntryCommand.Execute(null);
+        vm.NewHotkeyProfileId = custom.Id;
+        vm.AddProfileHotkeyCommand.Execute(null);
+        vm.NewRuleProcess = "game";
+        vm.NewRuleProfileId = custom.Id;
+        vm.AddAppRuleCommand.Execute(null);
+
+        shell.ConfirmAnswer = false;
+        vm.DeleteCustomProfileCommand.Execute(null);
+        Assert.Contains(custom, vm.Profiles);
+
+        shell.ConfirmAnswer = true;
+        vm.DeleteCustomProfileCommand.Execute(null);
+
+        Assert.DoesNotContain(custom, vm.Profiles);
+        Assert.DoesNotContain(vm.ScheduleEntries, item => item.Entry.ProfileId == custom.Id);
+        Assert.Empty(vm.ProfileHotkeys);
+        Assert.Empty(vm.AppRules);
+        Assert.DoesNotContain(new ProfileStore(dir.Path).Load(), saved => saved.Id == custom.Id);
+    }
+
+    [Fact]
+    public void DeleteCustomProfile_IgnoresBuiltInProfiles()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+
+        vm.DeleteCustomProfileCommand.Execute(null);
+
+        Assert.Equal(0, shell.ConfirmCalls);
+        Assert.False(vm.SelectedProfileIsCustom);
+    }
+
+    [Fact]
+    public void ProfileHotkeys_OneKeyAndOneProfileEach_AndRaiseBindingsChanged()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        var raised = 0;
+        vm.PropertyChanged += (_, e) => raised += e.PropertyName == nameof(MainViewModel.ProfileHotkeyBindings) ? 1 : 0;
+
+        vm.NewHotkeyKey = "1";
+        vm.NewHotkeyProfileId = "natural";
+        vm.AddProfileHotkeyCommand.Execute(null);
+        vm.NewHotkeyProfileId = "eyes-night";
+        vm.AddProfileHotkeyCommand.Execute(null);
+        vm.NewHotkeyKey = "F5";
+        vm.AddProfileHotkeyCommand.Execute(null);
+
+        var item = Assert.Single(vm.ProfileHotkeys);
+        Assert.Equal("Ctrl+Alt+F5", item.Shortcut);
+        Assert.Equal("eyes-night", item.Hotkey.ProfileId);
+        Assert.Equal(3, raised);
+
+        vm.RemoveProfileHotkeyCommand.Execute(item);
+        Assert.Empty(vm.ProfileHotkeyBindings);
+        Assert.Equal(4, raised);
+    }
+
+    [Fact]
+    public void AddScheduleEntry_SunEntryNeedsAValidOffset_AndShowsWhenLocationIsMissing()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.NewScheduleKind = nameof(SunEvent.Sunset);
+        vm.NewScheduleProfileId = "eyes-night";
+
+        vm.NewScheduleOffset = "abc";
+        vm.AddScheduleEntryCommand.Execute(null);
+        Assert.Equal(2, vm.ScheduleEntries.Count);
+
+        vm.NewScheduleOffset = "-30";
+        vm.AddScheduleEntryCommand.Execute(null);
+        Assert.Contains(vm.ScheduleEntries, item => item.Entry.Sun == SunEvent.Sunset && item.Entry.OffsetMinutes == -30);
+        Assert.Contains("-30", vm.ScheduleEntries.Last().Label);
+
+        vm.ScheduleLatitude = "4.71";
+        vm.ScheduleLongitude = "-74,07";
+        Assert.Equal("-74.07", vm.ScheduleLongitude);
+        Assert.Matches(@"\(\d\d:\d\d\)", vm.ScheduleEntries.Single(item => item.Entry.Sun == SunEvent.Sunset).Label);
+    }
+
+    [Theory]
+    [InlineData("95")]
+    [InlineData("x")]
+    public void ScheduleLocation_RejectsOutOfRangeValues(string text)
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.ScheduleLatitude = text;
+
+        Assert.Equal(string.Empty, vm.ScheduleLatitude);
+    }
+
+    private (MainViewModel Vm, FakeMonitorService Monitor, TempDirectory Dir) CreateScheduledFade(int seconds)
+    {
+        var (vm, monitor, _, dir) = Create();
+        vm.ApplyProfileCommand.Execute(Profile(vm, "natural"));
+        monitor.Applied.Clear();
+        vm.TransitionDelay = (_, _) => Task.CompletedTask;
+        vm.ScheduleTransitionSeconds = seconds;
+        foreach (var existing in vm.ScheduleEntries.ToList()) vm.RemoveScheduleEntryCommand.Execute(existing);
+        vm.NewScheduleTime = "00:00";
+        vm.NewScheduleProfileId = "gamer-competitive";
+        vm.AddScheduleEntryCommand.Execute(null);
+        return (vm, monitor, dir);
+    }
+
+    [Fact]
+    public void Schedule_FadesThroughIntermediateFramesBeforeApplying()
+    {
+        var (vm, monitor, dir) = CreateScheduledFade(5);
+        using var _ = dir;
+        var from = Profile(vm, "natural").Brightness;
+        var to = Profile(vm, "gamer-competitive").Brightness;
+
+        vm.ScheduleEnabled = true;
+
+        Assert.Equal(4, monitor.PreviewedBrightness.Count);
+        Assert.Equal(["gamer-competitive"], monitor.Applied);
+        Assert.All(monitor.PreviewedBrightness, value => Assert.InRange(value, Math.Min(from, to), Math.Max(from, to)));
+    }
+
+    [Fact]
+    public void Schedule_WithoutTransition_AppliesDirectly()
+    {
+        var (vm, monitor, dir) = CreateScheduledFade(0);
+        using var _ = dir;
+
+        vm.ScheduleEnabled = true;
+
+        Assert.Empty(monitor.PreviewedBrightness);
+        Assert.Equal(["gamer-competitive"], monitor.Applied);
+    }
+
+    [Fact]
+    public void Schedule_FadeIsCancelledByAUserAction()
+    {
+        var (vm, monitor, dir) = CreateScheduledFade(5);
+        using var _ = dir;
+        vm.TransitionDelay = (_, token) =>
+        {
+            vm.ApplyNeutral();
+            token.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        };
+
+        vm.ScheduleEnabled = true;
+
+        Assert.DoesNotContain("gamer-competitive", monitor.Applied);
+        Assert.Equal(1, monitor.OriginalCalls);
+        Assert.Single(monitor.PreviewedBrightness);
+    }
+
+    [Fact]
+    public void ExportThenImport_RestoresCustomProfilesScheduleRulesAndShortcuts()
+    {
+        var (source, _, sourceShell, sourceDir) = Create();
+        using var _ = sourceDir;
+        source.NewProfileName = "Compartido";
+        source.SaveAsNewProfileCommand.Execute(null);
+        var custom = source.SelectedProfile;
+        source.NewScheduleTime = "09:15";
+        source.NewScheduleProfileId = custom.Id;
+        source.AddScheduleEntryCommand.Execute(null);
+        source.NewHotkeyKey = "3";
+        source.NewHotkeyProfileId = custom.Id;
+        source.AddProfileHotkeyCommand.Execute(null);
+        source.NewRuleProcess = "game";
+        source.NewRuleProfileId = "natural";
+        source.AddAppRuleCommand.Execute(null);
+        source.ScheduleTransitionSeconds = 30;
+        var file = Path.Combine(sourceDir.Path, "backup.json");
+        sourceShell.SavePath = file;
+        source.ExportProfilesCommand.Execute(null);
+
+        var (target, _, targetShell, targetDir) = Create();
+        using var __ = targetDir;
+        targetShell.OpenPath = file;
+        target.ImportProfilesCommand.Execute(null);
+
+        Assert.Contains(target.Profiles, item => item.IsCustom && item.Name == "Compartido");
+        Assert.Contains(target.ScheduleEntries, item => item.Label == "09:15");
+        Assert.Equal("Ctrl+Alt+3", Assert.Single(target.ProfileHotkeys).Shortcut);
+        Assert.Equal("game", Assert.Single(target.AppRules).ProcessName);
+        Assert.Equal(30, target.ScheduleTransitionSeconds);
+        Assert.Contains(target.VisibleProfiles, item => item.IsCustom);
+    }
+
+    [Fact]
+    public void Import_DropsAutomationThatPointsAtUnknownProfiles()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        var file = Path.Combine(dir.Path, "foreign.json");
+        File.WriteAllText(file, """
+            {"SchemaVersion":1,"Profiles":[],"Automation":{
+              "Schedule":{"Enabled":false,"Entries":[{"Time":"08:00","ProfileId":"natural"},{"Time":"09:00","ProfileId":"ghost"},{"Time":"zz","ProfileId":"natural"}]},
+              "AppRules":[{"ProcessName":"a","ProfileId":"ghost"},{"ProcessName":"b","ProfileId":"natural"}],
+              "ProfileHotkeys":[{"ProfileId":"natural","Key":"0"},{"ProfileId":"natural","Key":"F2"}],
+              "GlobalHotkeysEnabled":true}}
+            """);
+        shell.OpenPath = file;
+
+        vm.ImportProfilesCommand.Execute(null);
+
+        Assert.Equal(["08:00"], vm.ScheduleEntries.Select(item => item.Label));
+        Assert.Equal(["b"], vm.AppRules.Select(item => item.ProcessName));
+        Assert.Equal(["Ctrl+Alt+F2"], vm.ProfileHotkeys.Select(item => item.Shortcut));
+    }
+
+    [Fact]
+    public void ScheduleEntry_RejectsInvalidTimes()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        var before = vm.ScheduleEntries.Count;
+        vm.NewScheduleTime = "99:99";
+        vm.NewScheduleProfileId = "natural";
+
+        vm.AddScheduleEntryCommand.Execute(null);
+
+        Assert.Equal(before, vm.ScheduleEntries.Count);
     }
 
     [Fact]
@@ -858,14 +1164,17 @@ public class MainViewModelTests
         vm.NewRuleProfileId = "natural";
         vm.AddAppRuleCommand.Execute(null);
         vm.GlobalHotkeysEnabled = false;
-        vm.ScheduleNightStart = "22:15";
+        vm.NewScheduleTime = "22:15";
+        vm.NewScheduleProfileId = "natural";
+        vm.AddScheduleEntryCommand.Execute(null);
 
         vm.SettingsSection = "Automation";
         vm.ResetSectionCommand.Execute(null);
 
         Assert.Empty(vm.AppRules);
         Assert.True(vm.GlobalHotkeysEnabled);
-        Assert.Equal("20:00", vm.ScheduleNightStart);
+        Assert.DoesNotContain(vm.ScheduleEntries, item => item.Label == "22:15");
+        Assert.Equal(2, vm.ScheduleEntries.Count);
         Assert.False(vm.ScheduleEnabled);
     }
 

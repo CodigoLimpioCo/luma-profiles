@@ -134,6 +134,7 @@ public partial class MainWindow : Window
                 ApplyResponsiveLayout();
                 break;
             case nameof(MainViewModel.GlobalHotkeysEnabled):
+            case nameof(MainViewModel.ProfileHotkeyBindings):
                 UpdateHotkeys();
                 break;
             case nameof(MainViewModel.SidebarWidth):
@@ -179,7 +180,7 @@ public partial class MainWindow : Window
     {
         var handle = new WindowInteropHelper(this).Handle;
         if (handle == IntPtr.Zero) return;
-        if (_viewModel.GlobalHotkeysEnabled) _hotkeys.Register(handle); else _hotkeys.Unregister();
+        if (_viewModel.GlobalHotkeysEnabled) _hotkeys.Register(handle, _viewModel.ProfileHotkeyBindings); else _hotkeys.Unregister();
     }
 
     private void ShowFromTray()
@@ -395,15 +396,9 @@ public partial class MainWindow : Window
             ConstrainMaximizedBounds(hwnd, lParam);
             handled = true;
         }
-        else if (HotkeyService.FromMessage(message, wParam) is { } hotkey)
+        else if (HandleHotkey(message, wParam))
         {
             handled = true;
-            switch (hotkey)
-            {
-                case HotkeyAction.NextProfile: _viewModel.CycleProfile(+1); break;
-                case HotkeyAction.PreviousProfile: _viewModel.CycleProfile(-1); break;
-                case HotkeyAction.Neutralize: _viewModel.ApplyNeutral(); break;
-            }
         }
         else if (message is NativeMethods.WmDisplayChange or NativeMethods.WmDeviceChange)
         {
@@ -412,21 +407,44 @@ public partial class MainWindow : Window
         }
         else if (message == NativeMethods.WmPowerBroadcast)
         {
-            var powerEvent = wParam.ToInt32();
-            if (powerEvent is NativeMethods.PbtApmResumeAutomatic or NativeMethods.PbtApmResumeSuspend)
+            HandlePowerBroadcast(wParam.ToInt32(), lParam);
+        }
+        return IntPtr.Zero;
+    }
+
+    private bool HandleHotkey(int message, IntPtr wParam)
+    {
+        if (_hotkeys.ProfileFromMessage(message, wParam) is { } profileId)
+        {
+            _viewModel.ApplyProfileById(profileId);
+            return true;
+        }
+
+        if (HotkeyService.FromMessage(message, wParam) is not { } hotkey) return false;
+        switch (hotkey)
+        {
+            case HotkeyAction.NextProfile: _viewModel.CycleProfile(+1); break;
+            case HotkeyAction.PreviousProfile: _viewModel.CycleProfile(-1); break;
+            case HotkeyAction.Neutralize: _viewModel.ApplyNeutral(); break;
+        }
+
+        return true;
+    }
+
+    private void HandlePowerBroadcast(int powerEvent, IntPtr lParam)
+    {
+        if (powerEvent is NativeMethods.PbtApmResumeAutomatic or NativeMethods.PbtApmResumeSuspend)
+        {
+            _viewModel.RequestReapply();
+        }
+        else if (powerEvent == NativeMethods.PbtPowerSettingChange && lParam != IntPtr.Zero)
+        {
+            var setting = Marshal.PtrToStructure<NativeMethods.PowerBroadcastSetting>(lParam);
+            if (setting.DataLength > 0 && setting.Data != 0)
             {
                 _viewModel.RequestReapply();
             }
-            else if (powerEvent == NativeMethods.PbtPowerSettingChange && lParam != IntPtr.Zero)
-            {
-                var setting = Marshal.PtrToStructure<NativeMethods.PowerBroadcastSetting>(lParam);
-                if (setting.DataLength > 0 && setting.Data != 0)
-                {
-                    _viewModel.RequestReapply();
-                }
-            }
         }
-        return IntPtr.Zero;
     }
 
     private static class NativeMethods

@@ -2,6 +2,17 @@
 
 ## Sin publicar
 
+### Añadido
+- Horarios múltiples: el horario automático admite cualquier cantidad de tramos (hora → perfil) en vez de solo día y noche. Los ajustes anteriores se migran solos.
+- Amanecer y atardecer automáticos: un tramo puede seguir la salida o la puesta del sol (con desfase en minutos) según tu latitud y longitud; se calcula sin conexión.
+- Transición suave: al cambiar de perfil por horario, la pantalla pasa gradualmente de uno al otro (sin transición, 5 s, 15 s, 30 s, 1 min o 5 min). Cualquier acción tuya la interrumpe.
+- Atajos por perfil: Ctrl+Alt + una tecla (1-9 o F1-F12) aplica el perfil elegido.
+- Perfiles personalizados: guarda los valores del panel de ajuste como un perfil propio (categoría Personalizados), renómbralo o elimínalo. Al eliminarlo se quita también de horarios, reglas y atajos.
+- Exportar e importar ahora incluye tus perfiles personalizados, el horario, las reglas por aplicación y los atajos; los archivos anteriores siguen funcionando.
+
+### Corregido
+- Al maximizar, la ventana ya no se extiende bajo la barra de tareas ni se corta por abajo.
+
 ### Mantenimiento
 - Los estilos y plantillas de la interfaz pasan de `MainWindow.xaml` a `Themes/ControlStyles.xaml` (de 2.640 a 1.207 líneas), sin cambios visuales.
 - Los errores al leer el tema de Windows, el inicio con Windows y los idiomas incluidos ahora quedan en el registro en vez de ignorarse.

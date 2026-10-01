@@ -44,7 +44,9 @@ public sealed class ApplicationSettingsStore
                     settings.MonitorCorrections ??= [];
                     settings.OriginalMonitorStates ??= [];
                     settings.AppRules ??= [];
+                    settings.ProfileHotkeys ??= [];
                     settings.Schedule ??= new ScheduleSettings();
+                    settings.Schedule.EnsureEntries();
                     if (_manageStartup) settings.StartWithWindows = IsStartupEnabled();
                     return settings;
                 }
@@ -58,6 +60,7 @@ public sealed class ApplicationSettingsStore
         }
 
         var defaults = new ApplicationSettings();
+        defaults.Schedule.EnsureEntries();
         if (_manageStartup) defaults.StartWithWindows = SetStartupEnabled(enabled: true);
         try
         {

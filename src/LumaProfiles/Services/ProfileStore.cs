@@ -55,21 +55,42 @@ public sealed class ProfileStore
     public void Save(IEnumerable<DisplayProfile> profiles) =>
         AtomicFile.WriteAllText(ProfilesPath, Serialize(profiles));
 
-    public void Export(string path, IEnumerable<DisplayProfile> profiles) =>
-        AtomicFile.WriteAllText(path, Serialize(profiles));
+    public void Export(string path, IEnumerable<DisplayProfile> profiles, AutomationBackup? automation = null) =>
+        AtomicFile.WriteAllText(path, Serialize(profiles, automation));
+
+    /// <summary>The schedule, rules and shortcuts stored in an exported file, or null for older/profile-only files.</summary>
+    public AutomationBackup? ReadAutomation(string path)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        return document.RootElement.ValueKind == JsonValueKind.Object
+            ? document.RootElement.Deserialize<ProfilesFile>(JsonOptions)?.Automation
+            : null;
+    }
 
     /// <summary>Reads a profile file and copies matching adjustments/favorites into <paramref name="target"/>.</summary>
     /// <returns>Number of profiles updated.</returns>
-    public int Import(string path, IEnumerable<DisplayProfile> target)
+    public int Import(string path, ICollection<DisplayProfile> target)
     {
-        var imported = ParseSaved(File.ReadAllText(path));
         var updated = 0;
-        foreach (var profile in target)
+        foreach (var source in ParseSaved(File.ReadAllText(path)))
         {
-            var source = imported.FirstOrDefault(item => item.Id.Equals(profile.Id, StringComparison.OrdinalIgnoreCase));
-            if (source is null) continue;
-            profile.CopyAdjustmentsFrom(source);
-            profile.IsFavorite = source.IsFavorite;
+            var profile = target.FirstOrDefault(item => item.Id.Equals(source.Id, StringComparison.OrdinalIgnoreCase));
+            if (profile is null)
+            {
+                if (!source.IsCustom) continue;
+                target.Add(source.Clone());
+            }
+            else
+            {
+                profile.CopyAdjustmentsFrom(source);
+                profile.IsFavorite = source.IsFavorite;
+                if (profile.IsCustom && source.IsCustom)
+                {
+                    profile.Name = source.Name;
+                    profile.Description = source.Description;
+                }
+            }
+
             updated++;
         }
 
@@ -79,7 +100,15 @@ public sealed class ProfileStore
     public DisplayProfile GetDefault(string id) =>
         Defaults.First(profile => profile.Id.Equals(id, StringComparison.OrdinalIgnoreCase)).Clone();
 
-    private List<DisplayProfile> Merge(List<DisplayProfile> saved) =>
+    private List<DisplayProfile> Merge(List<DisplayProfile> saved)
+    {
+        var merged = MergeDefaults(saved);
+        var known = merged.Select(profile => profile.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        merged.AddRange(saved.Where(profile => profile.IsCustom && known.Add(profile.Id)).Select(profile => profile.Clone()));
+        return merged;
+    }
+
+    private List<DisplayProfile> MergeDefaults(List<DisplayProfile> saved) =>
         Defaults.Select(defaultProfile =>
         {
             var merged = defaultProfile.Clone();
@@ -125,8 +154,10 @@ public sealed class ProfileStore
         return file.Profiles;
     }
 
-    private static string Serialize(IEnumerable<DisplayProfile> profiles) =>
-        JsonSerializer.Serialize(new ProfilesFile { SchemaVersion = CurrentSchemaVersion, Profiles = profiles.ToList() }, JsonOptions);
+    private static string Serialize(IEnumerable<DisplayProfile> profiles, AutomationBackup? automation = null) =>
+        JsonSerializer.Serialize(
+            new ProfilesFile { SchemaVersion = CurrentSchemaVersion, Profiles = profiles.ToList(), Automation = automation },
+            JsonOptions);
 
     private static List<DisplayProfile> LoadDefaults()
     {
@@ -141,5 +172,6 @@ public sealed class ProfileStore
     {
         public int SchemaVersion { get; set; }
         public List<DisplayProfile> Profiles { get; set; } = [];
+        public AutomationBackup? Automation { get; set; }
     }
 }

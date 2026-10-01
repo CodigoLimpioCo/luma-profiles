@@ -149,7 +149,7 @@ public sealed partial class MainViewModel
         {
             var path = _shell.PickSaveFile(T("ExportProfiles"), "luma-profiles.json");
             if (path is null) return;
-            _profileStore.Export(path, Profiles);
+            _profileStore.Export(path, Profiles, BuildAutomationBackup());
             StatusMessage = L("ProfilesExported", System.IO.Path.GetFileName(path));
         }
         catch (Exception exception)
@@ -167,7 +167,8 @@ public sealed partial class MainViewModel
             if (path is null) return;
             var updated = _profileStore.Import(path, Profiles);
             SaveProfiles();
-            if (_favoritesOnly) OnFiltersChanged();
+            if (_profileStore.ReadAutomation(path) is { } automation) ApplyAutomationBackup(automation);
+            RefreshProfileCatalog();
             StatusMessage = L("ProfilesImported", updated);
         }
         catch (Exception exception)
@@ -189,4 +190,49 @@ public sealed partial class MainViewModel
             StatusMessage = T("SettingsSaveFailed");
         }
     }
+
+    private AutomationBackup BuildAutomationBackup() => new()
+    {
+        Schedule = _settings.Schedule,
+        AppRules = _settings.AppRules,
+        ProfileHotkeys = _settings.ProfileHotkeys,
+        GlobalHotkeysEnabled = _settings.GlobalHotkeysEnabled,
+    };
+
+    /// <summary>Replaces the schedule, rules and shortcuts with an imported set, dropping anything that points at an unknown profile.</summary>
+    private void ApplyAutomationBackup(AutomationBackup backup)
+    {
+        bool Known(string id) => FindProfile(id) is not null;
+
+        if (backup.Schedule is { } schedule)
+        {
+            schedule.Entries = schedule.EnsureEntries().Where(entry => Known(entry.ProfileId) && IsValidScheduleEntry(entry)).ToList();
+            schedule.TransitionSeconds = NearestTransition(schedule.TransitionSeconds);
+            if (schedule.Latitude is not null and (< -90 or > 90)) schedule.Latitude = null;
+            if (schedule.Longitude is not null and (< -180 or > 180)) schedule.Longitude = null;
+            _settings.Schedule = schedule;
+        }
+
+        _settings.AppRules = backup.AppRules.Where(rule => Known(rule.ProfileId) && AppRuleEngine.Normalize(rule.ProcessName).Length > 0).ToList();
+        _settings.ProfileHotkeys = backup.ProfileHotkeys
+            .Where(hotkey => Known(hotkey.ProfileId) && HotkeyService.TryParseKey(hotkey.Key, out _))
+            .GroupBy(hotkey => hotkey.Key)
+            .Select(group => group.Last())
+            .ToList();
+        GlobalHotkeysEnabled = backup.GlobalHotkeysEnabled;
+
+        SaveSettings();
+        _ruleEngine.Reset();
+        RefreshAutomationLists();
+        foreach (var property in new[] { nameof(ScheduleEnabled), nameof(ScheduleLatitude), nameof(ScheduleLongitude), nameof(ScheduleTransitionSeconds) })
+        {
+            Raise(property);
+        }
+
+        RestartSchedule();
+    }
+
+    private static bool IsValidScheduleEntry(ScheduleEntry entry) => entry.Sun == SunEvent.None
+        ? ScheduleResolver.TryParseTime(entry.Time, out _)
+        : Math.Abs(entry.OffsetMinutes) <= MaxSunOffsetMinutes;
 }

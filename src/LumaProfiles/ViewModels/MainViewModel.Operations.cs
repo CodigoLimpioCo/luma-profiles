@@ -37,6 +37,7 @@ public sealed partial class MainViewModel
         var completion = new TaskCompletionSource();
         if (visible)
         {
+            CancelTransition();
             _visibleOperations++;
             RaiseBusy();
         }

@@ -17,24 +17,49 @@ public sealed class DisplayProfile : INotifyPropertyChanged
     private string _colorTemperature = "Usuario (RGB)";
     private bool _isActive;
     private bool _isFavorite;
+    private string _name = string.Empty;
+    private string _description = string.Empty;
     private string? _localizedName;
     private string? _localizedCategory;
     private string? _localizedDescription;
 
     public required string Id { get; init; }
-    public required string Name { get; init; }
+    public required string Name
+    {
+        get => _name;
+        set
+        {
+            if (!Set(ref _name, value)) return;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayName)));
+        }
+    }
+
     public required string Category { get; init; }
-    public required string Description { get; init; }
+
+    public required string Description
+    {
+        get => _description;
+        set
+        {
+            if (!Set(ref _description, value)) return;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DisplayDescription)));
+        }
+    }
+
     public required string PreviewStart { get; init; }
     public required string PreviewEnd { get; init; }
     public string PowerPlan { get; init; } = "Balanced";
     public bool IsHdr { get; init; }
+
+    /// <summary>A profile the user saved; its name and description are theirs and are never translated.</summary>
+    public bool IsCustom { get; init; }
+
     [JsonIgnore]
-    public string DisplayName => _localizedName ?? Name;
+    public string DisplayName => IsCustom ? Name : _localizedName ?? Name;
     [JsonIgnore]
     public string DisplayCategory => _localizedCategory ?? Category;
     [JsonIgnore]
-    public string DisplayDescription => _localizedDescription ?? Description;
+    public string DisplayDescription => IsCustom ? Description : _localizedDescription ?? Description;
 
     public int Brightness { get => _brightness; set => Set(ref _brightness, value); }
     public int Contrast { get => _contrast; set => Set(ref _contrast, value); }
@@ -73,6 +98,7 @@ public sealed class DisplayProfile : INotifyPropertyChanged
         PreviewEnd = PreviewEnd,
         PowerPlan = PowerPlan,
         IsHdr = IsHdr,
+        IsCustom = IsCustom,
         Brightness = Brightness,
         Contrast = Contrast,
         Saturation = Saturation,
@@ -108,10 +134,11 @@ public sealed class DisplayProfile : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private void Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    private bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
-        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+        if (EqualityComparer<T>.Default.Equals(field, value)) return false;
         field = value;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        return true;
     }
 }

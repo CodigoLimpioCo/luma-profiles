@@ -3,29 +3,48 @@ using LumaProfiles.Models;
 
 namespace LumaProfiles.Services;
 
-public enum ScheduleSlot { Day, Night }
-
 public static class ScheduleResolver
 {
-    private static readonly TimeOnly DefaultDayStart = new(7, 0);
-    private static readonly TimeOnly DefaultNightStart = new(20, 0);
-
     public static bool TryParseTime(string? text, out TimeOnly time) =>
         TimeOnly.TryParseExact(text?.Trim(), "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
 
-    /// <summary>Returns which slot is active at <paramref name="now"/>; windows may wrap past midnight.</summary>
-    public static ScheduleSlot Resolve(ScheduleSettings schedule, TimeOnly now)
+    /// <summary>
+    /// The time of day an entry starts on <paramref name="date"/>; null when it cannot be known (invalid time, a sun
+    /// entry without a location, or no sunrise/sunset that day).
+    /// </summary>
+    public static TimeOnly? EntryTime(ScheduleSettings schedule, ScheduleEntry entry, DateOnly date, TimeSpan utcOffset)
     {
-        var dayStart = TryParseTime(schedule.DayStart, out var d) ? d : DefaultDayStart;
-        var nightStart = TryParseTime(schedule.NightStart, out var n) ? n : DefaultNightStart;
-        if (dayStart == nightStart) return ScheduleSlot.Day;
+        if (entry.Sun == SunEvent.None) return TryParseTime(entry.Time, out var fixedTime) ? fixedTime : null;
+        if (schedule.Latitude is not { } latitude || schedule.Longitude is not { } longitude) return null;
 
-        var isDay = dayStart < nightStart
-            ? now >= dayStart && now < nightStart
-            : now >= dayStart || now < nightStart;
-        return isDay ? ScheduleSlot.Day : ScheduleSlot.Night;
+        var (sunrise, sunset) = SolarTimes.Calculate(date, latitude, longitude, utcOffset);
+        var sunTime = entry.Sun == SunEvent.Sunrise ? sunrise : sunset;
+        return sunTime?.AddMinutes(entry.OffsetMinutes);
     }
 
-    public static string ProfileFor(ScheduleSettings schedule, ScheduleSlot slot) =>
-        slot == ScheduleSlot.Day ? schedule.DayProfileId : schedule.NightProfileId;
+    /// <summary>
+    /// Returns the entry in effect at <paramref name="now"/>: the latest one that has started today, or, before the
+    /// first one starts, the last entry of the previous day. Entries whose time is unknown are ignored.
+    /// </summary>
+    public static ScheduleEntry? Resolve(ScheduleSettings schedule, DateTime now, TimeZoneInfo? zone = null)
+    {
+        var offset = (zone ?? TimeZoneInfo.Local).GetUtcOffset(now);
+        var date = DateOnly.FromDateTime(now);
+        var clock = TimeOnly.FromDateTime(now);
+
+        var timed = new List<(ScheduleEntry Entry, TimeOnly Time)>();
+        foreach (var entry in schedule.Entries ?? [])
+        {
+            if (EntryTime(schedule, entry, date, offset) is { } time) timed.Add((entry, time));
+        }
+        if (timed.Count == 0) return null;
+
+        var ordered = timed.OrderBy(item => item.Time).ToList();
+        var started = ordered.LastOrDefault(item => item.Time <= clock);
+        return started.Entry ?? ordered[^1].Entry;
+    }
+
+    /// <summary>Fixed entries only; kept for callers that have no date or time zone at hand.</summary>
+    public static ScheduleEntry? Resolve(ScheduleSettings schedule, TimeOnly now) =>
+        Resolve(schedule, DateTime.Today.Add(now.ToTimeSpan()));
 }

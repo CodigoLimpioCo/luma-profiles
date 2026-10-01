@@ -42,7 +42,7 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isMaximized;
     private bool _isLeftPanelVisible;
     private bool _isRightPanelVisible;
-    private ScheduleSlot? _lastScheduleSlot;
+    private ScheduleEntry? _lastScheduleEntry;
     private string? _profileBeforeRule;
     private string _newRuleProcess = string.Empty;
     private string? _newRuleProfileId;
@@ -83,7 +83,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshLocalizedOptions();
         InitializeFilters();
         RefreshVisibleProfiles();
-        RefreshAppRules();
+        RefreshAutomationLists();
 
         ApplyProfileCommand = new RelayCommand<DisplayProfile>(profile =>
         {
@@ -125,6 +125,12 @@ public sealed partial class MainViewModel : ObservableObject
         ExportProfilesCommand = new RelayCommand(ExportProfiles);
         ImportProfilesCommand = new RelayCommand(ImportProfiles);
         AddAppRuleCommand = new RelayCommand(AddAppRule);
+        AddProfileHotkeyCommand = new RelayCommand(AddProfileHotkey);
+        RemoveProfileHotkeyCommand = new RelayCommand<ProfileHotkeyItem>(RemoveProfileHotkey);
+        SaveAsNewProfileCommand = new RelayCommand(SaveAsNewProfile);
+        DeleteCustomProfileCommand = new RelayCommand(DeleteCustomProfile);
+        AddScheduleEntryCommand = new RelayCommand(AddScheduleEntry);
+        RemoveScheduleEntryCommand = new RelayCommand<ScheduleEntryItem>(RemoveScheduleEntry);
         RemoveAppRuleCommand = new RelayCommand<AppRuleItem>(RemoveAppRule);
 
         AdoptRestorePointCopy();
@@ -154,6 +160,7 @@ public sealed partial class MainViewModel : ObservableObject
     public IReadOnlyList<LanguageOption> Languages { get; }
     public ObservableCollection<LocalizedOption> ColorTemperatureOptions { get; } = [];
     public ObservableCollection<AppRuleItem> AppRules { get; } = [];
+    public ObservableCollection<ScheduleEntryItem> ScheduleEntries { get; } = [];
 
     public ICommand ApplyProfileCommand { get; }
     public ICommand EditProfileCommand { get; }
@@ -175,6 +182,12 @@ public sealed partial class MainViewModel : ObservableObject
     public ICommand OpenHdrSettingsCommand { get; }
     public ICommand ExportProfilesCommand { get; }
     public ICommand ImportProfilesCommand { get; }
+    public ICommand AddProfileHotkeyCommand { get; }
+    public ICommand RemoveProfileHotkeyCommand { get; }
+    public ICommand SaveAsNewProfileCommand { get; }
+    public ICommand DeleteCustomProfileCommand { get; }
+    public ICommand AddScheduleEntryCommand { get; }
+    public ICommand RemoveScheduleEntryCommand { get; }
     public ICommand AddAppRuleCommand { get; }
     public ICommand RemoveAppRuleCommand { get; }
 
@@ -188,6 +201,8 @@ public sealed partial class MainViewModel : ObservableObject
             _selectedProfile = value;
             _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
             Raise();
+            Raise(nameof(SelectedProfileIsCustom));
+            Raise(nameof(SelectedProfileIsBuiltIn));
             ScheduleLivePreview();
         }
     }
@@ -360,7 +375,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshLocalizedOptions();
         RefreshFilterText();
         RefreshVisibleProfiles();
-        RefreshAppRules();
+        RefreshAutomationLists();
         StatusMessage = T("Ready");
         RaiseUiProperties();
         Raise(nameof(LanguageCode));
@@ -386,6 +401,7 @@ public sealed partial class MainViewModel : ObservableObject
         ColorTemperatureOptions.Add(new LocalizedOption("Cálido 5000 K", T("Warm5000")));
         ColorTemperatureOptions.Add(new LocalizedOption("Neutro 6500 K", T("Neutral6500")));
         ColorTemperatureOptions.Add(new LocalizedOption("Frío 7500 K", T("Cool7500")));
+        RefreshScheduleOptions();
     }
 
     private string T(string key) => LocalizationService.Text(key, _selectedLanguage.Code);

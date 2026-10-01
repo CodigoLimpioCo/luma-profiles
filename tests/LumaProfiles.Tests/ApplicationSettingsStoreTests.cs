@@ -24,7 +24,7 @@ public class ApplicationSettingsStoreTests
         var store = new ApplicationSettingsStore(dir.Path, manageStartup: false);
         var settings = store.Load();
         settings.IsDarkTheme = false;
-        settings.Schedule = new ScheduleSettings { Enabled = true, NightStart = "21:30" };
+        settings.Schedule = new ScheduleSettings { Enabled = true, Entries = [new ScheduleEntry { Time = "21:30", ProfileId = "eyes-night" }] };
         settings.AppRules.Add(new AppProfileRule { ProcessName = "game", ProfileId = "gamer-competitive" });
         store.Save(settings);
 
@@ -32,7 +32,7 @@ public class ApplicationSettingsStoreTests
 
         Assert.False(reloaded.IsDarkTheme);
         Assert.True(reloaded.Schedule.Enabled);
-        Assert.Equal("21:30", reloaded.Schedule.NightStart);
+        Assert.Equal("21:30", Assert.Single(reloaded.Schedule.Entries!).Time);
         Assert.Equal("gamer-competitive", Assert.Single(reloaded.AppRules).ProfileId);
     }
 

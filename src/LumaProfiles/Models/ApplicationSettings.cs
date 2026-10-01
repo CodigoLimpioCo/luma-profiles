@@ -15,16 +15,63 @@ public sealed partial class ApplicationSettings
     public bool GlobalHotkeysEnabled { get; set; } = true;
     public ScheduleSettings Schedule { get; set; } = new();
     public List<AppProfileRule> AppRules { get; set; } = [];
+    public List<ProfileHotkey> ProfileHotkeys { get; set; } = [];
 }
 
-/// <summary>Switches between a day and a night profile at fixed local times.</summary>
+/// <summary>Applies a profile at each configured local time; the latest entry that has started stays in effect.</summary>
 public sealed class ScheduleSettings
 {
     public bool Enabled { get; set; }
+
+    /// <summary>Seconds a scheduled change takes to fade in; 0 switches instantly.</summary>
+    public int TransitionSeconds { get; set; } = 10;
+
+    /// <summary>Decimal degrees (north / east positive); needed only by sunrise and sunset entries.</summary>
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+
+    /// <summary>Null only in files written before multiple time slots existed; see <see cref="EnsureEntries"/>.</summary>
+    public List<ScheduleEntry>? Entries { get; set; }
+
+    // Legacy day/night pair, read only to migrate old settings.json files into <see cref="Entries"/>.
     public string DayProfileId { get; set; } = "natural";
     public string NightProfileId { get; set; } = "eyes-night";
     public string DayStart { get; set; } = "07:00";
     public string NightStart { get; set; } = "20:00";
+
+    public List<ScheduleEntry> EnsureEntries() => Entries ??=
+    [
+        new ScheduleEntry { Time = DayStart, ProfileId = DayProfileId },
+        new ScheduleEntry { Time = NightStart, ProfileId = NightProfileId },
+    ];
+}
+
+public enum SunEvent { None, Sunrise, Sunset }
+
+public sealed class ScheduleEntry
+{
+    /// <summary>HH:mm for fixed entries; ignored when <see cref="Sun"/> is set.</summary>
+    public string Time { get; set; } = "07:00";
+    public string ProfileId { get; set; } = string.Empty;
+    public SunEvent Sun { get; set; } = SunEvent.None;
+    /// <summary>Minutes after (positive) or before (negative) the sun event.</summary>
+    public int OffsetMinutes { get; set; }
+}
+
+/// <summary>Applies a profile with a global Ctrl+Alt+<see cref="Key"/> shortcut.</summary>
+public sealed class ProfileHotkey
+{
+    public string ProfileId { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
+}
+
+/// <summary>Everything under "Automation" that travels with an exported profile file.</summary>
+public sealed class AutomationBackup
+{
+    public ScheduleSettings? Schedule { get; set; }
+    public List<AppProfileRule> AppRules { get; set; } = [];
+    public List<ProfileHotkey> ProfileHotkeys { get; set; } = [];
+    public bool GlobalHotkeysEnabled { get; set; } = true;
 }
 
 /// <summary>Applies a profile while the named process owns the foreground window.</summary>

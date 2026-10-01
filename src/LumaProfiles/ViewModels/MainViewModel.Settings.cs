@@ -368,14 +368,16 @@ public sealed partial class MainViewModel
             case "Automation":
                 GlobalHotkeysEnabled = true;
                 ScheduleEnabled = false;
-                ScheduleDayProfileId = "natural";
-                ScheduleNightProfileId = "eyes-night";
-                ScheduleDayStart = "07:00";
-                ScheduleNightStart = "20:00";
+                _settings.Schedule = new Models.ScheduleSettings();
                 _settings.AppRules.Clear();
+                _settings.ProfileHotkeys.Clear();
                 _ruleEngine.Reset();
                 SaveSettings();
-                RefreshAppRules();
+                RefreshAutomationLists();
+                foreach (var property in new[] { nameof(ScheduleLatitude), nameof(ScheduleLongitude), nameof(ScheduleTransitionSeconds) })
+                {
+                    Raise(property);
+                }
                 break;
             default:
                 return;
