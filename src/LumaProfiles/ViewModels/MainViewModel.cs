@@ -230,6 +230,12 @@ public sealed partial class MainViewModel : ObservableObject
         set
         {
             if (_startWithWindows == value) return;
+            if (_settingsStore.UsesPackagedStartup)
+            {
+                _ = ChangePackagedStartupAsync(value);
+                return;
+            }
+
             if (!_settingsStore.SetStartupEnabled(value))
             {
                 StatusMessage = T("StartupChangeFailed");
@@ -242,6 +248,41 @@ public sealed partial class MainViewModel : ObservableObject
             SaveSettings();
             Raise();
             StatusMessage = T(value ? "StartupEnabled" : "StartupDisabled");
+        }
+    }
+
+    /// <summary>Store build: the startup task is asked of Windows, which may show a prompt or refuse.</summary>
+    private async Task ChangePackagedStartupAsync(bool enable)
+    {
+        var result = await _settingsStore.SetPackagedStartupAsync(enable);
+        if (result != StartupResult.Done)
+        {
+            StatusMessage = T(result switch
+            {
+                StartupResult.BlockedByUser => "StartupBlockedByUser",
+                StartupResult.BlockedByPolicy => "StartupBlockedByPolicy",
+                _ => "StartupChangeFailed",
+            });
+            Raise(nameof(StartWithWindows));
+            return;
+        }
+
+        _startWithWindows = enable;
+        _settings.StartWithWindows = enable;
+        SaveSettings();
+        Raise(nameof(StartWithWindows));
+        StatusMessage = T(enable ? "StartupEnabled" : "StartupDisabled");
+    }
+
+    public bool StartHiddenAtSignIn
+    {
+        get => _settings.StartHiddenAtSignIn;
+        set
+        {
+            if (_settings.StartHiddenAtSignIn == value) return;
+            _settings.StartHiddenAtSignIn = value;
+            SaveSettings();
+            Raise();
         }
     }
 
@@ -333,6 +374,10 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Requests a debounced re-application of the saved per-monitor corrections.</summary>
     public void RequestReapply() => SchedulePersistentCorrectionReapply();
 
+    /// <summary>
+    /// The panic action (Ctrl+Alt+0, tray). It never asks for confirmation: it is how you get out of a bad
+    /// state, and an unanswered question would revert straight back to it.
+    /// </summary>
     public void ApplyNeutral() => _ = EnqueueAutomation(NeutralizeAsync);
 
     private void SelectedProfile_PropertyChanged(object? sender, PropertyChangedEventArgs e)

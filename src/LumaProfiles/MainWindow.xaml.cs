@@ -51,6 +51,10 @@ public partial class MainWindow : Window
         {
             if (!_isRightPanelVisible) SetInspectorOpen(true);
         };
+        _viewModel.ConfirmationStarted += (_, _) =>
+        {
+            if (!IsVisible) ShowFromTray();
+        };
         _viewModel.ScrollToTopRequested += (_, _) => ProfilesScrollViewer?.ScrollToTop();
         _foregroundWatcher.ForegroundProcessChanged += _viewModel.OnForegroundProcessChanged;
         StateChanged += (_, _) => PushWindowState();
@@ -76,6 +80,9 @@ public partial class MainWindow : Window
         new WindowInteropHelper(this).EnsureHandle();
         EnsureInitialized();
     }
+
+    /// <summary>The user's choice for sign-in launches: stay in the tray or open the window.</summary>
+    public bool StartHiddenAtSignIn => _viewModel.StartHiddenAtSignIn;
 
     /// <summary>Windows is signing out or shutting down: close for real instead of hiding to the tray.</summary>
     public void PrepareToExit() => _isExiting = true;

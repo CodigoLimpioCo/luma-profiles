@@ -20,7 +20,7 @@ public sealed partial class MainViewModel
         var current = Profiles.FirstOrDefault(item => item.IsActive)?.Id ?? SelectedProfile.Id;
         if (Cycle(pool, current, direction) is not { } next) return;
         SelectedProfile = next;
-        _ = EnqueueAutomation(() => ApplyAsync(next));
+        _ = EnqueueUserTriggered(next);
     }
 
     internal static DisplayProfile? Cycle(IReadOnlyList<DisplayProfile> pool, string? currentId, int direction)
@@ -37,7 +37,18 @@ public sealed partial class MainViewModel
     {
         if (FindProfile(profileId) is not { } profile) return;
         SelectedProfile = profile;
-        _ = EnqueueAutomation(() => ApplyAsync(profile));
+        _ = EnqueueUserTriggered(profile);
+    }
+
+    /// <summary>
+    /// A profile the user asked for through a hotkey or the tray menu. Like a click in the window it asks
+    /// "keep changes?" (unless turned off), because a bad profile applied blindly can leave the screen unreadable.
+    /// The schedule and per-app rules cannot ask: nobody is there to answer.
+    /// </summary>
+    private Task EnqueueUserTriggered(DisplayProfile profile)
+    {
+        var detail = L("ConfirmDetailApply", profile.DisplayName);
+        return Enqueue(() => RunWithConfirmationAsync(() => ApplyAsync(profile), detail, L("Applying", profile.DisplayName)));
     }
 
     private DisplayProfile? FindProfile(string id) =>

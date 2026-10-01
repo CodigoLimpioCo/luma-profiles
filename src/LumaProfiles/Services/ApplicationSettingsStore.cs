@@ -49,8 +49,9 @@ public sealed class ApplicationSettingsStore
                     settings.Schedule.EnsureEntries();
                     if (_manageStartup)
                     {
-                        settings.StartWithWindows = IsStartupEnabled();
-                        if (settings.StartWithWindows) UpgradeLegacyStartupEntry();
+                        // Store build: the startup task the user may have switched off in Windows; otherwise the Run key.
+                        settings.StartWithWindows = PackagedStartup.IsEnabled() ?? IsStartupEnabled();
+                        if (settings.StartWithWindows && !PackagedStartup.IsPackaged) UpgradeLegacyStartupEntry();
                     }
                     return settings;
                 }
@@ -65,7 +66,8 @@ public sealed class ApplicationSettingsStore
 
         var defaults = new ApplicationSettings();
         defaults.Schedule.EnsureEntries();
-        if (_manageStartup) defaults.StartWithWindows = SetStartupEnabled(enabled: true);
+        // The Store build never turns startup on by itself: enabling its startup task is the user's decision.
+        if (_manageStartup && !PackagedStartup.IsPackaged) defaults.StartWithWindows = SetStartupEnabled(enabled: true);
         try
         {
             Save(defaults);
@@ -79,6 +81,11 @@ public sealed class ApplicationSettingsStore
 
     public void Save(ApplicationSettings settings) =>
         AtomicFile.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, JsonOptions));
+
+    /// <summary>True in the Microsoft Store (MSIX) build, which starts with Windows through a manifest startup task.</summary>
+    public bool UsesPackagedStartup => PackagedStartup.IsPackaged;
+
+    public Task<StartupResult> SetPackagedStartupAsync(bool enabled) => PackagedStartup.SetEnabledAsync(enabled);
 
     public bool SetStartupEnabled(bool enabled)
     {
@@ -116,7 +123,8 @@ public sealed class ApplicationSettingsStore
             var executablePath = Environment.ProcessPath;
             if (string.IsNullOrWhiteSpace(executablePath)) return;
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
-            if (key?.GetValue(RunValueName) is string value && value == StartupArguments.LegacyStartupCommand(executablePath))
+            if (key?.GetValue(RunValueName) is string value
+                && (value == StartupArguments.LegacyStartupCommand(executablePath) || value == StartupArguments.PreviousStartupCommand(executablePath)))
             {
                 key.SetValue(RunValueName, StartupArguments.StartupCommand(executablePath));
             }

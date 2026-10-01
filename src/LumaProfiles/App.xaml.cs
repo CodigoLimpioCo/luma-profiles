@@ -20,13 +20,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
-        var background = StartupArguments.IsBackground(e.Args);
+        var forceBackground = StartupArguments.IsBackground(e.Args);
+        var signIn = StartupArguments.IsSignInLaunch(e.Args) || PackagedStartup.WasLaunchedByStartupTask();
 
         _instanceGuard = new SingleInstanceGuard();
         if (!_instanceGuard.TryAcquire())
         {
             // Opening the app again brings the running copy forward; the sign-in launch stays silent.
-            if (!background) _instanceGuard.SignalExisting();
+            if (!forceBackground && !signIn) _instanceGuard.SignalExisting();
             Shutdown();
             return;
         }
@@ -34,7 +35,7 @@ public partial class App : Application
         var window = new MainWindow();
         MainWindow = window;
         _instanceGuard.ListenForActivation(() => Dispatcher.BeginInvoke(window.ShowFromTray));
-        if (background) window.StartInBackground(); else window.Show();
+        if (forceBackground || (signIn && window.StartHiddenAtSignIn)) window.StartInBackground(); else window.Show();
     }
 
     protected override void OnExit(ExitEventArgs e)

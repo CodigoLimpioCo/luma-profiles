@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.2 — Seguridad de los atajos e inicio en la Store
+
+### Seguridad
+- Los atajos (Ctrl+Alt+flechas y los de cada perfil) y el menú de la bandeja ahora piden «¿Conservar los cambios?» igual que la ventana: si no confirmas en 30 segundos, la pantalla vuelve a como estaba. Si la ventana estaba oculta en la bandeja, se muestra para que puedas responder. Neutralizar (Ctrl+Alt+0) nunca pregunta: es la salida de emergencia. El horario y las reglas por aplicación se aplican sin preguntar porque nadie podría responder.
+- Desactivar la confirmación ahora exige aceptar un aviso que explica el riesgo (un perfil que deje la pantalla ilegible no se revertirá solo, y los atajos aplican de forma definitiva), y mientras esté desactivada se muestra un recuadro de advertencia en Ajustes.
+
+### Añadido
+- Inicio con Windows en la versión de Microsoft Store: el paquete declara una tarea de inicio (`windows.startupTask`), desactivada hasta que la actives desde Ajustes. Si la desactivaste en Windows (Ajustes > Aplicaciones > Inicio), la aplicación te lo indica.
+- Nuevo ajuste «Iniciar en la bandeja»: elige si el inicio con Windows muestra la ventana o deja la aplicación en segundo plano. «Seguir en segundo plano al cerrar la ventana» sigue siendo independiente. Ambas funciones se pueden activar o desactivar por separado.
+
+### Cambios
+- El inicio con Windows ahora pasa `--startup` y respeta el ajuste anterior; las entradas de 0.8.1 (`--background`) se actualizan solas.
+- La aplicación apunta a Windows 10 2004 (19041) o posterior, el mismo mínimo que el paquete de la Store.
+
 ## 0.8.1 — Automatización y perfiles propios
 
 ### Añadido

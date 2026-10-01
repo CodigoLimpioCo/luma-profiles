@@ -37,18 +37,33 @@ public sealed partial class MainViewModel
     public string ConfirmDetail => _confirmDetail;
     public string ConfirmCountdownText => L("ConfirmCountdown", _confirmRemaining);
 
+    /// <summary>Raised when a "keep changes?" question starts, so a window hidden in the tray can come forward.</summary>
+    public event EventHandler? ConfirmationStarted;
+
     public bool ConfirmChanges
     {
         get => _settings.ConfirmChanges;
         set
         {
             if (_settings.ConfirmChanges == value) return;
+            if (!value && !_shell.Confirm(T("ConfirmOffTitle"), T("ConfirmOffMessage")))
+            {
+                // Declined: put the switch back (after the binding has finished writing its value).
+                Raise();
+                System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => Raise(nameof(ConfirmChanges)));
+                return;
+            }
+
             _settings.ConfirmChanges = value;
             if (!value) CommitPending();
             SaveSettings();
             Raise();
+            Raise(nameof(ConfirmChangesDisabled));
         }
     }
+
+    /// <summary>True while changes are applied for good without the 30-second safety net.</summary>
+    public bool ConfirmChangesDisabled => !_settings.ConfirmChanges;
 
     private void InitializeConfirmation()
     {
@@ -91,6 +106,7 @@ public sealed partial class MainViewModel
         _confirmTimer.Stop();
         _confirmTimer.Start();
         RaiseConfirmation();
+        ConfirmationStarted?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>Accepts an outstanding change without asking (automation supersedes the question).</summary>

@@ -359,6 +359,7 @@ public sealed partial class MainViewModel
             case "General":
                 StartWithWindows = true;
                 MinimizeToTray = false;
+                StartHiddenAtSignIn = true;
                 _settings.CloseChoiceAsked = false;
                 ConfirmChanges = true;
                 UseMonitorControls = true;

@@ -766,6 +766,126 @@ public class MainViewModelTests
     }
 
     [Fact]
+    public void ProfileHotkeyAndTray_AskToKeepTheChange_AndRevertIfNotConfirmed()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(Profile(vm, "natural"));
+        vm.KeepChangesCommand.Execute(null);
+        var started = 0;
+        vm.ConfirmationStarted += (_, _) => started++;
+
+        vm.ApplyProfileById("eyes-night");
+
+        Assert.True(vm.IsConfirmationPending);
+        Assert.Equal(1, started);
+        Assert.Equal("eyes-night", monitor.Applied.Last());
+        Assert.True(Profile(vm, "eyes-night").IsActive);
+
+        for (var second = 0; second < MainViewModel.ConfirmSeconds; second++) vm.ConfirmTick();
+
+        Assert.False(vm.IsConfirmationPending);
+        Assert.True(Profile(vm, "natural").IsActive);
+        Assert.False(Profile(vm, "eyes-night").IsActive);
+    }
+
+    [Fact]
+    public void CycleHotkeys_AskToKeepTheChange()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+
+        vm.CycleProfile(+1);
+
+        Assert.True(vm.IsConfirmationPending);
+        vm.KeepChangesCommand.Execute(null);
+        Assert.False(vm.IsConfirmationPending);
+    }
+
+    [Fact]
+    public void Hotkeys_DoNotAskWhenConfirmationIsOff()
+    {
+        var (vm, monitor, shell, dir) = Create();
+        using var _ = dir;
+        shell.ConfirmAnswer = true;
+        vm.ConfirmChanges = false;
+
+        vm.ApplyProfileById("eyes-night");
+        vm.CycleProfile(+1);
+
+        Assert.False(vm.IsConfirmationPending);
+        Assert.Equal(2, monitor.Applied.Count);
+    }
+
+    [Fact]
+    public void NeutralizeHotkey_NeverAsks_BecauseItIsThePanicButton()
+    {
+        var (vm, _, _, dir) = Create();
+        using var _ = dir;
+        vm.ApplyProfileCommand.Execute(Profile(vm, "natural"));
+        vm.KeepChangesCommand.Execute(null);
+
+        vm.ApplyNeutral();
+
+        Assert.False(vm.IsConfirmationPending);
+    }
+
+    [Fact]
+    public void ScheduleAndRules_ApplyWithoutAsking_BecauseNobodyCanAnswer()
+    {
+        var (vm, monitor, _, dir) = Create();
+        using var _ = dir;
+        vm.TransitionDelay = (_, _) => Task.CompletedTask;
+        vm.NewRuleProcess = "game";
+        vm.NewRuleProfileId = "gamer-competitive";
+        vm.AddAppRuleCommand.Execute(null);
+
+        vm.OnForegroundProcessChanged("game");
+
+        Assert.Contains("gamer-competitive", monitor.Applied);
+        Assert.False(vm.IsConfirmationPending);
+    }
+
+    [Fact]
+    public void TurningConfirmationOff_RequiresAcceptingTheRisk()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        var raised = 0;
+        vm.PropertyChanged += (_, e) => raised += e.PropertyName == nameof(MainViewModel.ConfirmChanges) ? 1 : 0;
+
+        shell.ConfirmAnswer = false;
+        vm.ConfirmChanges = false;
+
+        Assert.True(vm.ConfirmChanges);
+        Assert.False(vm.ConfirmChangesDisabled);
+        Assert.Equal(1, shell.ConfirmCalls);
+        Assert.True(raised > 0);
+
+        shell.ConfirmAnswer = true;
+        vm.ConfirmChanges = false;
+
+        Assert.False(vm.ConfirmChanges);
+        Assert.True(vm.ConfirmChangesDisabled);
+        Assert.False(new ApplicationSettingsStore(dir.Path, manageStartup: false).Load().ConfirmChanges);
+    }
+
+    [Fact]
+    public void TurningConfirmationOn_NeverAsks()
+    {
+        var (vm, _, shell, dir) = Create();
+        using var _ = dir;
+        shell.ConfirmAnswer = true;
+        vm.ConfirmChanges = false;
+        var asked = shell.ConfirmCalls;
+
+        vm.ConfirmChanges = true;
+
+        Assert.True(vm.ConfirmChanges);
+        Assert.Equal(asked, shell.ConfirmCalls);
+    }
+
+    [Fact]
     public void ScheduleEntry_RejectsInvalidTimes()
     {
         var (vm, _, _, dir) = Create();
@@ -1038,6 +1158,7 @@ public class MainViewModelTests
         var monitor = new FakeMonitorService { Displays = [Display(1)] };
         var vm = new MainViewModel(monitor, new ProfileStore(dir.Path), new ApplicationSettingsStore(dir.Path, manageStartup: false), new FakeShell(), workRunner: runner, restorePointStore: new RestorePointStore(dir.Path));
 
+        vm.ConfirmChanges = false;
         vm.ApplyProfileById("natural");
         vm.ApplyProfileById("eyes-night");
 
