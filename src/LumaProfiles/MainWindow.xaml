@@ -655,7 +655,7 @@
                     <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,16,0,14"/>
                     <TextBlock Text="{Binding [SaveAsNewProfile]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="11"/>
                     <TextBlock Text="{Binding [SaveAsNewProfileDescription]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,8"/>
-                    <TextBox Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,0,0,8"
+                    <TextBox Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}" Tag="{Binding [CustomProfileName]}" MaxLength="40" Margin="0,0,0,8"
                              ToolTip="{Binding [CustomProfileName]}" AutomationProperties.Name="{Binding [CustomProfileName]}"/>
                     <Button Style="{StaticResource SecondaryButton}" Content="{Binding [SaveAsNewProfile]}" Command="{Binding SaveAsNewProfileCommand}"/>
 
@@ -953,44 +953,57 @@
                                       AutomationProperties.Name="{Binding [GlobalHotkeys]}"
                                       IsChecked="{Binding GlobalHotkeysEnabled, Mode=TwoWay}"/>
                         </Grid>
-                        <StackPanel Margin="0,14,0,0">
-                            <TextBlock Text="{Binding [ProfileHotkeys]}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding [ProfileHotkeysDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                       FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
-                            <ItemsControl ItemsSource="{Binding ProfileHotkeys}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,0,0,6">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                                <Run Text="{Binding Shortcut, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
-                                            </TextBlock>
-                                            <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
-                                                    HorizontalContentAlignment="Center"
-                                                    Command="{Binding DataContext.RemoveProfileHotkeyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="{Binding DataContext[ProfileHotkeyRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    AutomationProperties.Name="{Binding DataContext[ProfileHotkeyRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    AutomationProperties.HelpText="{Binding Shortcut}">
-                                                <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
-                                            </Button>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Grid Margin="0,4,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="72"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <ComboBox ItemsSource="{Binding HotkeyKeyOptions}" SelectedItem="{Binding NewHotkeyKey, Mode=TwoWay}"
-                                          ToolTip="{Binding [ProfileHotkeyKey]}" AutomationProperties.Name="{Binding [ProfileHotkeyKey]}"/>
-                                <ComboBox Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
-                                          AutomationProperties.Name="{Binding [Profiles]}" SelectedValue="{Binding NewHotkeyProfileId, Mode=TwoWay}"/>
-                                <Button Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [ProfileHotkeyAdd]}"
-                                        Command="{Binding AddProfileHotkeyCommand}" Padding="14,8"/>
-                            </Grid>
-                        </StackPanel>
+
+                        <!-- Profile shortcuts -->
+                        <Grid Margin="0,18,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="680"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding [ProfileHotkeys]}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding [ProfileHotkeysDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                           FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
+                                <ItemsControl ItemsSource="{Binding ProfileHotkeys}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,0,0,6">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding Shortcut, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                                </TextBlock>
+                                                <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
+                                                        HorizontalContentAlignment="Center"
+                                                        Command="{Binding DataContext.RemoveProfileHotkeyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="{Binding DataContext[ProfileHotkeyRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        AutomationProperties.Name="{Binding DataContext[ProfileHotkeyRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        AutomationProperties.HelpText="{Binding Shortcut}">
+                                                    <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
+                                                </Button>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="10" Padding="14" Margin="0,4,0,0">
+                                    <Grid>
+                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="96"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding [FieldKey]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                        <ComboBox Grid.Row="1" ItemsSource="{Binding HotkeyKeyOptions}" SelectedItem="{Binding NewHotkeyKey, Mode=TwoWay}"
+                                                  ToolTip="{Binding [ProfileHotkeyKey]}" AutomationProperties.Name="{Binding [ProfileHotkeyKey]}"/>
+                                        <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                                  Tag="{Binding [SelectProfile]}"
+                                                  AutomationProperties.Name="{Binding [FieldProfile]}" SelectedValue="{Binding NewHotkeyProfileId, Mode=TwoWay}"/>
+                                        <Button Grid.Row="1" Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [ProfileHotkeyAdd]}"
+                                                Command="{Binding AddProfileHotkeyCommand}" Padding="16,0" MinHeight="36"/>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
                         <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+
+                <!-- Schedule -->
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -1003,112 +1016,147 @@
                                   AutomationProperties.Name="{Binding [Schedule]}"
                                   IsChecked="{Binding ScheduleEnabled, Mode=TwoWay}" VerticalAlignment="Center"/>
                     </Grid>
-                    <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding ScheduleEntries}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                        <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
-                                    </TextBlock>
-                                    <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
-                                            HorizontalContentAlignment="Center"
-                                            Command="{Binding DataContext.RemoveScheduleEntryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip="{Binding DataContext[ScheduleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                            AutomationProperties.Name="{Binding DataContext[ScheduleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                            AutomationProperties.HelpText="{Binding Label}">
-                                        <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
-                                    </Button>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="680"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <ItemsControl ItemsSource="{Binding ScheduleEntries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,6">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                            </TextBlock>
+                                            <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    Command="{Binding DataContext.RemoveScheduleEntryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="{Binding DataContext[ScheduleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    AutomationProperties.Name="{Binding DataContext[ScheduleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    AutomationProperties.HelpText="{Binding Label}">
+                                                <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="10" Padding="14" Margin="0,4,0,0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding [ScheduleKind]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding [ScheduleTime]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"
+                                               Visibility="{Binding NewScheduleIsFixed, Converter={StaticResource BoolToVisibility}}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding [FieldOffset]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"
+                                               Visibility="{Binding NewScheduleIsSun, Converter={StaticResource BoolToVisibility}}"/>
+                                    <ComboBox Grid.Row="1" ItemsSource="{Binding ScheduleKindOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                              AutomationProperties.Name="{Binding [ScheduleKind]}" SelectedValue="{Binding NewScheduleKind, Mode=TwoWay}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding NewScheduleTime, UpdateSourceTrigger=PropertyChanged}" MaxLength="5"
+                                             HorizontalContentAlignment="Center" Tag="HH:mm"
+                                             Visibility="{Binding NewScheduleIsFixed, Converter={StaticResource BoolToVisibility}}"
+                                             ToolTip="{Binding [ScheduleTime]}" AutomationProperties.Name="{Binding [ScheduleTime]}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding NewScheduleOffset, UpdateSourceTrigger=PropertyChanged}" MaxLength="4"
+                                             HorizontalContentAlignment="Center" Tag="0"
+                                             Visibility="{Binding NewScheduleIsSun, Converter={StaticResource BoolToVisibility}}"
+                                             ToolTip="{Binding [ScheduleOffset]}" AutomationProperties.Name="{Binding [ScheduleOffset]}"/>
+
+                                    <TextBlock Grid.Row="3" Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                    <Grid Grid.Row="4" Grid.ColumnSpan="3">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <ComboBox ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                                  Tag="{Binding [SelectProfile]}"
+                                                  AutomationProperties.Name="{Binding [FieldProfile]}" SelectedValue="{Binding NewScheduleProfileId, Mode=TwoWay}"/>
+                                        <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="{Binding [ScheduleAdd]}"
+                                                Command="{Binding AddScheduleEntryCommand}" Padding="16,0" MinHeight="36"/>
+                                    </Grid>
                                 </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="72"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox ItemsSource="{Binding ScheduleKindOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
-                                  AutomationProperties.Name="{Binding [ScheduleKind]}" SelectedValue="{Binding NewScheduleKind, Mode=TwoWay}"/>
-                        <TextBox Grid.Column="2" Text="{Binding NewScheduleTime, UpdateSourceTrigger=PropertyChanged}" MaxLength="5" HorizontalContentAlignment="Center"
-                                 Visibility="{Binding NewScheduleIsFixed, Converter={StaticResource BoolToVisibility}}"
-                                 ToolTip="{Binding [ScheduleTime]}" AutomationProperties.Name="{Binding [ScheduleTime]}"/>
-                        <TextBox Grid.Column="2" Text="{Binding NewScheduleOffset, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" HorizontalContentAlignment="Center"
-                                 Visibility="{Binding NewScheduleIsSun, Converter={StaticResource BoolToVisibility}}"
-                                 ToolTip="{Binding [ScheduleOffset]}" AutomationProperties.Name="{Binding [ScheduleOffset]}"/>
-                    </Grid>
-                    <Grid Margin="0,8,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
-                                  AutomationProperties.Name="{Binding [Profiles]}" SelectedValue="{Binding NewScheduleProfileId, Mode=TwoWay}"/>
-                        <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="{Binding [ScheduleAdd]}"
-                                Command="{Binding AddScheduleEntryCommand}" Padding="14,8"/>
-                    </Grid>
-                    <TextBlock Text="{Binding [ScheduleLocation]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,14,0,0"/>
-                    <TextBlock Text="{Binding [ScheduleLocationDescription]}" Foreground="{DynamicResource MutedBrush}"
-                               FontSize="10" Margin="0,2,0,6" TextWrapping="Wrap"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding ScheduleLatitude, UpdateSourceTrigger=LostFocus}" MaxLength="9"
-                                 ToolTip="{Binding [ScheduleLatitude]}" AutomationProperties.Name="{Binding [ScheduleLatitude]}"/>
-                        <TextBox Grid.Column="2" Text="{Binding ScheduleLongitude, UpdateSourceTrigger=LostFocus}" MaxLength="10"
-                                 ToolTip="{Binding [ScheduleLongitude]}" AutomationProperties.Name="{Binding [ScheduleLongitude]}"/>
-                    </Grid>
-                    <Grid Margin="0,14,0,0">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/></Grid.ColumnDefinitions>
-                        <StackPanel Margin="0,0,12,0">
-                            <TextBlock Text="{Binding [ScheduleTransition]}" FontWeight="SemiBold" FontSize="11"/>
-                            <TextBlock Text="{Binding [ScheduleTransitionDescription]}" Foreground="{DynamicResource MutedBrush}"
-                                       FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                            </Border>
+
+                            <TextBlock Text="{Binding [ScheduleLocation]}" FontWeight="SemiBold" FontSize="11" Margin="0,18,0,0"/>
+                            <TextBlock Text="{Binding [ScheduleLocationDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                       FontSize="10" Margin="0,2,0,8" TextWrapping="Wrap"/>
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding [FieldLatitude]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                <TextBlock Grid.Column="2" Text="{Binding [FieldLongitude]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                <TextBox Grid.Row="1" Text="{Binding ScheduleLatitude, UpdateSourceTrigger=LostFocus}" MaxLength="9" Tag="4.71"
+                                         ToolTip="{Binding [ScheduleLatitude]}" AutomationProperties.Name="{Binding [ScheduleLatitude]}"/>
+                                <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ScheduleLongitude, UpdateSourceTrigger=LostFocus}" MaxLength="10" Tag="-74.07"
+                                         ToolTip="{Binding [ScheduleLongitude]}" AutomationProperties.Name="{Binding [ScheduleLongitude]}"/>
+                            </Grid>
+
+                            <Grid Margin="0,18,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="170"/></Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding [ScheduleTransition]}" FontWeight="SemiBold" FontSize="11"/>
+                                    <TextBlock Text="{Binding [ScheduleTransitionDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                               FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <ComboBox Grid.Column="1" VerticalAlignment="Center" ItemsSource="{Binding TransitionOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Seconds"
+                                          AutomationProperties.Name="{Binding [ScheduleTransition]}" SelectedValue="{Binding ScheduleTransitionSeconds, Mode=TwoWay}"/>
+                            </Grid>
                         </StackPanel>
-                        <ComboBox Grid.Column="1" VerticalAlignment="Center" ItemsSource="{Binding TransitionOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Seconds"
-                                  AutomationProperties.Name="{Binding [ScheduleTransition]}" SelectedValue="{Binding ScheduleTransitionSeconds, Mode=TwoWay}"/>
                     </Grid>
                 </StackPanel>
-            
+
                         <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
-                <StackPanel>
-                    <TextBlock Text="{Binding [AppRules]}" FontWeight="SemiBold"/>
-                    <TextBlock Text="{Binding [AppRulesDescription]}" Foreground="{DynamicResource MutedBrush}"
-                               FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
-                    <ItemsControl ItemsSource="{Binding AppRules}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                    <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                        <Run Text="{Binding ProcessName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
-                                    </TextBlock>
-                                    <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
-                                            HorizontalContentAlignment="Center"
-                                            Command="{Binding DataContext.RemoveAppRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                            AutomationProperties.Name="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
-                                            AutomationProperties.HelpText="{Binding ProcessName}">
-                                        <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
-                                    </Button>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Grid Margin="0,4,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding NewRuleProcess, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="{Binding [AppRuleProcess]}" AutomationProperties.Name="{Binding [AppRuleProcess]}"/>
-                        <ComboBox Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
-                                  AutomationProperties.Name="{Binding [Profiles]}" SelectedValue="{Binding NewRuleProfileId, Mode=TwoWay}"/>
-                        <Button Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [AppRuleAdd]}"
-                                Command="{Binding AddAppRuleCommand}" Padding="14,8"/>
-                    </Grid>
-                </StackPanel>
-            
+
+                <!-- Per-application rules -->
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" MaxWidth="680"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding [AppRules]}" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding [AppRulesDescription]}" Foreground="{DynamicResource MutedBrush}"
+                                   FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
+                        <ItemsControl ItemsSource="{Binding AppRules}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                            <Run Text="{Binding ProcessName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                        </TextBlock>
+                                        <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
+                                                HorizontalContentAlignment="Center"
+                                                Command="{Binding DataContext.RemoveAppRuleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                AutomationProperties.Name="{Binding DataContext[AppRuleRemove], RelativeSource={RelativeSource AncestorType=Window}}"
+                                                AutomationProperties.HelpText="{Binding ProcessName}">
+                                            <TextBlock Text="&#xE711;" FontFamily="Segoe Fluent Icons" FontSize="11"/>
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="10" Padding="14" Margin="0,4,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding [FieldApplication]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                <TextBlock Grid.Column="2" Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                <TextBox Grid.Row="1" Text="{Binding NewRuleProcess, UpdateSourceTrigger=PropertyChanged}" Tag="eldenring"
+                                         ToolTip="{Binding [AppRuleProcess]}" AutomationProperties.Name="{Binding [AppRuleProcess]}"/>
+                                <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                          Tag="{Binding [SelectProfile]}"
+                                          AutomationProperties.Name="{Binding [FieldProfile]}" SelectedValue="{Binding NewRuleProfileId, Mode=TwoWay}"/>
+                                <Button Grid.Row="1" Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [AppRuleAdd]}"
+                                        Command="{Binding AddAppRuleCommand}" Padding="16,0" MinHeight="36"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
                         </StackPanel>
                         <StackPanel Visibility="{Binding IsSectionData, Converter={StaticResource BoolToVisibility}}">
                 <Grid>
