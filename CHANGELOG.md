@@ -3,7 +3,7 @@
 ## 0.8.2 — Seguridad de los atajos e inicio en la Store
 
 ### Seguridad
-- Los atajos (Ctrl+Alt+flechas y los de cada perfil) y el menú de la bandeja ahora piden «¿Conservar los cambios?» igual que la ventana: si no confirmas en 30 segundos, la pantalla vuelve a como estaba. Si la ventana estaba oculta en la bandeja, se muestra para que puedas responder. Neutralizar (Ctrl+Alt+0) nunca pregunta: es la salida de emergencia. El horario y las reglas por aplicación se aplican sin preguntar porque nadie podría responder.
+- Los atajos (Ctrl+Alt+flechas y los de cada perfil) y el menú de la bandeja ahora piden «¿Conservar los cambios?» igual que la ventana: si no confirmas en 30 segundos, la pantalla vuelve a como estaba. Si la ventana estaba oculta en la bandeja, minimizada o detrás de otras ventanas, se trae al frente para que puedas responder; si Windows no lo permite, aparece un aviso junto al reloj. Neutralizar (Ctrl+Alt+0) nunca pregunta: es la salida de emergencia. El horario y las reglas por aplicación se aplican sin preguntar porque nadie podría responder.
 - Desactivar la confirmación ahora exige aceptar un aviso que explica el riesgo (un perfil que deje la pantalla ilegible no se revertirá solo, y los atajos aplican de forma definitiva), y mientras esté desactivada se muestra un recuadro de advertencia en Ajustes.
 
 ### Añadido

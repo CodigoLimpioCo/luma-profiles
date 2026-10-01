@@ -51,10 +51,7 @@ public partial class MainWindow : Window
         {
             if (!_isRightPanelVisible) SetInspectorOpen(true);
         };
-        _viewModel.ConfirmationStarted += (_, _) =>
-        {
-            if (!IsVisible) ShowFromTray();
-        };
+        _viewModel.ConfirmationStarted += (_, _) => BringConfirmationForward();
         _viewModel.ScrollToTopRequested += (_, _) => ProfilesScrollViewer?.ScrollToTop();
         _foregroundWatcher.ForegroundProcessChanged += _viewModel.OnForegroundProcessChanged;
         StateChanged += (_, _) => PushWindowState();
@@ -214,6 +211,20 @@ public partial class MainWindow : Window
         var handle = new WindowInteropHelper(this).Handle;
         if (handle == IntPtr.Zero) return;
         if (_viewModel.GlobalHotkeysEnabled) _hotkeys.Register(handle, _viewModel.ProfileHotkeyBindings); else _hotkeys.Unregister();
+    }
+
+    /// <summary>
+    /// A "keep changes?" question started (hotkey, tray). It must be seen whether the window is hidden in the tray,
+    /// minimized or buried behind other windows; if Windows refuses to bring it forward, a tray balloon asks instead.
+    /// </summary>
+    private void BringConfirmationForward()
+    {
+        if (IsVisible && WindowState != WindowState.Minimized && IsActive) return;
+
+        ShowFromTray();
+        Topmost = true;
+        Topmost = false;
+        if (!IsActive) _tray?.NotifyConfirmation(_viewModel["ConfirmTitle"], _viewModel.ConfirmCountdownText);
     }
 
     public void ShowFromTray()
