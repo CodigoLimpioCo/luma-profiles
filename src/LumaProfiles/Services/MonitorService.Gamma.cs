@@ -7,23 +7,42 @@ namespace LumaProfiles.Services;
 // Software gamma ramp: building, reading and applying it.
 public sealed partial class MonitorService
 {
-    private static bool ApplyGamma(string display, double gamma, double red, double green, double blue)
+    /// <summary>
+    /// Applies the curve; when Windows refuses it (it rejects ramps too far from linear unless the
+    /// GdiIcmGammaRange registry value is raised) the strongest version it accepts is applied instead,
+    /// so a strong custom RGB balance is softened rather than silently dropped.
+    /// </summary>
+    private static bool ApplyGamma(string display, double gamma, double red, double green, double blue, List<string>? failures = null)
     {
-        var hdc = NativeMethods.CreateDC("DISPLAY", display, null, IntPtr.Zero);
-        if (hdc == IntPtr.Zero) return false;
+        var target = BuildGammaRamp(gamma, red, green, blue);
+        if (ApplyGammaRamp(display, target)) return true;
 
-        var ramp = BuildGammaRamp(gamma, red, green, blue);
+        var identity = BuildGammaRamp(1.0, 1.0, 1.0, 1.0);
+        double accepted = 0, rejected = 1;
+        for (var attempt = 0; attempt < 7; attempt++)
+        {
+            var strength = (accepted + rejected) / 2;
+            if (ApplyGammaRamp(display, BlendGammaRamp(identity, target, strength))) accepted = strength;
+            else rejected = strength;
+        }
 
-        var handle = GCHandle.Alloc(ramp, GCHandleType.Pinned);
-        try
+        // A rejected call leaves the screen untouched, so the last accepted ramp is the one showing.
+        if (accepted <= 0) return false;
+        AppLog.Warn($"Windows rejected the full gamma ramp on {display}; applied {accepted:P0} of it.");
+        failures?.Add($"Windows limitó el balance de color en {display}: se aplicó al {accepted:P0}.");
+        return true;
+    }
+
+    /// <summary>Moves a ramp toward <paramref name="from"/>: 0 returns it unchanged, 1 returns <paramref name="to"/>.</summary>
+    internal static ushort[] BlendGammaRamp(ushort[] from, ushort[] to, double strength)
+    {
+        var blended = new ushort[from.Length];
+        for (var index = 0; index < from.Length; index++)
         {
-            return NativeMethods.SetDeviceGammaRamp(hdc, handle.AddrOfPinnedObject());
+            blended[index] = (ushort)Math.Round(from[index] + ((to[index] - from[index]) * strength));
         }
-        finally
-        {
-            handle.Free();
-            NativeMethods.DeleteDC(hdc);
-        }
+
+        return blended;
     }
 
     /// <summary>Builds the 3x256 gamma ramp (red, green, blue) applied through SetDeviceGammaRamp.</summary>

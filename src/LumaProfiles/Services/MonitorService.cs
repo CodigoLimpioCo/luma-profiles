@@ -56,7 +56,7 @@ public sealed partial class MonitorService : IMonitorService
 
             var profile = correction.ToProfile();
             ApplyDdc(monitor.Handle, monitor.MonitorId, profile, failures, correction.ApplyImageControls);
-            if (!ApplyGamma(monitor.DeviceName, profile.Gamma, profile.Red, profile.Green, profile.Blue))
+            if (!ApplyGamma(monitor.DeviceName, profile.Gamma, profile.Red, profile.Green, profile.Blue, failures))
             {
                 failures.Add($"No fue posible aplicar gamma en {monitor.DeviceName}.");
             }
@@ -91,7 +91,7 @@ public sealed partial class MonitorService : IMonitorService
 
         foreach (var display in appliedDisplays)
         {
-            if (!ApplyGamma(display, profile.Gamma, profile.Red, profile.Green, profile.Blue))
+            if (!ApplyGamma(display, profile.Gamma, profile.Red, profile.Green, profile.Blue, failures))
             {
                 failures.Add($"No fue posible aplicar gamma en {display}.");
             }

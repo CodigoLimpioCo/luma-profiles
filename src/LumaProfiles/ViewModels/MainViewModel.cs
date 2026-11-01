@@ -81,6 +81,7 @@ public sealed partial class MainViewModel : ObservableObject
         _selectedProfile = Profiles.First();
         _selectedProfile.PropertyChanged += SelectedProfile_PropertyChanged;
 
+        foreach (var profile in Profiles) CommitAdjustments(profile);
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
         RefreshLocalizedOptions();
         InitializeFilters();
@@ -100,8 +101,15 @@ public sealed partial class MainViewModel : ObservableObject
             InspectorRequested?.Invoke(this, EventArgs.Empty);
         });
         ToggleFavoriteCommand = new RelayCommand<DisplayProfile>(ToggleFavorite);
+        ApplyEditedCommand = new RelayCommand(() =>
+        {
+            var profile = SelectedProfile;
+            var detail = L("ConfirmDetailApply", profile.DisplayName);
+            _ = Enqueue(() => RunWithConfirmationAsync(() => ApplyAsync(profile, L("AppliedUnsaved", profile.DisplayName)), detail, L("Applying", profile.DisplayName)));
+        }, () => !IsBusy);
         SaveAndApplyCommand = new RelayCommand(() =>
         {
+            CommitAdjustments(SelectedProfile);
             SaveProfiles();
             var profile = SelectedProfile;
             var detail = L("ConfirmDetailApply", profile.DisplayName);
@@ -167,6 +175,7 @@ public sealed partial class MainViewModel : ObservableObject
     public ICommand ApplyProfileCommand { get; }
     public ICommand EditProfileCommand { get; }
     public ICommand ToggleFavoriteCommand { get; }
+    public ICommand ApplyEditedCommand { get; }
     public ICommand SaveAndApplyCommand { get; }
     public ICommand RestoreDefaultsCommand { get; }
     public ICommand RepairCommand { get; }

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0 — Perfiles por tipo de juego y Aplicar sin guardar
+
+### Añadido
+- Siete perfiles nuevos en la categoría Gamer, pensados por tipo de juego: **Shooter militar**, **Shooter táctico**, **Battle royale**, **Terror y noche**, **Mundo abierto**, **Carreras** y **Colorido cartoon**. Todos usan Alto rendimiento y están traducidos al inglés y al portugués. La biblioteca pasa de 60 a 67 perfiles.
+- Botón **Aplicar** en el panel de ajuste, junto a **Guardar y aplicar**: prueba unos valores en pantalla durante la sesión sin cambiar el perfil guardado (útil para un ajuste puntual, como bajar el brillo de noche). El estado indica «aplicado sin guardar».
+
+### Corregido
+- Cuando Windows rechaza una curva de gamma demasiado alejada de la lineal (balances RGB fuertes), ya no se descarta en silencio: se aplica la versión más fuerte que Windows acepta y se avisa del porcentaje aplicado.
+
 ## 0.8.3 — Más colores de acento
 
 ### Añadido

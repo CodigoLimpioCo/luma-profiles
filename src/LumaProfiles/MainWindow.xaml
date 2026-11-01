@@ -647,7 +647,17 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Style="{StaticResource PrimaryButton}" Content="{Binding [SaveApply]}" Command="{Binding SaveAndApplyCommand}" Margin="0,10,0,9"/>
+                    <Grid Margin="0,10,0,9">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource SecondaryButton}" Content="{Binding [Apply]}" Command="{Binding ApplyEditedCommand}"
+                                ToolTip="{Binding [ApplyOnlyTooltip]}" AutomationProperties.HelpText="{Binding [ApplyOnlyTooltip]}"/>
+                        <Button Grid.Column="2" Style="{StaticResource PrimaryButton}" Content="{Binding [SaveApply]}" Command="{Binding SaveAndApplyCommand}"
+                                ToolTip="{Binding [SaveApplyTooltip]}" AutomationProperties.HelpText="{Binding [SaveApplyTooltip]}"/>
+                    </Grid>
                     <Button Style="{StaticResource SecondaryButton}" Content="{Binding [RestoreDefaults]}" Command="{Binding RestoreDefaultsCommand}"
                             Visibility="{Binding SelectedProfileIsBuiltIn, Converter={StaticResource BoolToVisibility}}"/>
                     <Button Style="{StaticResource SecondaryButton}" Content="{Binding [DeleteCustomProfile]}" Command="{Binding DeleteCustomProfileCommand}"

@@ -169,6 +169,19 @@ public class MonitorServiceTests
     }
 
     [Fact]
+    public void BlendGammaRamp_MovesFromNeutralTowardTheTarget()
+    {
+        var neutral = MonitorService.BuildGammaRamp(1.0, 1, 1, 1);
+        var target = MonitorService.BuildGammaRamp(1.0, 1.0, 0.5, 1.0);
+
+        Assert.Equal(neutral, MonitorService.BlendGammaRamp(neutral, target, 0));
+        Assert.Equal(target, MonitorService.BlendGammaRamp(neutral, target, 1));
+        var half = MonitorService.BlendGammaRamp(neutral, target, 0.5);
+        Assert.Equal((ushort)Math.Round((ushort.MaxValue + target[256 + 255]) / 2.0), half[256 + 255]);
+        Assert.Equal(ushort.MaxValue, half[255]);
+    }
+
+    [Fact]
     public void BuildGammaRamp_HigherGammaBrightensMidtones()
     {
         var neutral = MonitorService.BuildGammaRamp(1.0, 1, 1, 1);

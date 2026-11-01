@@ -12,6 +12,8 @@ namespace LumaProfiles.ViewModels;
 /// <summary>Profile library operations: favorites, import/export, saved corrections and live preview.</summary>
 public sealed partial class MainViewModel
 {
+    private readonly Dictionary<string, DisplayProfile> _savedAdjustments = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Applies the next/previous profile, preferring favorites when there are any.</summary>
     public void CycleProfile(int direction)
     {
@@ -66,6 +68,7 @@ public sealed partial class MainViewModel
     {
         var restored = _profileStore.GetDefault(SelectedProfile.Id);
         SelectedProfile.CopyAdjustmentsFrom(restored);
+        CommitAdjustments(SelectedProfile);
         SaveProfiles();
         StatusMessage = L("Restored", SelectedProfile.DisplayName);
     }
@@ -177,6 +180,7 @@ public sealed partial class MainViewModel
             var path = _shell.PickOpenFile(T("ImportProfiles"));
             if (path is null) return;
             var updated = _profileStore.Import(path, Profiles);
+            foreach (var profile in Profiles) CommitAdjustments(profile);
             SaveProfiles();
             if (_profileStore.ReadAutomation(path) is { } automation) ApplyAutomationBackup(automation);
             RefreshProfileCatalog();
@@ -189,11 +193,40 @@ public sealed partial class MainViewModel
         }
     }
 
+    /// <summary>Marks the profile's current slider values as the ones to keep on disk.</summary>
+    private void CommitAdjustments(DisplayProfile profile) => _savedAdjustments[profile.Id] = profile.Clone();
+
+    /// <summary>
+    /// The profiles as they should be written: values tried with "Apply" alone stay on screen for this
+    /// session but the file keeps the last saved ones, so a one-off tweak (dimmer at night) is not remembered.
+    /// </summary>
+    private IEnumerable<DisplayProfile> ProfilesToPersist()
+    {
+        foreach (var profile in Profiles)
+        {
+            if (!_savedAdjustments.TryGetValue(profile.Id, out var saved))
+            {
+                CommitAdjustments(profile);
+                yield return profile;
+            }
+            else if (profile.HasSameAdjustmentsAs(saved))
+            {
+                yield return profile;
+            }
+            else
+            {
+                var persisted = profile.Clone();
+                persisted.CopyAdjustmentsFrom(saved);
+                yield return persisted;
+            }
+        }
+    }
+
     private void SaveProfiles()
     {
         try
         {
-            _profileStore.Save(Profiles);
+            _profileStore.Save(ProfilesToPersist().ToList());
         }
         catch (Exception exception)
         {
