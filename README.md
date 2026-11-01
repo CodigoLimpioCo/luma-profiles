@@ -117,6 +117,6 @@ Luma Profiles es **gratuito pero no de código abierto**: el código es visible,
 
 **¿Quieres usarlo comercialmente?** Es posible con una licencia comercial por escrito, con una regalía del **15 % de los ingresos brutos** que obtengas con él, pagada cada trimestre. Escríbenos desde [codigolimpio.com.co](https://codigolimpio.com.co/) o abre un issue.
 
-Las versiones 0.10.0 y anteriores se publicaron con licencia MIT; quien ya las tenía las conserva con esa licencia. Las contribuciones son bienvenidas; consulta [CONTRIBUTING.md](CONTRIBUTING.md).
+Esta licencia aplica desde la versión 0.10.0. Las versiones 0.9.0 y anteriores se publicaron con licencia MIT y quien las obtuvo las conserva con esa licencia. Las contribuciones son bienvenidas; consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Código Limpio no está afiliado con ASUS. Las marcas mencionadas pertenecen a sus respectivos propietarios.

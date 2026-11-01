@@ -2,8 +2,9 @@ Licencia de Luma Profiles — Uso no comercial
 Copyright (c) 2026 Código Limpio (Juan Diego Mejía Maestre). Todos los derechos reservados salvo lo indicado aquí.
 
 Esta licencia se aplica a Luma Profiles (el código fuente, los ejecutables, los perfiles, los textos y los
-recursos gráficos de este repositorio, en adelante «el Software») a partir de la versión posterior a la 0.10.0.
-Las copias de la versión 0.10.0 y anteriores que ya se obtuvieron bajo la licencia MIT conservan esa licencia.
+recursos gráficos de este repositorio, en adelante «el Software») a partir de la versión 0.10.0, incluida.
+Las versiones 0.9.0 y anteriores se publicaron bajo la licencia MIT, y las copias obtenidas bajo esa licencia
+la conservan.
 
 1. LO QUE PUEDES HACER GRATIS
    a. Descargar, instalar y usar el Software en cualquier equipo, en casa, en el trabajo o en una empresa.
@@ -59,4 +60,5 @@ the code, and share free copies with this notice and a link to the original proj
 charge for it, publish it in an app store under another publisher, bundle it in a paid product or monetize it
 in any way without a written commercial license from Código Limpio, with a royalty of 15% of the gross revenue
 (paid quarterly with a revenue report) unless that agreement says otherwise. The names and logos are not licensed. Contributions may be
-relicensed by Código Limpio. No warranty. Versions 0.10.0 and earlier, as already received, remain under MIT.
+relicensed by Código Limpio. No warranty. This license covers version 0.10.0 onward; versions 0.9.0 and earlier were released under MIT
+and copies received under MIT keep it.
