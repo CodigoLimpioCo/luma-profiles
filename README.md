@@ -4,7 +4,7 @@ Aplicación creada por **[Código Limpio](https://codigolimpio.com.co/)** · [Re
 
 Luma Profiles es una aplicación de escritorio para Windows que permite guardar, personalizar y aplicar perfiles de color a uno o varios monitores compatibles con DDC/CI.
 
-[![Disponible en Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-9PJRZB8HFCSN-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9PJRZB8HFCSN) ![Versión](https://img.shields.io/badge/versi%C3%B3n-0.10.0-blue) ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)
+[![Disponible en Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-9PJRZB8HFCSN-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9PJRZB8HFCSN) ![Versión](https://img.shields.io/badge/versi%C3%B3n-0.10.0-blue) [![Licencia: uso no comercial](https://img.shields.io/badge/licencia-uso%20no%20comercial-orange)](LICENSE)
 
 ![Biblioteca de perfiles](store-assets/capturas-es-es/1-biblioteca.png)
 
@@ -14,8 +14,10 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 
 ## Instalación
 
-- **Microsoft Store:** [Luma Profiles](https://apps.microsoft.com/detail/9PJRZB8HFCSN).
-- **Release en GitHub:** descarga el ejecutable o el ZIP desde [Releases](https://github.com/CodigoLimpioCo/luma-profiles/releases).
+<a href="https://apps.microsoft.com/detail/9PJRZB8HFCSN"><img src="https://get.microsoft.com/images/es%20dark.svg" alt="Obtener en Microsoft Store" width="200"/></a>
+
+- **Microsoft Store (recomendado):** [instalar Luma Profiles](https://apps.microsoft.com/detail/9PJRZB8HFCSN). Se actualiza sola.
+- **Descarga directa:** el ejecutable portátil o el ZIP de cada versión en [Releases](https://github.com/CodigoLimpioCo/luma-profiles/releases).
 - **Desde el código:** consulta [Ejecutar desde el código](#ejecutar-desde-el-código).
 
 ## Funciones
@@ -43,7 +45,8 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 
 ### Automatización
 - Horario con tramos múltiples, amanecer/atardecer automáticos y transición suave.
-- Perfiles por aplicación en primer plano.
+- Perfiles por aplicación en primer plano y modo juego automático para cualquier aplicación a pantalla completa.
+- Perfil con batería para portátiles.
 - Atajos globales: Ctrl+Alt+→/←/0 y Ctrl+Alt + tecla por perfil.
 - Icono en la bandeja, inicio con Windows en segundo plano e instancia única.
 
@@ -98,16 +101,22 @@ El selector descubre automáticamente todos los archivos `.lang` válidos.
 
 Luma Profiles no instala controladores ni necesita privilegios de administrador. Para trabajo donde la precisión sea crítica se recomienda utilizar un colorímetro y un perfil ICC medido para cada panel. Los modos cálidos se ofrecen por comodidad; no constituyen tratamiento médico.
 
-## Diseño
+## Arquitectura
 
-Las capturas se encuentran en `docs` y `store-assets`. El concepto visual inicial está en `docs/design-concept.png`. La estructura del código se describe en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Microsoft Store
-
-La guía de publicación, el manifiesto MSIX y el comando para generar `.msix`/`.msixupload` están en [docs/MICROSOFT-STORE.md](docs/MICROSOFT-STORE.md). Los recursos de marca para la ficha se encuentran en `store-assets/`.
+La estructura del código se describe en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Licencia
 
-MIT. Las contribuciones y mejoras son bienvenidas; consulta [CONTRIBUTING.md](CONTRIBUTING.md).
+Luma Profiles es **gratuito pero no de código abierto**: el código es visible, pero no se puede vender. El texto completo está en [LICENSE](LICENSE).
+
+| Puedes, gratis | No puedes sin una licencia comercial |
+| --- | --- |
+| Usarlo en casa, en el trabajo o en tu empresa | Venderlo o cobrar por descargarlo o instalarlo |
+| Leer, estudiar y modificar el código | Publicarlo en una tienda con otro nombre o editor |
+| Compartir copias gratis con el aviso de licencia y un enlace a este repositorio | Incluirlo en un producto, servicio o suscripción de pago, o monetizarlo con anuncios |
+
+**¿Quieres usarlo comercialmente?** Es posible con una licencia comercial por escrito, con una regalía del **15 % de los ingresos brutos** que obtengas con él, pagada cada trimestre. Escríbenos desde [codigolimpio.com.co](https://codigolimpio.com.co/) o abre un issue.
+
+Las versiones 0.10.0 y anteriores se publicaron con licencia MIT; quien ya las tenía las conserva con esa licencia. Las contribuciones son bienvenidas; consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Código Limpio no está afiliado con ASUS. Las marcas mencionadas pertenecen a sus respectivos propietarios.

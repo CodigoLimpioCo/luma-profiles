@@ -1,21 +1,62 @@
-MIT License
+Licencia de Luma Profiles — Uso no comercial
+Copyright (c) 2026 Código Limpio (Juan Diego Mejía Maestre). Todos los derechos reservados salvo lo indicado aquí.
 
-Copyright (c) 2026 Código Limpio and Luma Profiles contributors
+Esta licencia se aplica a Luma Profiles (el código fuente, los ejecutables, los perfiles, los textos y los
+recursos gráficos de este repositorio, en adelante «el Software») a partir de la versión posterior a la 0.10.0.
+Las copias de la versión 0.10.0 y anteriores que ya se obtuvieron bajo la licencia MIT conservan esa licencia.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. LO QUE PUEDES HACER GRATIS
+   a. Descargar, instalar y usar el Software en cualquier equipo, en casa, en el trabajo o en una empresa.
+   b. Leer, estudiar y modificar el código fuente, y compilar tus propias versiones.
+   c. Compartir copias del Software, modificadas o no, siempre que sea sin cobrar nada, conserves este aviso
+      de copyright y esta licencia, indiques claramente los cambios que hiciste y enlaces al proyecto original:
+      https://github.com/CodigoLimpioCo/luma-profiles
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. LO QUE NO PUEDES HACER SIN UNA LICENCIA COMERCIAL
+   Se considera «uso comercial» cualquier forma de obtener dinero o una ventaja económica con el Software o con
+   una versión derivada de él, en particular:
+   a. Venderlo, cobrar por descargarlo, instalarlo o activarlo, o venderlo con otro nombre.
+   b. Publicarlo en una tienda de aplicaciones (Microsoft Store u otra) con cualquier nombre o editor distinto de
+      Código Limpio.
+   c. Incluirlo, total o parcialmente, en un producto, servicio, suscripción o paquete por el que se cobre.
+   d. Monetizarlo con publicidad, compras dentro de la aplicación, donaciones condicionadas o similares.
+   Usar el Software gratis dentro de una empresa no es uso comercial; venderlo o cobrar por él sí lo es.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. LICENCIA COMERCIAL Y REGALÍAS
+   Para cualquier uso comercial necesitas una licencia comercial firmada por escrito con Código Limpio.
+   Salvo que ese acuerdo diga otra cosa, la regalía es del QUINCE POR CIENTO (15 %) de los ingresos brutos
+   obtenidos con el Software o con la versión derivada (ventas, suscripciones, publicidad, compras dentro de la
+   aplicación o cualquier otro ingreso atribuible), pagadera cada trimestre junto con un informe de esos
+   ingresos. Cuando el Software sea solo una parte de un producto mayor, el porcentaje se aplica a la parte de
+   los ingresos atribuible al Software, según se acuerde por escrito. Mientras no exista ese acuerdo escrito,
+   el uso comercial no está autorizado.
+   Contacto: https://codigolimpio.com.co/ o un issue en https://github.com/CodigoLimpioCo/luma-profiles
+
+4. MARCAS
+   «Luma Profiles», «Código Limpio» y sus logotipos no se licencian. Una versión modificada que compartas debe
+   usar otro nombre e icono, o indicar de forma visible que es una versión no oficial.
+
+5. CONTRIBUCIONES
+   Al enviar una contribución (pull request, parche, traducción, perfil, etc.) aceptas que Código Limpio pueda
+   usarla, modificarla, distribuirla y licenciarla, incluso bajo licencias comerciales, sin necesidad de un
+   permiso adicional. Conservas el reconocimiento de tu autoría.
+
+6. FIN DE LA LICENCIA
+   Si incumples esta licencia, tus permisos terminan automáticamente. Se restablecen si corriges el
+   incumplimiento dentro de los 30 días siguientes a que Código Limpio te lo notifique por primera vez.
+
+7. SIN GARANTÍA
+   EL SOFTWARE SE ENTREGA «TAL CUAL», SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O IMPLÍCITA, INCLUIDAS LAS DE
+   COMERCIABILIDAD, IDONEIDAD PARA UN FIN DETERMINADO Y NO INFRACCIÓN. EN NINGÚN CASO LOS AUTORES O TITULARES
+   DEL COPYRIGHT SERÁN RESPONSABLES DE RECLAMACIONES, DAÑOS U OTRAS RESPONSABILIDADES DERIVADAS DEL SOFTWARE O
+   DE SU USO, INCLUIDOS LOS CAMBIOS EN LA CONFIGURACIÓN DE LOS MONITORES.
+
+---------------------------------------------------------------------------------------------------------------
+English summary (for convenience only; the Spanish text above is the binding one)
+
+Luma Profiles is source-available, not open source. You may use it for free (also at work), read and modify
+the code, and share free copies with this notice and a link to the original project. You may NOT sell it,
+charge for it, publish it in an app store under another publisher, bundle it in a paid product or monetize it
+in any way without a written commercial license from Código Limpio, with a royalty of 15% of the gross revenue
+(paid quarterly with a revenue report) unless that agreement says otherwise. The names and logos are not licensed. Contributions may be
+relicensed by Código Limpio. No warranty. Versions 0.10.0 and earlier, as already received, remain under MIT.

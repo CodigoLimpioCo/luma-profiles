@@ -62,7 +62,18 @@ git push origin $tag
 if (-not $Title) { $Title = "Luma Profiles $version" }
 
 $assets = @((Join-Path $out $exeName), (Join-Path $out $zipName))
-gh release create $tag --title $Title --notes-file $notes
+# Every release carries the Microsoft Store link and the license, whatever its own notes say.
+$footer = @"
+
+---
+
+**Instalar desde Microsoft Store (recomendado, se actualiza sola):** https://apps.microsoft.com/detail/9PJRZB8HFCSN
+
+Licencia: uso gratuito y no comercial; venderla o monetizarla requiere una licencia comercial. Consulta [LICENSE](https://github.com/CodigoLimpioCo/luma-profiles/blob/$tag/LICENSE).
+"@
+$releaseNotes = Join-Path $env:TEMP "luma-release-notes-$tag.md"
+[System.IO.File]::WriteAllText($releaseNotes, ((Get-Content -LiteralPath $notes -Raw).TrimEnd() + "`n" + $footer), (New-Object System.Text.UTF8Encoding $false))
+gh release create $tag --title $Title --notes-file $releaseNotes
 # Assets go up one by one so a failure is visible, and the result is verified afterwards.
 foreach ($asset in $assets) { gh release upload $tag $asset --clobber }
 $uploaded = gh release view $tag --json assets --jq '.assets[].name'
