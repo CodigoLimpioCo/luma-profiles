@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly MainViewModel _viewModel;
     private readonly ForegroundWatcher _foregroundWatcher = new();
     private readonly HotkeyService _hotkeys = new();
+    private readonly PowerSourceWatcher _powerSource = new();
     private TrayIconService? _tray;
     private HwndSource? _windowSource;
     private IntPtr _consoleDisplayNotification;
@@ -39,7 +40,8 @@ public partial class MainWindow : Window
 
     public MainWindow()
     {
-        _viewModel = new MainViewModel(new MonitorService(), new ProfileStore(), new ApplicationSettingsStore(), new ShellService());
+        _viewModel = new MainViewModel(new MonitorService(), new ProfileStore(), new ApplicationSettingsStore(), new ShellService(),
+            updateChecker: new GitHubUpdateChecker());
 
         InitializeComponent();
         DataContext = _viewModel;
@@ -56,6 +58,7 @@ public partial class MainWindow : Window
         Activated += (_, _) => CloseConfirmationAlert();
         _viewModel.ScrollToTopRequested += (_, _) => ProfilesScrollViewer?.ScrollToTop();
         _foregroundWatcher.ForegroundProcessChanged += _viewModel.OnForegroundProcessChanged;
+        _powerSource.PowerSourceChanged += _viewModel.OnPowerSourceChanged;
         StateChanged += (_, _) => PushWindowState();
         Loaded += (_, _) =>
         {
@@ -71,6 +74,7 @@ public partial class MainWindow : Window
         if (_initialized) return;
         _initialized = true;
         _viewModel.Initialize();
+        _powerSource.Start();
     }
 
     /// <summary>Runs everything except the visible window: tray icon, hotkeys, schedule and rules (sign-in launch).</summary>
@@ -128,6 +132,7 @@ public partial class MainWindow : Window
         CloseConfirmationAlert();
         _viewModel.Shutdown();
         _foregroundWatcher.Dispose();
+        _powerSource.Dispose();
         _hotkeys.Dispose();
         _tray?.Dispose();
         _windowSource?.RemoveHook(WindowMessageHook);
@@ -383,6 +388,19 @@ public partial class MainWindow : Window
         {
             _viewModel.CloseOverlaysCommand.Execute(null);
             e.Handled = true;
+            return;
+        }
+
+        // Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) undo adjustments, except while typing: text boxes keep their own undo.
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && Keyboard.FocusedElement is not System.Windows.Controls.TextBox)
+        {
+            var redo = e.Key == Key.Y || (e.Key == Key.Z && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
+            var command = redo ? _viewModel.RedoAdjustmentCommand : e.Key == Key.Z ? _viewModel.UndoAdjustmentCommand : null;
+            if (command?.CanExecute(null) == true)
+            {
+                command.Execute(null);
+                e.Handled = true;
+            }
         }
     }
 

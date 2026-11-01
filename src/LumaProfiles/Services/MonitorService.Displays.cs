@@ -13,12 +13,17 @@ public sealed partial class MonitorService
 
     private const uint MonitorInfoPrimary = 1;
 
-    public IReadOnlyList<DisplayInfo> GetDisplays() => EnumerateMonitors()
-        .Select(monitor => new DisplayInfo(
-            DisplayNumber(monitor.DeviceName), monitor.DeviceName, monitor.MonitorId,
-            monitor.Left, monitor.Top, monitor.Width, monitor.Height, monitor.IsPrimary))
-        .OrderBy(display => display.Number)
-        .ToList();
+    public IReadOnlyList<DisplayInfo> GetDisplays()
+    {
+        var hdr = HdrStatus.ActiveDisplays();
+        return EnumerateMonitors()
+            .Select(monitor => new DisplayInfo(
+                DisplayNumber(monitor.DeviceName), monitor.DeviceName, monitor.MonitorId,
+                monitor.Left, monitor.Top, monitor.Width, monitor.Height, monitor.IsPrimary,
+                hdr.Contains(monitor.DeviceName)))
+            .OrderBy(display => display.Number)
+            .ToList();
+    }
 
     /// <summary>
     /// A target is "Ambas pantallas" (every display) or a comma separated list like "Pantalla 1, Pantalla 3".

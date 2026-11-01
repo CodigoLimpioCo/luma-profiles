@@ -9,11 +9,12 @@ public sealed class DisplayButton : ObservableObject
 {
     private readonly Action<DisplayButton> _onToggled;
     private bool _isSelected;
+    private string _tooltip;
 
     public DisplayButton(DisplayInfo display, string tooltip, bool isSelected, Action<DisplayButton> onToggled)
     {
         Display = display;
-        Tooltip = tooltip;
+        _tooltip = tooltip;
         _isSelected = isSelected;
         _onToggled = onToggled;
     }
@@ -21,7 +22,8 @@ public sealed class DisplayButton : ObservableObject
     public DisplayInfo Display { get; }
     public int Number => Display.Number;
     public string Label => Display.Number.ToString();
-    public string Tooltip { get; }
+    public bool IsHdrActive => Display.IsHdrActive;
+    public string Tooltip { get => _tooltip; set => Set(ref _tooltip, value); }
 
     public bool IsSelected
     {
@@ -127,12 +129,19 @@ public sealed partial class MainViewModel
         NormalizeSelection();
         UpdateTarget();
         Raise(nameof(HasMultipleDisplays));
+        RefreshTargetOptions();
+        RefreshActiveFlags();
     }
 
     public void OnDisplaysChanged() => RefreshDisplays(force: false);
 
-    private string DisplayTooltip(DisplayInfo display) =>
-        L(display.IsPrimary ? "DisplayButtonTipPrimary" : "DisplayButtonTip", display.Number, display.Width, display.Height);
+    private string DisplayTooltip(DisplayInfo display)
+    {
+        var tip = L(display.IsPrimary ? "DisplayButtonTipPrimary" : "DisplayButtonTip", display.Number, display.Width, display.Height);
+        if (ActiveProfileNameOn(display) is { } name) tip += Environment.NewLine + L("DisplayRunning", name);
+        if (display.IsHdrActive) tip += Environment.NewLine + T("DisplayHdrOn");
+        return tip;
+    }
 
     private void OnDisplayToggled(DisplayButton changed)
     {

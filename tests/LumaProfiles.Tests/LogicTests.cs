@@ -175,6 +175,7 @@ public class MainViewModelTests
         public bool ThrowOnApply { get; set; }
         public List<DisplayInfo> Displays { get; set; } = [];
         public bool UseMonitorControls { get; set; } = true;
+        public bool HdrSafeGamma { get; set; } = true;
         public List<OriginalMonitorState> KnownOriginals { get; } = [];
         public void UseOriginalStates(IEnumerable<OriginalMonitorState> states)
         {
@@ -1682,7 +1683,7 @@ public class MainViewModelTests
         vm.SearchText = "zzzz-nothing";
 
         Assert.True(vm.HasNoResults);
-        Assert.Equal("0 de 67 perfiles", vm.ProfileCountSubtitle);
+        Assert.Equal("0 de 77 perfiles", vm.ProfileCountSubtitle);
         vm.ClearFiltersCommand.Execute(null);
         Assert.False(vm.HasNoResults);
         Assert.Equal(vm.Profiles.Count, vm.VisibleProfiles.Count);
@@ -2219,7 +2220,7 @@ public class MainViewModelTests
         Assert.Equal(10, vm.VisibleProfiles.Count);
         Assert.All(vm.VisibleProfiles, profile => Assert.Equal("Pantallas VA", profile.Category));
         Assert.Equal("Pantallas VA", vm.SidebarCategory);
-        Assert.Equal(67, vm.Profiles.Count);
+        Assert.Equal(77, vm.Profiles.Count);
         Assert.Contains(vm.CategoryChips, chip => chip.Value == "Pantallas VA" && chip.Count == 10);
     }
 

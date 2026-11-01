@@ -8,7 +8,7 @@ using LumaProfiles.Services;
 
 namespace LumaProfiles.ViewModels;
 
-public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName)
+public sealed record AppRuleItem(AppProfileRule Rule, string ProfileName, string TargetLabel = "")
 {
     public string ProcessName => Rule.ProcessName;
 }
@@ -57,7 +57,8 @@ public sealed partial class MainViewModel : ObservableObject
         Func<bool>? systemPrefersDark = null,
         IWorkRunner? workRunner = null,
         IReadOnlyList<string>? availableFonts = null,
-        RestorePointStore? restorePointStore = null)
+        RestorePointStore? restorePointStore = null,
+        IUpdateChecker? updateChecker = null)
     {
         _restorePoints = restorePointStore ?? new RestorePointStore();
         if (workRunner is not null) _runner = workRunner;
@@ -84,6 +85,7 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var profile in Profiles) CommitAdjustments(profile);
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
         RefreshLocalizedOptions();
+        InitializeDiscovery();
         InitializeFilters();
         RefreshVisibleProfiles();
         RefreshAutomationLists();
@@ -145,6 +147,9 @@ public sealed partial class MainViewModel : ObservableObject
 
         AdoptRestorePointCopy();
         _monitor.UseMonitorControls = _settings.UseMonitorControls;
+        _monitor.HdrSafeGamma = _settings.HdrSafeGamma;
+        InitializeUpdates(updateChecker);
+        InitializeHistory();
         _monitor.UseOriginalStates(_settings.OriginalMonitorStates);
         InitializeConfirmation();
         InitializeSettingsPage();
@@ -214,6 +219,7 @@ public sealed partial class MainViewModel : ObservableObject
             Raise();
             Raise(nameof(SelectedProfileIsCustom));
             Raise(nameof(SelectedProfileIsBuiltIn));
+            ResetHistory();
             ScheduleLivePreview();
         }
     }
@@ -366,6 +372,7 @@ public sealed partial class MainViewModel : ObservableObject
         }, visible: false);
         _scheduleTimer.Start();
         EvaluateSchedule();
+        CheckForUpdatesOnStartup();
 
         var warning = _profileStore.LoadWarning ?? _settingsStore.LoadWarning;
         if (warning is not null) StatusMessage = L("StorageWarning", System.IO.Path.GetFileName(warning));
@@ -378,6 +385,7 @@ public sealed partial class MainViewModel : ObservableObject
         _reapplyTimer.Stop();
         _livePreviewTimer.Stop();
         _scheduleTimer.Stop();
+        _historyTimer.Stop();
     }
 
     /// <summary>Requests a debounced re-application of the saved per-monitor corrections.</summary>
@@ -397,6 +405,7 @@ public sealed partial class MainViewModel : ObservableObject
             or nameof(DisplayProfile.Green) or nameof(DisplayProfile.Blue)
             or nameof(DisplayProfile.ColorTemperature))
         {
+            RecordAdjustmentChange();
             ScheduleLivePreview();
         }
     }
@@ -432,6 +441,10 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshFilterText();
         RefreshVisibleProfiles();
         RefreshAutomationLists();
+        RefreshTargetOptions();
+        RaiseDisplayState();
+        Raise(nameof(PowerSourceText));
+        Raise(nameof(UpdateBadgeText));
         StatusMessage = T("Ready");
         RaiseUiProperties();
         Raise(nameof(LanguageCode));

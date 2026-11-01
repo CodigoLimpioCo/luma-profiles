@@ -4,7 +4,7 @@ Aplicación creada por **[Código Limpio](https://codigolimpio.com.co/)** · [Re
 
 Luma Profiles es una aplicación de escritorio para Windows que permite guardar, personalizar y aplicar perfiles de color a uno o varios monitores compatibles con DDC/CI.
 
-[![Disponible en Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-9PJRZB8HFCSN-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9PJRZB8HFCSN) ![Versión](https://img.shields.io/badge/versi%C3%B3n-0.9.0-blue) ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)
+[![Disponible en Microsoft Store](https://img.shields.io/badge/Microsoft%20Store-9PJRZB8HFCSN-0078D4?logo=microsoft)](https://apps.microsoft.com/detail/9PJRZB8HFCSN) ![Versión](https://img.shields.io/badge/versi%C3%B3n-0.10.0-blue) ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)
 
 ![Biblioteca de perfiles](store-assets/capturas-es-es/1-biblioteca.png)
 
@@ -21,7 +21,9 @@ Luma Profiles es una aplicación de escritorio para Windows que permite guardar,
 ## Funciones
 
 ### Perfiles
-- 67 perfiles ajustables por finalidad: color fiel, entretenimiento, rendimiento, cuidado visual, HDR, creativos, Gamer (con siete perfiles por tipo de juego), modos inspirados en ASUS GameVisual y diez modos para paneles VA económicos.
+- 77 perfiles ajustables por finalidad: color fiel, entretenimiento, rendimiento, cuidado visual, HDR, creativos, Gamer (con diez perfiles por tipo de juego), modos inspirados en ASUS GameVisual y diez modos para paneles VA económicos.
+- «¿Qué vas a hacer?»: Jugar, Ver series y cine, Trabajar, Leer, De noche y Foto y diseño filtran la biblioteca en un clic, y los perfiles recientes quedan a mano.
+- Un perfil distinto en cada pantalla, modo juego automático (pantalla completa), perfil con batería y deshacer/rehacer en el panel de ajuste.
 - Perfiles personalizados: guarda los valores del panel de ajuste como perfil propio, renómbralo o elimínalo.
 - Favoritos persistentes con su propia categoría.
 - Buscador avanzado (sin distinguir mayúsculas ni acentos) con filtros combinables y orden.

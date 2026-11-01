@@ -171,7 +171,8 @@ public sealed partial class MainViewModel
     {
         _settings.MonitorCorrections.Clear();
         _settings.MonitorCorrections.AddRange(snapshot.Corrections);
-        foreach (var profile in Profiles) profile.IsActive = profile.Id == snapshot.ActiveProfileId;
+        RefreshActiveFlags();
+        if (snapshot.ActiveProfileId is not null && FindProfile(snapshot.ActiveProfileId) is { } active) active.IsActive = true;
         SaveProfiles();
         SaveSettings();
         StatusMessage = FormatResult(T(timedOut ? "ChangesRevertedTimeout" : "ChangesReverted"), result);

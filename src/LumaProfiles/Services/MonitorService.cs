@@ -25,12 +25,27 @@ public interface IMonitorService
 
     /// <summary>When false only the software gamma is changed and the monitor itself is never written to.</summary>
     bool UseMonitorControls { get; set; }
+
+    /// <summary>When true, displays running in HDR keep a neutral gamma ramp (Windows maps SDR content itself).</summary>
+    bool HdrSafeGamma { get; set; }
 }
 
 /// <summary>Applies profiles to the connected displays. Split by concern: DDC/CI, gamma, displays, saved state and native calls.</summary>
 public sealed partial class MonitorService : IMonitorService
 {
     public bool UseMonitorControls { get; set; } = true;
+
+    public bool HdrSafeGamma { get; set; } = true;
+
+    /// <summary>
+    /// In HDR Windows composes in linear light, so an SDR gamma ramp shifts colors far more than intended.
+    /// With <see cref="HdrSafeGamma"/> those displays get the neutral ramp and only the monitor controls change.
+    /// </summary>
+    private bool ApplyGammaFor(string display, IReadOnlySet<string> hdrDisplays, DisplayProfile profile, List<string> failures)
+    {
+        if (HdrSafeGamma && hdrDisplays.Contains(display)) return ApplyGamma(display, 1.0, 1.0, 1.0, 1.0);
+        return ApplyGamma(display, profile.Gamma, profile.Red, profile.Green, profile.Blue, failures);
+    }
 
     public ApplyResult Apply(DisplayProfile profile, string target)
         => ApplyCore(profile, target, updatePowerPlan: true);
@@ -43,6 +58,7 @@ public sealed partial class MonitorService : IMonitorService
         var saved = corrections.ToList();
         var failures = new List<string>();
         var applied = new List<AppliedMonitor>();
+        var hdr = HdrSafeGamma ? HdrStatus.ActiveDisplays() : new HashSet<string>();
 
         foreach (var monitor in EnumerateMonitors())
         {
@@ -56,7 +72,7 @@ public sealed partial class MonitorService : IMonitorService
 
             var profile = correction.ToProfile();
             ApplyDdc(monitor.Handle, monitor.MonitorId, profile, failures, correction.ApplyImageControls);
-            if (!ApplyGamma(monitor.DeviceName, profile.Gamma, profile.Red, profile.Green, profile.Blue, failures))
+            if (!ApplyGammaFor(monitor.DeviceName, hdr, profile, failures))
             {
                 failures.Add($"No fue posible aplicar gamma en {monitor.DeviceName}.");
             }
@@ -89,9 +105,10 @@ public sealed partial class MonitorService : IMonitorService
 
         NativeMethods.EnumDisplayMonitors(IntPtr.Zero, IntPtr.Zero, callback, IntPtr.Zero);
 
+        var hdr = HdrSafeGamma ? HdrStatus.ActiveDisplays() : new HashSet<string>();
         foreach (var display in appliedDisplays)
         {
-            if (!ApplyGamma(display, profile.Gamma, profile.Red, profile.Green, profile.Blue, failures))
+            if (!ApplyGammaFor(display, hdr, profile, failures))
             {
                 failures.Add($"No fue posible aplicar gamma en {display}.");
             }

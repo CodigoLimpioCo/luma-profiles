@@ -11,7 +11,7 @@
     <RootNamespace>LumaProfiles</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\LumaProfiles.ico</ApplicationIcon>
-    <Version>0.9.0</Version>
+    <Version>0.10.0</Version>
     <AssemblyTitle>Luma Profiles</AssemblyTitle>
     <Product>Luma Profiles by Código Limpio</Product>
     <Company>Código Limpio</Company>

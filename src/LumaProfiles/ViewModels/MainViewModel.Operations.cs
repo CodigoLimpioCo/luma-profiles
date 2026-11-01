@@ -97,13 +97,14 @@ public sealed partial class MainViewModel
 
     // ---- display operations ----------------------------------------------------------------
 
-    private async Task ApplyAsync(DisplayProfile profile, string? statusOverride = null)
+    /// <param name="target">Displays to change; null uses the selector in the header.</param>
+    private async Task ApplyAsync(DisplayProfile profile, string? statusOverride = null, string? target = null)
     {
         CancelPendingReapply();
         StatusMessage = L("Applying", profile.DisplayName);
         var knownIds = _settings.OriginalMonitorStates.Select(item => item.MonitorId).ToList();
         var needsPlan = string.IsNullOrWhiteSpace(_settings.OriginalPowerPlan);
-        var target = SelectedMonitorTarget;
+        target = ResolveTarget(target);
 
         var (captured, plan, result) = await _runner.RunAsync(() => (
             _monitor.CaptureOriginalStates(knownIds),
@@ -111,13 +112,32 @@ public sealed partial class MainViewModel
             _monitor.Apply(profile, target)));
 
         StoreOriginalState(captured, plan);
-        foreach (var item in Profiles) item.IsActive = false;
-        profile.IsActive = result.DisplayCount > 0;
-        SaveProfiles();
         SaveMonitorCorrections(profile, result, applyImageControls: true);
+        if (result.DisplayCount > 0)
+        {
+            RefreshActiveFlags();
+            RememberRecent(profile);
+        }
+        else
+        {
+            foreach (var item in Profiles) item.IsActive = false;
+        }
+
+        SaveProfiles();
         _lastChangeApplied = result.DisplayCount > 0;
-        StatusMessage = FormatResult(statusOverride ?? L("Applied", profile.DisplayName), result);
-        if (profile.IsHdr) StatusMessage += T("HdrReminder");
+        StatusMessage = FormatResult(statusOverride ?? L("Applied", profile.DisplayName), result) + HdrNote(profile, target);
+    }
+
+    /// <summary>Explains what HDR changes: gamma left neutral on HDR displays, or HDR still off for an HDR profile.</summary>
+    private string HdrNote(DisplayProfile profile, string target)
+    {
+        var targeted = _lastDisplays.Where(display => MonitorService.MatchesTarget(display.DeviceName, target)).ToList();
+        if (targeted.Any(display => display.IsHdrActive))
+        {
+            return _settings.HdrSafeGamma ? T("HdrGammaKept") : T("HdrGammaApplied");
+        }
+
+        return profile.IsHdr ? T("HdrReminder") : string.Empty;
     }
 
     /// <summary>
@@ -146,7 +166,7 @@ public sealed partial class MainViewModel
             RemoveCorrectionsFor(result);
         }
 
-        foreach (var profile in Profiles) profile.IsActive = false;
+        RefreshActiveFlags();
         SaveProfiles();
         SaveSettings();
         _lastChangeApplied = result.DisplayCount > 0;
@@ -166,7 +186,7 @@ public sealed partial class MainViewModel
         RemoveCorrectionsFor(result);
         if (result.DisplayCount > 0)
         {
-            foreach (var profile in Profiles) profile.IsActive = false;
+            RefreshActiveFlags();
             SaveProfiles();
         }
 
@@ -179,6 +199,16 @@ public sealed partial class MainViewModel
     {
         var previous = _profileBeforeRule;
         _profileBeforeRule = null;
+
+        // Unplugged while the rule was in charge: the battery profile takes over instead of the old one.
+        if (BatteryProfileWanted && !_batteryApplied && FindProfile(_settings.BatteryProfileId!) is { } battery)
+        {
+            _batteryApplied = true;
+            _profileBeforeBattery = previous;
+            await ApplyAsync(battery, L("BatteryApplied", battery.DisplayName));
+            return;
+        }
+
         if (previous is not null && FindProfile(previous) is { } profile)
         {
             await ApplyAsync(profile, L("RuleRestored", profile.DisplayName));

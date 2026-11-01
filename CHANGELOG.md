@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.0 — Un perfil por pantalla, modo juego, batería y «¿Qué vas a hacer?»
+
+### Añadido
+- **¿Qué vas a hacer?**: encima de la biblioteca, Jugar, Ver series y cine, Trabajar, Leer, De noche y Foto y diseño filtran los perfiles en un clic (con el perfil recomendado primero y el número de perfiles de cada uno). Un segundo clic vuelve a mostrar todo; «Limpiar filtros» también lo restablece.
+- **Recientes**: los últimos seis perfiles aplicados aparecen como accesos rápidos para aplicarlos otra vez (con ✓ en los que están en pantalla).
+- **Diez perfiles nuevos** (la biblioteca pasa de 67 a 77): Ahorro de batería, Programación nocturna, Habitación a oscuras, Diseño web sRGB, Videollamada natural, Series de noche, Videos y redes, Estrategia y MOBA, Retro y pixel art, y Lucha y ritmo. Traducidos al inglés y al portugués.
+- **Un perfil distinto en cada pantalla**: cada pantalla conserva su propio perfil (por ejemplo, la 1 en Natural y la 2 en Shooter táctico); la cabecera muestra qué perfil tiene cada una y el botón de cada pantalla lo indica al pasar el ratón. Los tramos del horario, las reglas por aplicación y los atajos de perfil tienen un campo **Pantallas** («Las del selector», Todas o una pantalla concreta).
+- **Modo juego automático** (Configuración > Automatización): aplica el perfil elegido mientras cualquier aplicación ocupa toda la pantalla (juegos en exclusiva o sin bordes, vídeo a pantalla completa) y vuelve al anterior al salir. Las reglas por aplicación tienen prioridad.
+- **Perfil con batería**: en portátiles, al desenchufar se aplica el perfil elegido (por defecto, Ahorro de batería) y al conectar vuelve el anterior o el del horario. Si cambiaste de perfil mientras tanto, se respeta tu elección.
+- **Deshacer / Rehacer** en el panel de ajuste (botones y Ctrl+Z / Ctrl+Y): cada arrastre de un control cuenta como un paso; el historial es por perfil.
+- **Aviso de nueva versión** (no en la versión de Microsoft Store, que se actualiza sola): una vez al día consulta los releases de GitHub y, si hay una versión más nueva, aparece un botón en la barra superior. Se puede omitir esa versión, desactivar el aviso o comprobar a mano en Configuración > General. Solo se lee el número de versión.
+- **Soporte HDR real**: la aplicación detecta qué pantallas tienen HDR activo en Windows (se muestra en la cabecera, en el panel de ajuste y en el botón de cada pantalla). En ellas, por defecto, la gamma y el balance RGB por software se dejan neutros y solo se usan los controles del monitor, porque con HDR esa curva altera mucho los colores (se puede desactivar en Configuración > General). Los perfiles HDR ya no recuerdan activar HDR si ya está activo.
+- Exportar e importar incluye el modo juego y el perfil con batería; eliminar un perfil personalizado lo quita también de esos ajustes y de Recientes.
+
 ## 0.9.0 — Perfiles por tipo de juego y Aplicar sin guardar
 
 ### Añadido

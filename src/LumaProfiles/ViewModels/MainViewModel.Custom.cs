@@ -75,7 +75,23 @@ public sealed partial class MainViewModel
         _settings.Schedule.EnsureEntries().RemoveAll(entry => Matches(entry.ProfileId));
         _settings.AppRules.RemoveAll(rule => Matches(rule.ProfileId));
         _settings.ProfileHotkeys.RemoveAll(hotkey => Matches(hotkey.ProfileId));
+        _settings.RecentProfileIds.RemoveAll(Matches);
+        if (_settings.BatteryProfileId is { } battery && Matches(battery))
+        {
+            _settings.BatteryProfileId = null;
+            _settings.BatteryProfileEnabled = false;
+            Raise(nameof(BatteryProfileEnabled));
+        }
+
+        if (_settings.GameModeProfileId is { } game && Matches(game))
+        {
+            _settings.GameModeProfileId = null;
+            _settings.GameModeEnabled = false;
+            Raise(nameof(GameModeEnabled));
+        }
+
         SaveSettings();
+        RefreshRecentProfiles();
         _ruleEngine.Reset();
         RefreshAutomationLists();
         RestartSchedule();
@@ -86,6 +102,7 @@ public sealed partial class MainViewModel
     {
         LocalizationService.LocalizeProfiles(Profiles, _selectedLanguage.Code);
         BuildFilterChips();
+        RefreshIntentCounts();
         RefreshVisibleProfiles();
         Raise(nameof(ProfileCountSubtitle));
         Raise(nameof(Favorites));

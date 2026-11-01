@@ -22,7 +22,11 @@ public sealed class AppRuleEngine
         return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
     }
 
-    public RuleDecision Evaluate(string? foregroundProcess, IEnumerable<AppProfileRule> rules)
+    /// <param name="fullscreenRule">
+    /// Game mode: used when no rule names the process but its window fills the display. Explicit rules win.
+    /// </param>
+    public RuleDecision Evaluate(string? foregroundProcess, IEnumerable<AppProfileRule> rules,
+        bool isFullscreen = false, AppProfileRule? fullscreenRule = null)
     {
         // Unknown or own windows (including desktop transitions) never change the active state.
         if (string.IsNullOrWhiteSpace(foregroundProcess)) return new RuleDecision(RuleAction.None);
@@ -32,6 +36,7 @@ public sealed class AppRuleEngine
         var match = rules.FirstOrDefault(rule =>
             !string.IsNullOrWhiteSpace(rule.ProcessName) &&
             Normalize(rule.ProcessName).Equals(process, StringComparison.OrdinalIgnoreCase));
+        if (match is null && isFullscreen) match = fullscreenRule;
 
         if (match is not null)
         {

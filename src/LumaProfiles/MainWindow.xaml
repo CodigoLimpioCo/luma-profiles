@@ -159,6 +159,18 @@
                     </Button>
                     <ComboBox x:Name="TitleLanguageSelector" Style="{StaticResource LanguageComboBox}" Width="148" Margin="6,0,0,0"
                               ItemsSource="{Binding Languages}" AutomationProperties.Name="{Binding [Language]}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"/>
+                    <Button Style="{StaticResource FlatButton}" Command="{Binding OpenUpdateCommand}" Padding="0" Margin="6,0,0,0" Height="34"
+                            Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BoolToVisibility}}"
+                            ToolTip="{Binding [UpdateBadgeTooltip]}" AutomationProperties.Name="{Binding UpdateBadgeText}">
+                        <Border Height="30" CornerRadius="15" Padding="12,0" Background="{DynamicResource SelectedBrush}"
+                                BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons" FontSize="12" Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding UpdateBadgeText}" Margin="7,0,0,0" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Button>
                     <Button Style="{StaticResource FlatButton}" Command="{Binding OpenSettingsCommand}" Padding="0" Margin="6,0,0,0"
                             Width="36" Height="36" HorizontalContentAlignment="Center"
                             ToolTip="{Binding [Settings]}" AutomationProperties.Name="{Binding [Settings]}">
@@ -345,7 +357,64 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
+                <!-- Activities and recently applied profiles: the quick way through a long library -->
+                <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                    <TextBlock Text="{Binding [IntentTitle]}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" Margin="2,0,0,7"/>
+                    <ItemsControl ItemsSource="{Binding IntentChoices}" IsTabStop="False">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ToggleButton Style="{StaticResource FilterChip}" IsChecked="{Binding IsSelected, Mode=OneWay}"
+                                              Command="{Binding DataContext.SelectIntentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              CommandParameter="{Binding Key}" AutomationProperties.Name="{Binding Label}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Icon}" FontFamily="Segoe Fluent Icons" FontSize="12" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Label}" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Count}" Margin="6,0,0,0" FontSize="10" Opacity="0.65" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </ToggleButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <StackPanel Orientation="Horizontal" Margin="2,2,0,0"
+                                Visibility="{Binding HasRecentProfiles, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{Binding [RecentTitle]}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ItemsControl ItemsSource="{Binding RecentProfiles}" IsTabStop="False">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource FlatButton}" Padding="0" Margin="0,0,6,0"
+                                            Command="{Binding DataContext.ApplyRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="{Binding DataContext[RecentApplyTooltip], RelativeSource={RelativeSource AncestorType=Window}}"
+                                            AutomationProperties.Name="{Binding DisplayName}">
+                                        <Border Height="28" CornerRadius="14" Padding="5,0,12,0" BorderThickness="1"
+                                                Background="{DynamicResource InputBrush}" BorderBrush="{DynamicResource BorderThemeBrush}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Border Width="18" Height="18" CornerRadius="9">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                            <GradientStop Color="{Binding PreviewStart}" Offset="0"/>
+                                                            <GradientStop Color="{Binding PreviewEnd}" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                                <TextBlock Text="{Binding DisplayName}" Margin="7,0,0,0" FontSize="11" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource SecondaryTextBrush}"/>
+                                                <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons" FontSize="10" Margin="6,0,0,0"
+                                                           Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center"
+                                                           Visibility="{Binding IsActive, Converter={StaticResource BoolToVisibility}}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
                 <StackPanel Margin="0,0,16,0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding [ProfileLibrary]}" FontSize="31" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{Binding ProfileCountSubtitle}" FontSize="16" Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
@@ -382,6 +451,10 @@
                             </Button>
                         </StackPanel>
                     </Border>
+                    <TextBlock Text="{Binding ActiveByDisplaySummary}" Foreground="{DynamicResource MutedBrush}" FontSize="10"
+                               Margin="4,6,0,0" MaxWidth="460" TextTrimming="CharacterEllipsis" HorizontalAlignment="Right"
+                               ToolTip="{Binding [ActiveByDisplayTooltip]}"
+                               Visibility="{Binding HasActiveByDisplaySummary, Converter={StaticResource BoolToVisibility}}"/>
                 </StackPanel>
                 <Grid Grid.Row="1" Margin="0,14,0,12">
                     <Grid.ColumnDefinitions>
@@ -612,6 +685,24 @@
                         </StackPanel>
                     </Border>
 
+                    <Grid Margin="0,-8,0,14">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="6"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Button Style="{StaticResource SecondaryButton}" Command="{Binding UndoAdjustmentCommand}" MinHeight="30" Padding="8,0"
+                                ToolTip="{Binding [UndoTooltip]}" AutomationProperties.Name="{Binding [Undo]}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7A7;" FontFamily="Segoe Fluent Icons" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding [Undo]}" Margin="6,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Command="{Binding RedoAdjustmentCommand}" MinHeight="30" Padding="8,0"
+                                ToolTip="{Binding [RedoTooltip]}" AutomationProperties.Name="{Binding [Redo]}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7A6;" FontFamily="Segoe Fluent Icons" FontSize="12" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding [Redo]}" Margin="6,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
                     <TextBlock Text="{Binding [Image]}" Foreground="{DynamicResource MutedBrush}" FontWeight="SemiBold" FontSize="11" Margin="0,0,0,11"/>
                     <TextBlock><Run Text="{Binding [Brightness]}"/><Run Text="  "/><Run Text="{Binding SelectedProfile.Brightness}" Foreground="{DynamicResource AccentTextBrush}"/></TextBlock>
                     <Slider Minimum="0" Maximum="100" AutomationProperties.Name="{Binding [Brightness]}" Value="{Binding SelectedProfile.Brightness, Mode=TwoWay}"/>
@@ -644,6 +735,14 @@
                             <TextBlock Text="{Binding [HdrRequires]}" Foreground="#86B7FF" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding [HdrDescription]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,8"/>
                             <Button Style="{StaticResource SecondaryButton}" Content="{Binding [OpenHdr]}" Command="{Binding OpenHdrSettingsCommand}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="#18253A" BorderBrush="#36537D" BorderThickness="1" CornerRadius="9" Padding="12" Margin="0,4,0,10"
+                            Visibility="{Binding AnyDisplayHdr, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding [HdrActiveTitle]}" Foreground="#86B7FF" FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding [HdrActiveDescription]}" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                         </StackPanel>
                     </Border>
 
@@ -983,6 +1082,34 @@
                                       AutomationProperties.Name="{Binding [MonitorControlsTitle]}"
                                       IsChecked="{Binding UseMonitorControls, Mode=TwoWay}"/>
                         </Grid>
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="{Binding [HdrSafeGammaTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding [HdrSafeGammaDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{Binding [HdrSafeGammaTitle]}"
+                                      IsChecked="{Binding HdrSafeGamma, Mode=TwoWay}"/>
+                        </Grid>
+                        <StackPanel Visibility="{Binding CanCheckForUpdates, Converter={StaticResource BoolToVisibility}}">
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="{Binding [UpdateCheckTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding [UpdateCheckDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Style="{StaticResource SecondaryButton}" Content="{Binding [UpdateCheckNow]}" Command="{Binding CheckUpdatesNowCommand}" Padding="14,0" MinHeight="32"/>
+                                    <TextBlock Text="{Binding UpdateStatusText}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{Binding [UpdateCheckTitle]}"
+                                      IsChecked="{Binding CheckForUpdates, Mode=TwoWay}"/>
+                        </Grid>
+                        </StackPanel>
                         </StackPanel>
                         <StackPanel Visibility="{Binding IsSectionLanguage, Converter={StaticResource BoolToVisibility}}">
                 <Grid>
@@ -1022,7 +1149,7 @@
                                             <Grid Margin="0,0,0,6">
                                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                                    <Run Text="{Binding Shortcut, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                                    <Run Text="{Binding Shortcut, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/><Run Text="{Binding TargetLabel, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}"/>
                                                 </TextBlock>
                                                 <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
                                                         HorizontalContentAlignment="Center"
@@ -1041,16 +1168,19 @@
                                     <Grid>
                                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="96"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="96"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="150"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Text="{Binding [FieldKey]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
                                         <TextBlock Grid.Column="2" Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                        <TextBlock Grid.Column="4" Text="{Binding [FieldDisplays]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                        <ComboBox Grid.Row="1" Grid.Column="4" ItemsSource="{Binding AutomationTargetOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                                  ToolTip="{Binding [FieldDisplaysTooltip]}" AutomationProperties.Name="{Binding [FieldDisplays]}" SelectedValue="{Binding NewHotkeyTarget, Mode=TwoWay}"/>
                                         <ComboBox Grid.Row="1" ItemsSource="{Binding HotkeyKeyOptions}" SelectedItem="{Binding NewHotkeyKey, Mode=TwoWay}"
                                                   ToolTip="{Binding [ProfileHotkeyKey]}" AutomationProperties.Name="{Binding [ProfileHotkeyKey]}"/>
                                         <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
                                                   Tag="{Binding [SelectProfile]}"
                                                   AutomationProperties.Name="{Binding [FieldProfile]}" SelectedValue="{Binding NewHotkeyProfileId, Mode=TwoWay}"/>
-                                        <Button Grid.Row="1" Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [ProfileHotkeyAdd]}"
+                                        <Button Grid.Row="1" Grid.Column="6" Style="{StaticResource SecondaryButton}" Content="{Binding [ProfileHotkeyAdd]}"
                                                 Command="{Binding AddProfileHotkeyCommand}" Padding="16,0" MinHeight="36"/>
                                     </Grid>
                                 </Border>
@@ -1080,7 +1210,7 @@
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                             <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                                <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                                <Run Text="{Binding Label, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/><Run Text="{Binding TargetLabel, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}"/>
                                             </TextBlock>
                                             <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
                                                     HorizontalContentAlignment="Center"
@@ -1120,13 +1250,17 @@
                                              Visibility="{Binding NewScheduleIsSun, Converter={StaticResource BoolToVisibility}}"
                                              ToolTip="{Binding [ScheduleOffset]}" AutomationProperties.Name="{Binding [ScheduleOffset]}"/>
 
-                                    <TextBlock Grid.Row="3" Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
-                                    <Grid Grid.Row="4" Grid.ColumnSpan="3">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                        <ComboBox ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
+                                    <Grid Grid.Row="3" Grid.RowSpan="2" Grid.ColumnSpan="3">
+                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="150"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding [FieldDisplays]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                        <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding AutomationTargetOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                                  ToolTip="{Binding [FieldDisplaysTooltip]}" AutomationProperties.Name="{Binding [FieldDisplays]}" SelectedValue="{Binding NewScheduleTarget, Mode=TwoWay}"/>
+                                        <ComboBox Grid.Row="1" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
                                                   Tag="{Binding [SelectProfile]}"
                                                   AutomationProperties.Name="{Binding [FieldProfile]}" SelectedValue="{Binding NewScheduleProfileId, Mode=TwoWay}"/>
-                                        <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="{Binding [ScheduleAdd]}"
+                                        <Button Grid.Row="1" Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [ScheduleAdd]}"
                                                 Command="{Binding AddScheduleEntryCommand}" Padding="16,0" MinHeight="36"/>
                                     </Grid>
                                 </Grid>
@@ -1163,6 +1297,33 @@
                 </StackPanel>
 
                         <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="{Binding [GameModeTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding [GameModeDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                <ComboBox ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" Margin="0,10,0,0" MaxWidth="420" HorizontalAlignment="Left" MinWidth="260"
+                                          Tag="{Binding [SelectProfile]}" AutomationProperties.Name="{Binding [GameModeTitle]}" SelectedValue="{Binding GameModeProfileId, Mode=TwoWay}"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{Binding [GameModeTitle]}"
+                                      IsChecked="{Binding GameModeEnabled, Mode=TwoWay}"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                <TextBlock Text="{Binding [BatteryTitle]}" FontWeight="SemiBold" FontSize="14"/>
+                                <TextBlock Text="{Binding [BatteryDesc]}" Foreground="{DynamicResource MutedBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                <ComboBox ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id" Margin="0,10,0,0" MaxWidth="420" HorizontalAlignment="Left" MinWidth="260"
+                                          Tag="{Binding [SelectProfile]}" AutomationProperties.Name="{Binding [BatteryTitle]}" SelectedValue="{Binding BatteryProfileId, Mode=TwoWay}"/>
+                                <TextBlock Text="{Binding PowerSourceText}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11" Margin="0,8,0,0"/>
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Style="{StaticResource LivePreviewToggle}" VerticalAlignment="Center"
+                                      AutomationProperties.Name="{Binding [BatteryTitle]}"
+                                      IsChecked="{Binding BatteryProfileEnabled, Mode=TwoWay}"/>
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource BorderThemeBrush}" Margin="0,18"/>
 
                 <!-- Per-application rules -->
                 <Grid>
@@ -1177,7 +1338,7 @@
                                     <Grid Margin="0,0,0,6">
                                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                         <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
-                                            <Run Text="{Binding ProcessName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/>
+                                            <Run Text="{Binding ProcessName, Mode=OneWay}" FontWeight="SemiBold"/><Run Text="  →  "/><Run Text="{Binding ProfileName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}"/><Run Text="{Binding TargetLabel, Mode=OneWay}" Foreground="{DynamicResource MutedBrush}"/>
                                         </TextBlock>
                                         <Button Grid.Column="1" Style="{StaticResource FlatButton}" Width="28" Height="28" Padding="0"
                                                 HorizontalContentAlignment="Center"
@@ -1196,16 +1357,19 @@
                             <Grid>
                                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="150"/><ColumnDefinition Width="10"/><ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding [FieldApplication]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                <TextBlock Grid.Column="4" Text="{Binding [FieldDisplays]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
+                                <ComboBox Grid.Row="1" Grid.Column="4" ItemsSource="{Binding AutomationTargetOptions}" DisplayMemberPath="DisplayName" SelectedValuePath="Value"
+                                                  ToolTip="{Binding [FieldDisplaysTooltip]}" AutomationProperties.Name="{Binding [FieldDisplays]}" SelectedValue="{Binding NewRuleTarget, Mode=TwoWay}"/>
                                 <TextBlock Grid.Column="2" Text="{Binding [FieldProfile]}" Foreground="{DynamicResource MutedBrush}" FontSize="10" Margin="2,0,0,5"/>
                                 <TextBox Grid.Row="1" Text="{Binding NewRuleProcess, UpdateSourceTrigger=PropertyChanged}" Tag="eldenring"
                                          ToolTip="{Binding [AppRuleProcess]}" AutomationProperties.Name="{Binding [AppRuleProcess]}"/>
                                 <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding Profiles}" DisplayMemberPath="DisplayName" SelectedValuePath="Id"
                                           Tag="{Binding [SelectProfile]}"
                                           AutomationProperties.Name="{Binding [FieldProfile]}" SelectedValue="{Binding NewRuleProfileId, Mode=TwoWay}"/>
-                                <Button Grid.Row="1" Grid.Column="4" Style="{StaticResource SecondaryButton}" Content="{Binding [AppRuleAdd]}"
+                                <Button Grid.Row="1" Grid.Column="6" Style="{StaticResource SecondaryButton}" Content="{Binding [AppRuleAdd]}"
                                         Command="{Binding AddAppRuleCommand}" Padding="16,0" MinHeight="36"/>
                             </Grid>
                         </Border>

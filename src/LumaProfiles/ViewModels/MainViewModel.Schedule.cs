@@ -5,7 +5,7 @@ using LumaProfiles.Services;
 
 namespace LumaProfiles.ViewModels;
 
-public sealed record ScheduleEntryItem(ScheduleEntry Entry, string ProfileName, string Label);
+public sealed record ScheduleEntryItem(ScheduleEntry Entry, string ProfileName, string Label, string TargetLabel = "");
 
 public sealed record TransitionOption(int Seconds, string DisplayName)
 {
@@ -148,7 +148,7 @@ public sealed partial class MainViewModel
     /// <summary>Applies the entry in effect once per boundary crossing so manual changes are not overridden.</summary>
     internal void EvaluateSchedule()
     {
-        if (!_settings.Schedule.Enabled || _ruleEngine.ActiveRule is not null) return;
+        if (!_settings.Schedule.Enabled || _ruleEngine.ActiveRule is not null || _batteryApplied) return;
 
         var entry = ScheduleResolver.Resolve(_settings.Schedule, DateTime.Now);
         if (entry is null || ReferenceEquals(entry, _lastScheduleEntry)) return;
@@ -156,7 +156,8 @@ public sealed partial class MainViewModel
 
         if (FindProfile(entry.ProfileId) is not { } profile) return;
         var scheduleStatus = L("ScheduleApplied", profile.DisplayName);
-        _ = EnqueueAutomation(() => ApplyScheduledAsync(profile, scheduleStatus));
+        var target = entry.Target;
+        _ = EnqueueAutomation(() => ApplyScheduledAsync(profile, scheduleStatus, target));
     }
 
     private void AddScheduleEntry()
@@ -187,7 +188,7 @@ public sealed partial class MainViewModel
                 return null;
             }
 
-            return new ScheduleEntry { Time = time.ToString("HH:mm", CultureInfo.InvariantCulture), ProfileId = profileId };
+            return new ScheduleEntry { Time = time.ToString("HH:mm", CultureInfo.InvariantCulture), ProfileId = profileId, Target = StoredTarget(NewScheduleTarget) };
         }
 
         if (!int.TryParse(NewScheduleOffset.Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var offset)
@@ -198,7 +199,7 @@ public sealed partial class MainViewModel
         }
 
         var sun = Enum.Parse<SunEvent>(NewScheduleKind);
-        return new ScheduleEntry { Sun = sun, OffsetMinutes = offset, ProfileId = profileId };
+        return new ScheduleEntry { Sun = sun, OffsetMinutes = offset, ProfileId = profileId, Target = StoredTarget(NewScheduleTarget) };
     }
 
     private void RemoveScheduleEntry(ScheduleEntryItem item)
@@ -223,7 +224,7 @@ public sealed partial class MainViewModel
         foreach (var (entry, time) in timed)
         {
             var name = FindProfile(entry.ProfileId)?.DisplayName ?? entry.ProfileId;
-            ScheduleEntries.Add(new ScheduleEntryItem(entry, name, ScheduleEntryLabel(entry, time)));
+            ScheduleEntries.Add(new ScheduleEntryItem(entry, name, ScheduleEntryLabel(entry, time), TargetSuffix(entry.Target)));
         }
     }
 
@@ -242,21 +243,29 @@ public sealed partial class MainViewModel
     private void CancelTransition() => _transitionCts?.Cancel();
 
     /// <summary>Fades from the active profile to <paramref name="profile"/> before applying it, unless a newer action interrupts.</summary>
-    private async Task ApplyScheduledAsync(DisplayProfile profile, string status)
+    private async Task ApplyScheduledAsync(DisplayProfile profile, string status, string? target = null)
     {
-        var from = Profiles.FirstOrDefault(item => item.IsActive);
+        target = ResolveTarget(target);
+        var from = ActiveProfileOn(target) ?? Profiles.FirstOrDefault(item => item.IsActive);
         var seconds = _settings.Schedule.TransitionSeconds;
         if (seconds > 0 && from is not null && !from.HasSameAdjustmentsAs(profile)
-            && !await TransitionAsync(from.Clone(), profile, seconds))
+            && !await TransitionAsync(from.Clone(), profile, seconds, target))
         {
             return;
         }
 
-        await ApplyAsync(profile, status);
+        await ApplyAsync(profile, status, target);
+    }
+
+    /// <summary>The profile the first display of <paramref name="target"/> is running, to fade from.</summary>
+    private DisplayProfile? ActiveProfileOn(string target)
+    {
+        var display = _lastDisplays.FirstOrDefault(item => MonitorService.MatchesTarget(item.DeviceName, target));
+        return display is not null && CorrectionFor(display) is { } correction ? FindProfile(correction.ProfileId) : null;
     }
 
     /// <returns>False when a newer action cancelled the fade, in which case the final profile must not be applied.</returns>
-    private async Task<bool> TransitionAsync(DisplayProfile from, DisplayProfile to, int seconds)
+    private async Task<bool> TransitionAsync(DisplayProfile from, DisplayProfile to, int seconds, string target)
     {
         using var cts = new CancellationTokenSource();
         _transitionCts = cts;
@@ -265,7 +274,6 @@ public sealed partial class MainViewModel
             // Every step is a DDC/CI write, so long fades use fewer, larger steps.
             var steps = Math.Clamp(seconds, 2, 30);
             var interval = TimeSpan.FromSeconds((double)seconds / steps);
-            var target = SelectedMonitorTarget;
             StatusMessage = L("Transitioning", to.DisplayName);
 
             for (var step = 1; step < steps; step++)

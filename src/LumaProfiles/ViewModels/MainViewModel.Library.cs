@@ -39,7 +39,9 @@ public sealed partial class MainViewModel
     {
         if (FindProfile(profileId) is not { } profile) return;
         SelectedProfile = profile;
-        _ = EnqueueUserTriggered(profile);
+        var target = _settings.ProfileHotkeys
+            .FirstOrDefault(hotkey => hotkey.ProfileId.Equals(profileId, StringComparison.OrdinalIgnoreCase))?.Target;
+        _ = EnqueueUserTriggered(profile, target);
     }
 
     /// <summary>
@@ -47,10 +49,10 @@ public sealed partial class MainViewModel
     /// "keep changes?" (unless turned off), because a bad profile applied blindly can leave the screen unreadable.
     /// The schedule and per-app rules cannot ask: nobody is there to answer.
     /// </summary>
-    private Task EnqueueUserTriggered(DisplayProfile profile)
+    private Task EnqueueUserTriggered(DisplayProfile profile, string? target = null)
     {
         var detail = L("ConfirmDetailApply", profile.DisplayName);
-        return Enqueue(() => RunWithConfirmationAsync(() => ApplyAsync(profile), detail, L("Applying", profile.DisplayName)));
+        return Enqueue(() => RunWithConfirmationAsync(() => ApplyAsync(profile, target: target), detail, L("Applying", profile.DisplayName)));
     }
 
     private DisplayProfile? FindProfile(string id) =>
@@ -241,6 +243,10 @@ public sealed partial class MainViewModel
         AppRules = _settings.AppRules,
         ProfileHotkeys = _settings.ProfileHotkeys,
         GlobalHotkeysEnabled = _settings.GlobalHotkeysEnabled,
+        BatteryProfileEnabled = _settings.BatteryProfileEnabled,
+        BatteryProfileId = _settings.BatteryProfileId,
+        GameModeEnabled = _settings.GameModeEnabled,
+        GameModeProfileId = _settings.GameModeProfileId,
     };
 
     /// <summary>Replaces the schedule, rules and shortcuts with an imported set, dropping anything that points at an unknown profile.</summary>
@@ -264,6 +270,18 @@ public sealed partial class MainViewModel
             .Select(group => group.Last())
             .ToList();
         GlobalHotkeysEnabled = backup.GlobalHotkeysEnabled;
+        // Files from before 0.10 carry no battery or game mode: keep what is configured here.
+        if (backup.BatteryProfileId is { } batteryId && Known(batteryId))
+        {
+            BatteryProfileId = batteryId;
+            BatteryProfileEnabled = backup.BatteryProfileEnabled;
+        }
+
+        if (backup.GameModeProfileId is { } gameId && Known(gameId))
+        {
+            GameModeProfileId = gameId;
+            GameModeEnabled = backup.GameModeEnabled;
+        }
 
         SaveSettings();
         _ruleEngine.Reset();

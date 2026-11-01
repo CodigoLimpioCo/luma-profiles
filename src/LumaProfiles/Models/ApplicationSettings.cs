@@ -20,6 +20,26 @@ public sealed partial class ApplicationSettings
     public ScheduleSettings Schedule { get; set; } = new();
     public List<AppProfileRule> AppRules { get; set; } = [];
     public List<ProfileHotkey> ProfileHotkeys { get; set; } = [];
+
+    /// <summary>Applies <see cref="BatteryProfileId"/> while a laptop runs on battery and hands back on AC power.</summary>
+    public bool BatteryProfileEnabled { get; set; }
+    public string? BatteryProfileId { get; set; } = "performance-battery";
+
+    /// <summary>Applies <see cref="GameModeProfileId"/> while any application fills a whole display.</summary>
+    public bool GameModeEnabled { get; set; }
+    public string? GameModeProfileId { get; set; } = "gamer-competitive";
+
+    /// <summary>Check GitHub for a newer release at start-up (never in the Microsoft Store build).</summary>
+    public bool CheckForUpdates { get; set; } = true;
+    public DateTime? LastUpdateCheck { get; set; }
+    /// <summary>A release the user chose to skip; it is not announced again.</summary>
+    public string? SkippedUpdateVersion { get; set; }
+
+    /// <summary>On displays running in HDR, leave the software gamma alone (only the monitor controls are used).</summary>
+    public bool HdrSafeGamma { get; set; } = true;
+
+    /// <summary>The last applied profiles, newest first.</summary>
+    public List<string> RecentProfileIds { get; set; } = [];
 }
 
 /// <summary>Applies a profile at each configured local time; the latest entry that has started stays in effect.</summary>
@@ -60,6 +80,8 @@ public sealed class ScheduleEntry
     public SunEvent Sun { get; set; } = SunEvent.None;
     /// <summary>Minutes after (positive) or before (negative) the sun event.</summary>
     public int OffsetMinutes { get; set; }
+    /// <summary>Displays this slot changes ("Ambas pantallas", "Pantalla 2"...); null follows the selector.</summary>
+    public string? Target { get; set; }
 }
 
 /// <summary>Applies a profile with a global Ctrl+Alt+<see cref="Key"/> shortcut.</summary>
@@ -67,6 +89,8 @@ public sealed class ProfileHotkey
 {
     public string ProfileId { get; set; } = string.Empty;
     public string Key { get; set; } = string.Empty;
+    /// <summary>Displays the shortcut changes; null follows the selector.</summary>
+    public string? Target { get; set; }
 }
 
 /// <summary>Everything under "Automation" that travels with an exported profile file.</summary>
@@ -76,6 +100,10 @@ public sealed class AutomationBackup
     public List<AppProfileRule> AppRules { get; set; } = [];
     public List<ProfileHotkey> ProfileHotkeys { get; set; } = [];
     public bool GlobalHotkeysEnabled { get; set; } = true;
+    public bool BatteryProfileEnabled { get; set; }
+    public string? BatteryProfileId { get; set; }
+    public bool GameModeEnabled { get; set; }
+    public string? GameModeProfileId { get; set; }
 }
 
 /// <summary>Applies a profile while the named process owns the foreground window.</summary>
@@ -83,6 +111,8 @@ public sealed class AppProfileRule
 {
     public string ProcessName { get; set; } = string.Empty;
     public string ProfileId { get; set; } = string.Empty;
+    /// <summary>Displays the rule changes; null follows the selector.</summary>
+    public string? Target { get; set; }
 }
 
 public sealed class OriginalMonitorState

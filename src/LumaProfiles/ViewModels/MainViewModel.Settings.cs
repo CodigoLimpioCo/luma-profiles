@@ -371,6 +371,24 @@ public sealed partial class MainViewModel
         }
     }
 
+    /// <summary>On displays in HDR keep the neutral gamma ramp; Windows already maps SDR content there.</summary>
+    public bool HdrSafeGamma
+    {
+        get => _settings.HdrSafeGamma;
+        set
+        {
+            if (_settings.HdrSafeGamma == value) return;
+            _settings.HdrSafeGamma = value;
+            _monitor.HdrSafeGamma = value;
+            SaveSettings();
+            Raise();
+            SchedulePersistentCorrectionReapply(immediate: true);
+        }
+    }
+
+    /// <summary>True when at least one connected display currently runs in HDR.</summary>
+    public bool AnyDisplayHdr => _lastDisplays.Any(display => display.IsHdrActive);
+
     // ---- scrollbar -------------------------------------------------------------------------
 
     public double ScrollBarThickness
@@ -491,6 +509,8 @@ public sealed partial class MainViewModel
                 _settings.CloseChoiceAsked = false;
                 ConfirmChanges = true;
                 UseMonitorControls = true;
+                HdrSafeGamma = true;
+                CheckForUpdates = true;
                 break;
             case "Language":
                 if (Languages.FirstOrDefault(language => language.Code == "es") is { } spanish) SelectedLanguage = spanish;
@@ -501,6 +521,8 @@ public sealed partial class MainViewModel
                 _settings.Schedule = new Models.ScheduleSettings();
                 _settings.AppRules.Clear();
                 _settings.ProfileHotkeys.Clear();
+                BatteryProfileEnabled = false;
+                GameModeEnabled = false;
                 _ruleEngine.Reset();
                 SaveSettings();
                 RefreshAutomationLists();

@@ -3,18 +3,29 @@ using System.Runtime.InteropServices;
 
 namespace LumaProfiles.Services;
 
-/// <summary>Raises an event whenever another application takes the foreground (event-driven, no polling).</summary>
+/// <summary>
+/// Raises an event whenever another application takes the foreground (event-driven) or the foreground window
+/// enters or leaves full screen (checked every two seconds: games often go full screen after taking focus).
+/// </summary>
 public sealed class ForegroundWatcher : IDisposable
 {
     private const uint EventSystemForeground = 0x0003;
     private const uint WinEventOutOfContext = 0x0000;
 
     private readonly WinEventProc _callback;
+    private readonly System.Windows.Threading.DispatcherTimer _fullscreenTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private IntPtr _hook;
+    private string? _lastProcess;
+    private bool _lastFullscreen;
 
-    public ForegroundWatcher() => _callback = OnForegroundChanged;
+    public ForegroundWatcher()
+    {
+        _callback = OnForegroundChanged;
+        _fullscreenTimer.Tick += (_, _) => CheckFullscreen();
+    }
 
-    public event Action<string?>? ForegroundProcessChanged;
+    /// <summary>Process name of the foreground window (null when unknown) and whether it fills its display.</summary>
+    public event Action<string?, bool>? ForegroundProcessChanged;
 
     /// <summary>Must be called on a thread with a message loop (the UI thread).</summary>
     public void Start()
@@ -22,10 +33,12 @@ public sealed class ForegroundWatcher : IDisposable
         if (_hook != IntPtr.Zero) return;
         _hook = SetWinEventHook(EventSystemForeground, EventSystemForeground, IntPtr.Zero, _callback, 0, 0, WinEventOutOfContext);
         if (_hook == IntPtr.Zero) AppLog.Warn("Foreground watcher could not be installed; app rules are disabled.");
+        _fullscreenTimer.Start();
     }
 
     public void Dispose()
     {
+        _fullscreenTimer.Stop();
         if (_hook == IntPtr.Zero) return;
         UnhookWinEvent(_hook);
         _hook = IntPtr.Zero;
@@ -47,7 +60,18 @@ public sealed class ForegroundWatcher : IDisposable
             // The process may have exited or be inaccessible; treat it as unknown.
         }
 
-        ForegroundProcessChanged?.Invoke(name);
+        _lastProcess = name;
+        _lastFullscreen = name is not null && FullscreenDetector.IsForegroundFullscreen();
+        ForegroundProcessChanged?.Invoke(name, _lastFullscreen);
+    }
+
+    private void CheckFullscreen()
+    {
+        if (_lastProcess is null) return;
+        var fullscreen = FullscreenDetector.IsForegroundFullscreen();
+        if (fullscreen == _lastFullscreen) return;
+        _lastFullscreen = fullscreen;
+        ForegroundProcessChanged?.Invoke(_lastProcess, fullscreen);
     }
 
     private delegate void WinEventProc(IntPtr hook, uint eventType, IntPtr window, int objectId, int childId, uint threadId, uint timestamp);

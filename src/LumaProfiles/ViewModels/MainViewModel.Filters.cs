@@ -182,6 +182,7 @@ public sealed partial class MainViewModel
     private void RefreshFilterText()
     {
         foreach (var chip in CategoryChips) chip.Label = LocalizationService.Category(chip.Value, _selectedLanguage.Code);
+        RefreshIntentText();
         for (var index = 0; index < TemperatureChips.Count; index++) TemperatureChips[index].Label = T(TemperatureTextKeys[index]);
         RefreshSortOptions();
         Raise(nameof(ProfileCountSubtitle));
@@ -195,7 +196,7 @@ public sealed partial class MainViewModel
         (BrightnessRange.IsActive ? 1 : 0) + (ContrastRange.IsActive ? 1 : 0) + (SaturationRange.IsActive ? 1 : 0);
 
     public bool HasActiveFilters => ActiveFilterCount > 0;
-    public bool IsFiltering => HasActiveFilters || _searchText.Length > 0;
+    public bool IsFiltering => HasActiveFilters || _searchText.Length > 0 || _intent != ProfileIntents.All;
     public bool HasNoResults => VisibleProfiles.Count == 0;
 
     public string ProfileCountSubtitle => IsFiltering
@@ -210,13 +211,15 @@ public sealed partial class MainViewModel
         _favoritesOnly = _hdrOnly = _highPerformanceOnly = _modifiedOnly = false;
         _sortMode = "Default";
         _searchText = string.Empty;
+        _intent = ProfileIntents.All;
+        foreach (var choice in IntentChoices) choice.IsSelected = choice.Key == ProfileIntents.All;
         BrightnessRange.Reset();
         ContrastRange.Reset();
         SaturationRange.Reset();
         foreach (var chip in CategoryChips.Concat(TemperatureChips)) chip.SetSelectedSilently(false);
         _filtersReady = true;
 
-        foreach (var name in new[] { nameof(FavoritesOnly), nameof(HdrOnly), nameof(HighPerformanceOnly), nameof(ModifiedOnly), nameof(SortMode), nameof(SearchText) })
+        foreach (var name in new[] { nameof(FavoritesOnly), nameof(HdrOnly), nameof(HighPerformanceOnly), nameof(ModifiedOnly), nameof(SortMode), nameof(SearchText), nameof(SelectedIntent) })
         {
             Raise(name);
         }
@@ -252,7 +255,7 @@ public sealed partial class MainViewModel
             "ContrastDesc" => matches.OrderByDescending(profile => profile.Contrast),
             "SaturationDesc" => matches.OrderByDescending(profile => profile.Saturation),
             "Category" => matches.OrderBy(profile => profile.DisplayCategory, StringComparer.CurrentCultureIgnoreCase),
-            _ => matches
+            _ => IntentOrder(matches)
         };
 
         VisibleProfiles.Clear();
@@ -261,6 +264,7 @@ public sealed partial class MainViewModel
 
     internal bool MatchesFilters(DisplayProfile profile)
     {
+        if (!ProfileIntents.Matches(_intent, profile)) return false;
         if (_favoritesOnly && !profile.IsFavorite) return false;
         if (_hdrOnly && !profile.IsHdr) return false;
         if (_highPerformanceOnly && profile.PowerPlan != "HighPerformance") return false;

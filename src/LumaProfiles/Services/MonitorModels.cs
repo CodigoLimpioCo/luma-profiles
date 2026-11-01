@@ -10,7 +10,7 @@ internal sealed record ConnectedMonitor(
     IntPtr Handle, string MonitorId, string DeviceName, int Left, int Top, int Width, int Height, bool IsPrimary);
 
 /// <summary>A connected display as shown in the UI (bounds are in physical pixels).</summary>
-public sealed record DisplayInfo(int Number, string DeviceName, string MonitorId, int Left, int Top, int Width, int Height, bool IsPrimary);
+public sealed record DisplayInfo(int Number, string DeviceName, string MonitorId, int Left, int Top, int Width, int Height, bool IsPrimary, bool IsHdrActive = false);
 
 public sealed record AppliedMonitor(string MonitorId, string DeviceName);
 

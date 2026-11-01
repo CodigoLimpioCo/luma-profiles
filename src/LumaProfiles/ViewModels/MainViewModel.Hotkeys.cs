@@ -4,7 +4,7 @@ using LumaProfiles.Services;
 
 namespace LumaProfiles.ViewModels;
 
-public sealed record ProfileHotkeyItem(ProfileHotkey Hotkey, string ProfileName)
+public sealed record ProfileHotkeyItem(ProfileHotkey Hotkey, string ProfileName, string TargetLabel = "")
 {
     public string Shortcut => "Ctrl+Alt+" + Hotkey.Key;
 }
@@ -33,7 +33,7 @@ public sealed partial class MainViewModel
         // One shortcut per key and one per profile: the newest assignment wins.
         _settings.ProfileHotkeys.RemoveAll(hotkey =>
             hotkey.Key == NewHotkeyKey || hotkey.ProfileId.Equals(NewHotkeyProfileId, StringComparison.OrdinalIgnoreCase));
-        _settings.ProfileHotkeys.Add(new ProfileHotkey { ProfileId = NewHotkeyProfileId, Key = NewHotkeyKey });
+        _settings.ProfileHotkeys.Add(new ProfileHotkey { ProfileId = NewHotkeyProfileId, Key = NewHotkeyKey, Target = StoredTarget(NewHotkeyTarget) });
         CommitProfileHotkeys();
     }
 
@@ -56,7 +56,7 @@ public sealed partial class MainViewModel
         foreach (var hotkey in _settings.ProfileHotkeys.OrderBy(item => HotkeyService.AvailableKeys.ToList().IndexOf(item.Key)))
         {
             var name = FindProfile(hotkey.ProfileId)?.DisplayName ?? hotkey.ProfileId;
-            ProfileHotkeys.Add(new ProfileHotkeyItem(hotkey, name));
+            ProfileHotkeys.Add(new ProfileHotkeyItem(hotkey, name, TargetSuffix(hotkey.Target)));
         }
     }
 
