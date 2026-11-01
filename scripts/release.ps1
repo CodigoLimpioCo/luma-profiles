@@ -72,7 +72,7 @@ $footer = @"
 Licencia: uso gratuito y no comercial; venderla o monetizarla requiere una licencia comercial. Consulta [LICENSE](https://github.com/CodigoLimpioCo/luma-profiles/blob/$tag/LICENSE).
 "@
 $releaseNotes = Join-Path $env:TEMP "luma-release-notes-$tag.md"
-[System.IO.File]::WriteAllText($releaseNotes, ((Get-Content -LiteralPath $notes -Raw).TrimEnd() + "`n" + $footer), (New-Object System.Text.UTF8Encoding $false))
+[System.IO.File]::WriteAllText($releaseNotes, ((Get-Content -LiteralPath $notes -Raw -Encoding UTF8).TrimEnd() + "`n" + $footer), (New-Object System.Text.UTF8Encoding $false))
 gh release create $tag --title $Title --notes-file $releaseNotes
 # Assets go up one by one so a failure is visible, and the result is verified afterwards.
 foreach ($asset in $assets) { gh release upload $tag $asset --clobber }
